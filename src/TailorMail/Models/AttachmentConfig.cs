@@ -2,7 +2,7 @@
 
 /// <summary>
 /// 附件配置模型，管理邮件发送时的附件信息。
-/// 支持两种附件模式：公共附件（所有收件人共享）和单位专属附件（每个收件人单独配置），
+/// 支持两种附件模式：公共附件（所有收件人共享）和收件人专属附件（每个收件人单独配置），
 /// 同时支持从指定目录自动匹配附件文件。
 /// </summary>
 public class AttachmentConfig
@@ -14,10 +14,10 @@ public class AttachmentConfig
     public List<string> CommonAttachments { get; set; } = [];
 
     /// <summary>
-    /// 获取或设置单位专属附件配置列表。
+    /// 获取或设置收件人专属附件配置列表。
     /// 每个元素对应一个收件人的专属附件配置，可实现不同收件人附加不同的文件。默认为空列表。
     /// </summary>
-    public List<UnitAttachment> UnitAttachments { get; set; } = [];
+    public List<RecipientAttachment> RecipientAttachments { get; set; } = [];
 
     /// <summary>
     /// 获取或设置附件自动匹配目录路径。
@@ -31,7 +31,7 @@ public class AttachmentConfig
 /// 单个收件人的附件配置模型，表示某个收件人专属的附件信息。
 /// 包含收件人标识、关联的附件文件列表以及自动匹配状态。
 /// </summary>
-public class UnitAttachment
+public class RecipientAttachment
 {
     /// <summary>
     /// 获取或设置关联收件人的唯一标识符。用于与 <see cref="Recipient.Id"/> 建立对应关系。

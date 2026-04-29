@@ -153,9 +153,9 @@ public partial class SendViewModel : ObservableObject
             var recipient = selectedRecipients[i];
             StatusText = $"正在发送: {recipient.Name} ({i + 1}/{selectedRecipients.Count})...";
 
-            // 合并公共附件和单位专属附件
+            // 合并公共附件和收件人专属附件
             var allAttachments = new List<string>(attachConfig.CommonAttachments);
-            var unitAtt = attachConfig.UnitAttachments.FirstOrDefault(ua => ua.RecipientId == recipient.Id);
+            var unitAtt = attachConfig.RecipientAttachments.FirstOrDefault(ua => ua.RecipientId == recipient.Id);
             if (unitAtt != null) allAttachments.AddRange(unitAtt.Files);
 
             // 对每个收件人独立进行变量替换

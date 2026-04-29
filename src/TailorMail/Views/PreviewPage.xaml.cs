@@ -61,7 +61,7 @@ public partial class PreviewPage : UserControl, IRefreshable
         PanelAttachments.Items.Clear();
         var config = App.DataService.LoadAttachmentConfig();
         var commonFiles = config.CommonAttachments;
-        var unitAtt = config.UnitAttachments.FirstOrDefault(ua =>
+        var unitAtt = config.RecipientAttachments.FirstOrDefault(ua =>
             _viewModel.SelectedRecipient != null && ua.RecipientId == _viewModel.SelectedRecipient.Id);
         var specialFiles = unitAtt?.Files ?? [];
 

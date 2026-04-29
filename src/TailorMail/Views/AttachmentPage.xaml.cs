@@ -6,7 +6,7 @@ using TailorMail.ViewModels;
 namespace TailorMail.Views;
 
 /// <summary>
-/// 附件管理页面，提供公共附件和单位专属附件的添加/移除、自动匹配等功能。
+/// 附件管理页面，提供公共附件和收件人专属附件的添加/移除、自动匹配等功能。
 /// </summary>
 public partial class AttachmentPage : UserControl, IRefreshable
 {
@@ -30,7 +30,7 @@ public partial class AttachmentPage : UserControl, IRefreshable
     private void LoadLists()
     {
         CommonList.ItemsSource = _vm.CommonAttachments;
-        UnitGrid.ItemsSource = _vm.UnitAttachments;
+        RecipientGrid.ItemsSource = _vm.RecipientAttachments;
         TxtFolder.Text = string.IsNullOrEmpty(_vm.MatchDirectory) ? "" : _vm.MatchDirectory;
     }
 
@@ -93,9 +93,9 @@ public partial class AttachmentPage : UserControl, IRefreshable
         RefreshGrid();
     }
 
-    private void OnAddUnitAttachmentFromGrid(object sender, RoutedEventArgs e)
+    private void OnAddRecipientAttachmentFromGrid(object sender, RoutedEventArgs e)
     {
-        if (sender is FrameworkElement fe && fe.Tag is UnitAttachment ua)
+        if (sender is FrameworkElement fe && fe.Tag is RecipientAttachment ua)
         {
             var dialog = new Microsoft.Win32.OpenFileDialog
             {
@@ -117,7 +117,7 @@ public partial class AttachmentPage : UserControl, IRefreshable
     {
         if (sender is FrameworkElement fe && fe.Tag is string file)
         {
-            _vm.RemoveUnitAttachmentCommand.Execute(file);
+            _vm.RemoveRecipientAttachmentCommand.Execute(file);
             RefreshGrid();
         }
     }
@@ -126,7 +126,7 @@ public partial class AttachmentPage : UserControl, IRefreshable
     {
         if (MessageBox.Show("确定清空所有专有附件？", "确认清空",
             MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) return;
-        foreach (var ua in _vm.UnitAttachments.ToList())
+        foreach (var ua in _vm.RecipientAttachments.ToList())
         {
             ua.Files.Clear();
         }
@@ -136,7 +136,7 @@ public partial class AttachmentPage : UserControl, IRefreshable
 
     private void RefreshGrid()
     {
-        UnitGrid.ItemsSource = null;
-        UnitGrid.ItemsSource = _vm.UnitAttachments;
+        RecipientGrid.ItemsSource = null;
+        RecipientGrid.ItemsSource = _vm.RecipientAttachments;
     }
 }

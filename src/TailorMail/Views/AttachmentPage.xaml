@@ -57,7 +57,7 @@
                                Style="{StaticResource CaptionTextStyle}"/>
                 </StackPanel>
 
-                <DataGrid x:Name="UnitGrid" DockPanel.Dock="Bottom"
+                <DataGrid x:Name="RecipientGrid" DockPanel.Dock="Bottom"
                           AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False"
                           SelectionMode="Single" BorderThickness="0" Background="Transparent"
                           FontFamily="{StaticResource AppFontFamily}" FontSize="13"
@@ -96,7 +96,7 @@
                         <DataGridTemplateColumn Header="操作" Width="60" IsReadOnly="True">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
-                                    <Button Content="📎" Click="OnAddUnitAttachmentFromGrid" Tag="{Binding}"
+                                    <Button Content="📎" Click="OnAddRecipientAttachmentFromGrid" Tag="{Binding}"
                                             Background="Transparent" BorderThickness="0" Padding="4,2"
                                             ToolTip="添加专有附件" FontSize="14"/>
                                 </DataTemplate>

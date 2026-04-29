@@ -9,7 +9,7 @@ namespace TailorMail.ViewModels;
 
 /// <summary>
 /// 变量管理视图模型，负责自定义变量的增删、导入导出以及邮件模板占位符替换。
-/// 内置占位符包括 {名称}、{单位名称}、{简称}、{单位简称}，
+/// 内置占位符包括 {名称}、{简称}，
 /// 用户可添加自定义变量并在邮件模板中使用 {变量名} 格式引用。
 /// </summary>
 public partial class VariablesViewModel : ObservableObject
@@ -216,7 +216,7 @@ public partial class VariablesViewModel : ObservableObject
     }
 
     /// <summary>
-    /// 对邮件正文进行变量替换。先替换内置占位符（{名称}、{单位名称}、{简称}、{单位简称}），
+    /// 对邮件正文进行变量替换。先替换内置占位符（{名称}、{简称}），
     /// 再替换自定义变量占位符（{变量名}）。
     /// </summary>
     /// <param name="body">包含占位符的原始文本。</param>
@@ -225,9 +225,7 @@ public partial class VariablesViewModel : ObservableObject
     public string ProcessBody(string body, Recipient recipient)
     {
         var result = body.Replace("{名称}", recipient.Name)
-                         .Replace("{单位名称}", recipient.Name)
-                         .Replace("{简称}", recipient.ShortName)
-                         .Replace("{单位简称}", recipient.ShortName);
+                         .Replace("{简称}", recipient.ShortName);
         foreach (var kvp in recipient.Variables)
             result = result.Replace($"{{{kvp.Key}}}", kvp.Value);
         return result;

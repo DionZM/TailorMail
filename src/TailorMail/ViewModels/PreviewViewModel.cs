@@ -52,7 +52,7 @@ public partial class PreviewViewModel : ObservableObject
     private string _previewBcc = string.Empty;
 
     /// <summary>
-    /// 获取或设置附件文件路径预览列表（公共附件 + 单位专属附件）。
+    /// 获取或设置附件文件路径预览列表（公共附件 + 收件人专属附件）。
     /// </summary>
     [ObservableProperty]
     private ObservableCollection<string> _previewAttachments = [];
@@ -108,11 +108,11 @@ public partial class PreviewViewModel : ObservableObject
         PreviewCc = SelectedRecipient.CcEmails;
         PreviewBcc = SelectedRecipient.BccEmails;
 
-        // 合并公共附件和单位专属附件
+        // 合并公共附件和收件人专属附件
         var attachments = new List<string>();
         var config = _dataService.LoadAttachmentConfig();
         attachments.AddRange(config.CommonAttachments);
-        var unitAtt = config.UnitAttachments.FirstOrDefault(ua => ua.RecipientId == SelectedRecipient.Id);
+        var unitAtt = config.RecipientAttachments.FirstOrDefault(ua => ua.RecipientId == SelectedRecipient.Id);
         if (unitAtt != null) attachments.AddRange(unitAtt.Files);
         PreviewAttachments = new ObservableCollection<string>(attachments);
     }

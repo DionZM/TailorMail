@@ -7,7 +7,7 @@ using TailorMail.Services;
 namespace TailorMail.ViewModels;
 
 /// <summary>
-/// 附件管理视图模型，负责公共附件和单位专属附件的管理与自动匹配。
+/// 附件管理视图模型，负责公共附件和收件人专属附件的管理与自动匹配。
 /// 支持从指定目录按收件人名称自动匹配附件文件，也可手动添加。
 /// </summary>
 public partial class AttachmentViewModel : ObservableObject
@@ -22,16 +22,16 @@ public partial class AttachmentViewModel : ObservableObject
     private ObservableCollection<string> _commonAttachments = [];
 
     /// <summary>
-    /// 获取或设置单位专属附件配置列表（每个收件人可独立配置）。
+    /// 获取或设置收件人专属附件配置列表（每个收件人可独立配置）。
     /// </summary>
     [ObservableProperty]
-    private ObservableCollection<UnitAttachment> _unitAttachments = [];
+    private ObservableCollection<RecipientAttachment> _RecipientAttachments = [];
 
     /// <summary>
-    /// 获取或设置当前选中的单位附件配置项。
+    /// 获取或设置当前选中的收件人附件配置项。
     /// </summary>
     [ObservableProperty]
-    private UnitAttachment? _selectedUnitAttachment;
+    private RecipientAttachment? _selectedRecipientAttachment;
 
     /// <summary>
     /// 获取或设置自动匹配的预览文本，显示匹配结果摘要。
@@ -71,7 +71,7 @@ public partial class AttachmentViewModel : ObservableObject
     {
         var config = _dataService.LoadAttachmentConfig();
         CommonAttachments = new ObservableCollection<string>(config.CommonAttachments);
-        UnitAttachments = new ObservableCollection<UnitAttachment>(config.UnitAttachments);
+        RecipientAttachments = new ObservableCollection<RecipientAttachment>(config.RecipientAttachments);
         if (config.AutoMatchDirectory != null)
             MatchDirectory = config.AutoMatchDirectory;
 
@@ -79,21 +79,21 @@ public partial class AttachmentViewModel : ObservableObject
     }
 
     /// <summary>
-    /// 确保所有选中的收件人在单位附件列表中有对应条目，
+    /// 确保所有选中的收件人在收件人附件列表中有对应条目，
     /// 同时移除未选中收件人的条目，保持列表与选中状态同步。
     /// </summary>
     private void EnsureAllRecipientsInList()
     {
         var groups = _dataService.LoadRecipientGroups();
         var selectedRecipients = groups.SelectMany(g => g.Recipients).Where(r => r.IsSelected).ToList();
-        var existingIds = UnitAttachments.Select(ua => ua.RecipientId).ToHashSet();
+        var existingIds = RecipientAttachments.Select(ua => ua.RecipientId).ToHashSet();
 
         // 添加缺失的选中收件人
         foreach (var r in selectedRecipients)
         {
             if (!existingIds.Contains(r.Id))
             {
-                UnitAttachments.Add(new UnitAttachment
+                RecipientAttachments.Add(new RecipientAttachment
                 {
                     RecipientId = r.Id,
                     RecipientName = r.Name,
@@ -105,9 +105,9 @@ public partial class AttachmentViewModel : ObservableObject
 
         // 移除未选中的收件人
         var selectedIds = selectedRecipients.Select(r => r.Id).ToHashSet();
-        var toRemove = UnitAttachments.Where(ua => !selectedIds.Contains(ua.RecipientId)).ToList();
+        var toRemove = RecipientAttachments.Where(ua => !selectedIds.Contains(ua.RecipientId)).ToList();
         foreach (var ua in toRemove)
-            UnitAttachments.Remove(ua);
+            RecipientAttachments.Remove(ua);
     }
 
     /// <summary>
@@ -149,9 +149,9 @@ public partial class AttachmentViewModel : ObservableObject
     /// </summary>
     /// <param name="filePath">要移除的文件路径。</param>
     [RelayCommand]
-    private void RemoveUnitAttachment(string filePath)
+    private void RemoveRecipientAttachment(string filePath)
     {
-        foreach (var ua in UnitAttachments)
+        foreach (var ua in RecipientAttachments)
         {
             if (ua.Files.Contains(filePath))
             {
@@ -197,7 +197,7 @@ public partial class AttachmentViewModel : ObservableObject
 
     /// <summary>
     /// 在指定目录下根据收件人名称自动匹配附件文件。
-    /// 匹配结果会更新到单位附件列表，并生成预览文本。
+    /// 匹配结果会更新到收件人附件列表，并生成预览文本。
     /// </summary>
     /// <param name="dir">待搜索的目录路径。</param>
     private void AutoMatchFromDirectory(string dir)
@@ -222,8 +222,8 @@ public partial class AttachmentViewModel : ObservableObject
             foreach (var file in kvp.Value)
                 preview.AppendLine($"    → {System.IO.Path.GetFileName(file)}");
 
-            // 将匹配结果合并到单位附件列表
-            var existing = UnitAttachments.FirstOrDefault(ua => ua.RecipientId == kvp.Key);
+            // 将匹配结果合并到收件人附件列表
+            var existing = RecipientAttachments.FirstOrDefault(ua => ua.RecipientId == kvp.Key);
             if (existing != null)
             {
                 foreach (var file in kvp.Value)
@@ -234,7 +234,7 @@ public partial class AttachmentViewModel : ObservableObject
             }
             else
             {
-                UnitAttachments.Add(new UnitAttachment
+                RecipientAttachments.Add(new RecipientAttachment
                 {
                     RecipientId = kvp.Key,
                     RecipientName = recipient.Name,
@@ -248,10 +248,10 @@ public partial class AttachmentViewModel : ObservableObject
         var unmatched = selectedRecipients.Where(r => !matchedIds.Contains(r.Id)).ToList();
         foreach (var r in unmatched)
         {
-            var existing = UnitAttachments.FirstOrDefault(ua => ua.RecipientId == r.Id);
+            var existing = RecipientAttachments.FirstOrDefault(ua => ua.RecipientId == r.Id);
             if (existing == null)
             {
-                UnitAttachments.Add(new UnitAttachment
+                RecipientAttachments.Add(new RecipientAttachment
                 {
                     RecipientId = r.Id,
                     RecipientName = r.Name,
@@ -275,14 +275,14 @@ public partial class AttachmentViewModel : ObservableObject
     }
 
     /// <summary>
-    /// 保存当前附件配置到数据服务。仅保存有文件的单位附件条目。
+    /// 保存当前附件配置到数据服务。仅保存有文件的收件人附件条目。
     /// </summary>
     public void SaveConfig()
     {
         var config = new AttachmentConfig
         {
             CommonAttachments = CommonAttachments.ToList(),
-            UnitAttachments = UnitAttachments.Where(ua => ua.Files.Count > 0).ToList(),
+            RecipientAttachments = RecipientAttachments.Where(ua => ua.Files.Count > 0).ToList(),
             AutoMatchDirectory = MatchDirectory
         };
         _dataService.SaveAttachmentConfig(config);

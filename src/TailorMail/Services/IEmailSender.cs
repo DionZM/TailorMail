@@ -20,7 +20,7 @@ public interface IEmailSender
     /// <param name="subject">邮件主题（已进行变量替换后的最终内容）。</param>
     /// <param name="body">邮件正文 HTML 内容（已进行变量替换后的最终内容）。</param>
     /// <param name="recipient">收件人对象，包含 TO/CC/BCC 邮箱地址。</param>
-    /// <param name="attachments">附件文件路径列表（公共附件与单位专属附件的合集）。</param>
+    /// <param name="attachments">附件文件路径列表（公共附件与收件人专属附件的合集）。</param>
     /// <param name="smtpPassword">
     /// SMTP 密码，仅在 SMTP 发送方式下使用。
     /// 密码不持久化存储，每次发送时由用户临时输入。
