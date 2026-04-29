@@ -64,16 +64,20 @@
                     </ContextMenu>
                 </DataGrid.ContextMenu>
                 <DataGrid.Columns>
-                    <DataGridTemplateColumn Width="66" IsReadOnly="True" CanUserSort="False" CanUserResize="False">
+                    <DataGridTemplateColumn Width="60" IsReadOnly="True" CanUserSort="False" CanUserResize="False">
                         <DataGridTemplateColumn.Header>
-                            <CheckBox x:Name="HeaderCheckBox" Click="OnHeaderCheckBoxClick"
-                                      HorizontalAlignment="Center" VerticalAlignment="Center"
-                                      ToolTip="全选/取消全选"/>
+                            <Grid HorizontalAlignment="Stretch">
+                                <CheckBox x:Name="HeaderCheckBox" Click="OnHeaderCheckBoxClick"
+                                          HorizontalAlignment="Center" VerticalAlignment="Center"
+                                          ToolTip="全选/取消全选"/>
+                            </Grid>
                         </DataGridTemplateColumn.Header>
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
-                                <CheckBox IsChecked="{Binding IsSelected,UpdateSourceTrigger=PropertyChanged}"
-                                          Click="OnCheckClick" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                <Grid HorizontalAlignment="Stretch">
+                                    <CheckBox IsChecked="{Binding IsSelected,UpdateSourceTrigger=PropertyChanged}"
+                                              Click="OnCheckClick" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Grid>
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>

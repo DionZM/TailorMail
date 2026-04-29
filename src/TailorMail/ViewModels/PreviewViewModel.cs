@@ -1,5 +1,4 @@
-﻿using System.Collections.ObjectModel;
-using System.Text;
+﻿﻿using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using TailorMail.Models;
 using TailorMail.Services;
@@ -139,16 +138,8 @@ public partial class PreviewViewModel : ObservableObject
         var varVm = new VariablesViewModel(_dataService);
         var processedBody = varVm.ProcessBody(settings.LastBody, SelectedRecipient);
 
-        var sb = new StringBuilder();
-        sb.Append("<!DOCTYPE html><html><head>");
-        sb.Append("<meta charset='utf-8'>");
-        sb.Append("<style>");
-        sb.Append("body{background:#F7F6F3;margin:0;padding:24px;}");
-        sb.Append("a{color:#1F6C9F;text-decoration:none;}");
-        sb.Append("</style>");
-        sb.Append("</head><body>");
+        string bodyContent;
 
-        // 优先使用 XAML 转 HTML 生成格式化正文
         if (!string.IsNullOrEmpty(settings.LastBodyXaml))
         {
             try
@@ -156,23 +147,21 @@ public partial class PreviewViewModel : ObservableObject
                 var doc = new System.Windows.Documents.FlowDocument();
                 Helpers.FlowDocumentHelper.LoadFromXaml(doc, settings.LastBodyXaml);
                 var html = Helpers.FlowDocumentHelper.ToHtml(doc);
-                var processedHtml = varVm.ProcessBody(html, SelectedRecipient);
-                sb.Append(processedHtml);
+                bodyContent = varVm.ProcessBody(html, SelectedRecipient);
             }
             catch (Exception ex)
             {
                 AppLogger.Error("预览HTML生成失败", ex);
                 var plainHtml = Helpers.FlowDocumentHelper.PlainTextToHtml(processedBody);
-                sb.Append(varVm.ProcessBody(plainHtml, SelectedRecipient));
+                bodyContent = varVm.ProcessBody(plainHtml, SelectedRecipient);
             }
         }
         else
         {
             var plainHtml = Helpers.FlowDocumentHelper.PlainTextToHtml(processedBody);
-            sb.Append(varVm.ProcessBody(plainHtml, SelectedRecipient));
+            bodyContent = varVm.ProcessBody(plainHtml, SelectedRecipient);
         }
 
-        sb.Append("</body></html>");
-        return sb.ToString();
+        return Helpers.FlowDocumentHelper.WrapAsPreviewHtml(bodyContent);
     }
 }

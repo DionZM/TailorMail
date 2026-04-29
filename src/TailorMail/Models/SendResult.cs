@@ -1,4 +1,4 @@
-﻿namespace TailorMail.Models;
+﻿﻿namespace TailorMail.Models;
 
 /// <summary>
 /// 邮件发送结果模型，记录单个收件人的邮件发送状态和结果信息。

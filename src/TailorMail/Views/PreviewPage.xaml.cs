@@ -1,6 +1,9 @@
-﻿using System.Windows;
+﻿﻿using System.IO;
+using System.Text;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Documents;
+using System.Windows.Media;
 using TailorMail.Models;
 using TailorMail.ViewModels;
 
@@ -12,6 +15,7 @@ namespace TailorMail.Views;
 public partial class PreviewPage : UserControl, IRefreshable
 {
     private readonly PreviewViewModel _viewModel;
+    private string? _tempHtmlPath;
 
     public PreviewPage()
     {
@@ -121,8 +125,22 @@ public partial class PreviewPage : UserControl, IRefreshable
     private void UpdateBrowser()
     {
         var html = _viewModel.GetPreviewHtml();
-        if (!string.IsNullOrEmpty(html))
-            PreviewBrowser.NavigateToString(html);
+        if (string.IsNullOrEmpty(html)) return;
+
+        var dpi = VisualTreeHelper.GetDpi(this);
+        var scaledFontSize = (int)Math.Round(15 * dpi.DpiScaleX);
+        html = html.Replace("font-size:15px", $"font-size:{scaledFontSize}px");
+
+        try
+        {
+            if (_tempHtmlPath != null && File.Exists(_tempHtmlPath))
+                File.Delete(_tempHtmlPath);
+        }
+        catch { }
+
+        _tempHtmlPath = Path.Combine(Path.GetTempPath(), $"tailormail_preview_{Guid.NewGuid():N}.html");
+        File.WriteAllText(_tempHtmlPath, html, Encoding.UTF8);
+        PreviewBrowser.Navigate(new Uri(_tempHtmlPath));
     }
 
     private void OnPrevGroup(object sender, RoutedEventArgs e)

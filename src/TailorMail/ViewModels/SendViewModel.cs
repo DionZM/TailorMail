@@ -1,4 +1,4 @@
-﻿using System.Collections.ObjectModel;
+﻿﻿using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using TailorMail.Models;
 using TailorMail.Services;
@@ -131,16 +131,19 @@ public partial class SendViewModel : ObservableObject
             {
                 var doc = new System.Windows.Documents.FlowDocument();
                 Helpers.FlowDocumentHelper.LoadFromXaml(doc, settings.LastBodyXaml);
-                htmlBody = Helpers.FlowDocumentHelper.ToHtml(doc);
+                var bodyContent = Helpers.FlowDocumentHelper.ToHtml(doc);
+                htmlBody = Helpers.FlowDocumentHelper.WrapAsEmailDocument(bodyContent);
             }
             catch
             {
-                htmlBody = Helpers.FlowDocumentHelper.PlainTextToHtml(settings.LastBody);
+                var bodyContent = Helpers.FlowDocumentHelper.PlainTextToHtml(settings.LastBody);
+                htmlBody = Helpers.FlowDocumentHelper.WrapAsEmailDocument(bodyContent);
             }
         }
         else
         {
-            htmlBody = Helpers.FlowDocumentHelper.PlainTextToHtml(settings.LastBody);
+            var bodyContent = Helpers.FlowDocumentHelper.PlainTextToHtml(settings.LastBody);
+            htmlBody = Helpers.FlowDocumentHelper.WrapAsEmailDocument(bodyContent);
         }
 
         // 逐个发送邮件

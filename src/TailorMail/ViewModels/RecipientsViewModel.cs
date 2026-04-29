@@ -1,4 +1,4 @@
-﻿using System.Collections.ObjectModel;
+﻿﻿using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using TailorMail.Models;
@@ -423,10 +423,51 @@ public partial class RecipientsViewModel : ObservableObject
 
     /// <summary>
     /// 同步收件人数据并保存到数据服务。
+    /// 保存前先从文件重新加载最新数据，将当前分组的收件人变更合并进去，
+    /// 仅更新收件人的基本字段（名称、简称、邮箱、备注、选择状态），
+    /// 保留文件中的变量数据，避免覆盖其他页面（如变量维护页）已保存的修改。
     /// </summary>
     public void SaveAll()
     {
         SyncRecipientsToGroup();
-        _dataService.SaveRecipientGroups(Groups.ToList());
+
+        var latestGroups = _dataService.LoadRecipientGroups();
+
+        foreach (var group in Groups)
+        {
+            var latestGroup = latestGroups.FirstOrDefault(g => g.Id == group.Id);
+            if (latestGroup != null)
+            {
+                latestGroup.Name = group.Name;
+
+                var updatedRecipients = new List<Recipient>();
+                foreach (var r in group.Recipients)
+                {
+                    var existingInFile = latestGroup.Recipients.FirstOrDefault(lr => lr.Id == r.Id);
+                    if (existingInFile != null)
+                    {
+                        existingInFile.Name = r.Name;
+                        existingInFile.ShortName = r.ShortName;
+                        existingInFile.ToEmails = r.ToEmails;
+                        existingInFile.CcEmails = r.CcEmails;
+                        existingInFile.BccEmails = r.BccEmails;
+                        existingInFile.Remark = r.Remark;
+                        existingInFile.IsSelected = r.IsSelected;
+                        updatedRecipients.Add(existingInFile);
+                    }
+                    else
+                    {
+                        updatedRecipients.Add(r);
+                    }
+                }
+                latestGroup.Recipients = updatedRecipients;
+            }
+            else
+            {
+                latestGroups.Add(group);
+            }
+        }
+
+        _dataService.SaveRecipientGroups(latestGroups);
     }
 }
