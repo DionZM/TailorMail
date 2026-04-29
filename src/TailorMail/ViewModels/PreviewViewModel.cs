@@ -142,7 +142,10 @@ public partial class PreviewViewModel : ObservableObject
         var sb = new StringBuilder();
         sb.Append("<!DOCTYPE html><html><head>");
         sb.Append("<meta charset='utf-8'>");
-        sb.Append("<style>body{font-family:'Microsoft YaHei UI',sans-serif;font-size:16px;line-height:1.8;padding:12px;margin:0;}</style>");
+        sb.Append("<style>");
+        sb.Append("body{background:#F7F6F3;margin:0;padding:24px;}");
+        sb.Append("a{color:#1F6C9F;text-decoration:none;}");
+        sb.Append("</style>");
         sb.Append("</head><body>");
 
         // 优先使用 XAML 转 HTML 生成格式化正文
@@ -158,14 +161,15 @@ public partial class PreviewViewModel : ObservableObject
             }
             catch (Exception ex)
             {
-                // XAML 转换失败时回退为纯文本
                 AppLogger.Error("预览HTML生成失败", ex);
-                sb.Append(processedBody.Replace("\n", "<br/>"));
+                var plainHtml = Helpers.FlowDocumentHelper.PlainTextToHtml(processedBody);
+                sb.Append(varVm.ProcessBody(plainHtml, SelectedRecipient));
             }
         }
         else
         {
-            sb.Append(processedBody.Replace("\n", "<br/>"));
+            var plainHtml = Helpers.FlowDocumentHelper.PlainTextToHtml(processedBody);
+            sb.Append(varVm.ProcessBody(plainHtml, SelectedRecipient));
         }
 
         sb.Append("</body></html>");

@@ -135,13 +135,12 @@ public partial class SendViewModel : ObservableObject
             }
             catch
             {
-                // XAML 转换失败时回退为纯文本
-                htmlBody = settings.LastBody.Replace("\n", "<br/>");
+                htmlBody = Helpers.FlowDocumentHelper.PlainTextToHtml(settings.LastBody);
             }
         }
         else
         {
-            htmlBody = settings.LastBody.Replace("\n", "<br/>");
+            htmlBody = Helpers.FlowDocumentHelper.PlainTextToHtml(settings.LastBody);
         }
 
         // 逐个发送邮件

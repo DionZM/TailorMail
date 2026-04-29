@@ -10,29 +10,130 @@ namespace TailorMail.Helpers;
 /// <summary>
 /// FlowDocument 与 HTML/XAML 之间的转换工具类。
 /// 提供 FlowDocument 转 HTML（用于邮件发送）、XAML 序列化/反序列化（用于富文本编辑器状态保存）等功能。
+/// HTML 输出采用极简主义设计规范：温暖的纯白色调背景、精致的排版层级、宽裕的留白间距。
 /// </summary>
 public static class FlowDocumentHelper
 {
     /// <summary>
-    /// 将 <see cref="FlowDocument"/> 转换为 HTML 字符串。
-    /// 支持 Paragraph、Bold、Italic、Underline、Span、Run、LineBreak 等元素，
-    /// 以及字号和颜色的内联样式输出。
+    /// 邮件 HTML 的默认内联 CSS 样式，基于极简主义设计规范：
+    /// - 背景: 纯白 #FFFFFF
+    /// - 正文: 炭灰色 #2F3437, 字号 15px, 行高 1.75
+    /// - 次要文字: 柔灰 #787774
+    /// - 分隔线: 极浅灰 #EAEAEA
+    /// - 链接: 柔蓝 #1F6C9F
+    /// - 最大宽度: 640px 居中，模拟 A4 信纸阅读体验
+    /// </summary>
+    private const string EmailBaseStyle = @"
+        background:#FFFFFF;
+        font-family:'Helvetica Neue','PingFang SC','Microsoft YaHei UI','SF Pro Display',sans-serif;
+        font-size:15px;
+        line-height:1.75;
+        color:#2F3437;
+        max-width:640px;
+        margin:0 auto;
+        padding:40px 32px;";
+
+    /// <summary>
+    /// 段落样式：底部间距 16px，首段无顶部间距。
+    /// </summary>
+    private const string ParagraphStyle = "margin:0 0 16px 0;";
+
+    /// <summary>
+    /// 将 <see cref="FlowDocument"/> 转换为美观的邮件 HTML 字符串。
+    /// 采用极简主义排版设计：宽裕的留白、精致的字体层级、温暖的纯白色调。
+    /// 支持 Paragraph、Bold、Italic、Underline、Span、Run、LineBreak 等元素。
     /// </summary>
     /// <param name="doc">要转换的 FlowDocument 对象。</param>
-    /// <returns>HTML 格式的字符串。</returns>
+    /// <returns>带有精致排版的 HTML 格式字符串。</returns>
     public static string ToHtml(FlowDocument doc)
     {
         var sb = new StringBuilder();
-        sb.Append("<div style=\"font-family:'Microsoft YaHei UI',sans-serif;font-size:16px;line-height:1.8;\">");
+        sb.Append($"<div style=\"{EmailBaseStyle}\">");
+
+        var isFirstParagraph = true;
         foreach (Block block in doc.Blocks)
         {
             if (block is Paragraph para)
             {
-                sb.Append("<p style=\"margin:0 0 8px 0;\">");
+                var extraStyle = isFirstParagraph ? "margin-top:0;" : "";
+                isFirstParagraph = false;
+
+                sb.Append($"<p style=\"{ParagraphStyle}{extraStyle}\">");
                 WriteInlines(sb, para.Inlines);
                 sb.Append("</p>");
             }
+            else if (block is Section section)
+            {
+                foreach (var child in section.Blocks)
+                {
+                    if (child is Paragraph childPara)
+                    {
+                        sb.Append($"<p style=\"{ParagraphStyle}\">");
+                        WriteInlines(sb, childPara.Inlines);
+                        sb.Append("</p>");
+                    }
+                }
+            }
         }
+
+        // 底部签名分隔线
+        sb.Append("<div style=\"margin-top:32px;padding-top:16px;border-top:1px solid #EAEAEA;\"></div>");
+        sb.Append("</div>");
+        return sb.ToString();
+    }
+
+    /// <summary>
+    /// 将纯文本转换为美观的邮件 HTML，保留换行并应用精致的默认样式。
+    /// 用于没有 XAML 格式信息时的回退场景。
+    /// </summary>
+    /// <param name="plainText">纯文本内容。</param>
+    /// <returns>带有精致排版的 HTML 格式字符串。</returns>
+    public static string PlainTextToHtml(string plainText)
+    {
+        if (string.IsNullOrEmpty(plainText)) return string.Empty;
+
+        var sb = new StringBuilder();
+        sb.Append($"<div style=\"{EmailBaseStyle}\">");
+
+        var lines = plainText.Split('\n');
+        var isFirstLine = true;
+        var currentParagraph = new StringBuilder();
+
+        foreach (var line in lines)
+        {
+            var trimmed = line.TrimEnd('\r');
+
+            if (string.IsNullOrEmpty(trimmed))
+            {
+                // 空行触发段落分隔
+                if (currentParagraph.Length > 0)
+                {
+                    var extraStyle = isFirstLine ? "margin-top:0;" : "";
+                    isFirstLine = false;
+                    sb.Append($"<p style=\"{ParagraphStyle}{extraStyle}\">");
+                    sb.Append(HtmlEncode(currentParagraph.ToString()));
+                    sb.Append("</p>");
+                    currentParagraph.Clear();
+                }
+            }
+            else
+            {
+                if (currentParagraph.Length > 0) currentParagraph.Append(' ');
+                currentParagraph.Append(trimmed);
+            }
+        }
+
+        // 输出最后一段
+        if (currentParagraph.Length > 0)
+        {
+            var extraStyle = isFirstLine ? "margin-top:0;" : "";
+            sb.Append($"<p style=\"{ParagraphStyle}{extraStyle}\">");
+            sb.Append(HtmlEncode(currentParagraph.ToString()));
+            sb.Append("</p>");
+        }
+
+        // 底部签名分隔线
+        sb.Append("<div style=\"margin-top:32px;padding-top:16px;border-top:1px solid #EAEAEA;\"></div>");
         sb.Append("</div>");
         return sb.ToString();
     }
@@ -50,14 +151,14 @@ public static class FlowDocumentHelper
                     WriteRun(sb, run);
                     break;
                 case Bold bold:
-                    sb.Append("<b>");
+                    sb.Append("<strong style=\"font-weight:600;color:#111111;\">");
                     WriteInlines(sb, bold.Inlines);
-                    sb.Append("</b>");
+                    sb.Append("</strong>");
                     break;
                 case Italic italic:
-                    sb.Append("<i>");
+                    sb.Append("<em>");
                     WriteInlines(sb, italic.Inlines);
-                    sb.Append("</i>");
+                    sb.Append("</em>");
                     break;
                 case Underline underline:
                     sb.Append("<u>");
@@ -106,7 +207,7 @@ public static class FlowDocumentHelper
 
     /// <summary>
     /// 提取内联元素的字号和颜色样式。
-    /// 字号仅在与默认值（16px）差异超过 0.5px 时输出；
+    /// 字号仅在与默认值差异超过 0.5px 时输出；
     /// 颜色仅在该属性被显式设置时输出。
     /// </summary>
     private static string GetInlineStyles(Inline inline)
@@ -117,7 +218,7 @@ public static class FlowDocumentHelper
         if (inline.ReadLocalValue(System.Windows.Documents.TextElement.ForegroundProperty) != DependencyProperty.UnsetValue)
         {
             if (inline.Foreground is SolidColorBrush colorBrush)
-                parts.Add($"color:{colorBrush.Color.ToString().Substring(0,7)}");
+                parts.Add($"color:{colorBrush.Color.ToString().Substring(0, 7)}");
         }
         return string.Join(";", parts);
     }
@@ -152,7 +253,6 @@ public static class FlowDocumentHelper
         }
         catch (Exception ex)
         {
-            // XAML 加载失败时降级为纯文本
             AppLogger.Error("加载XAML到FlowDocument失败", ex);
             var range = new TextRange(doc.ContentStart, doc.ContentEnd);
             range.Text = xaml;
