@@ -1,0 +1,78 @@
+﻿<UserControl x:Class="TailorMail.Views.PreviewPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml">
+    <Grid Margin="0">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="240"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <StackPanel Grid.Row="0" Grid.ColumnSpan="2" Margin="0,0,0,16">
+            <TextBlock Text="效果预览" Style="{StaticResource PageTitleStyle}" Margin="0,0,0,4"/>
+            <TextBlock Text="查看每个收件人的邮件最终效果" Style="{StaticResource CaptionTextStyle}"/>
+        </StackPanel>
+
+        <Border Grid.Row="1" Grid.Column="0" Style="{StaticResource CardStyle}" Margin="0,0,12,0">
+            <StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                    <TextBlock Text="发送对象" Style="{StaticResource SectionTitleStyle}"/>
+                    <Button x:Name="BtnPrevGroup" Content="◀" Click="OnPrevGroup" Margin="12,0,0,0" Width="28" Padding="0"
+                            FontSize="10"/>
+                    <Button x:Name="BtnNextGroup" Content="▶" Click="OnNextGroup" Margin="4,0,0,0" Width="28" Padding="0"
+                            FontSize="10"/>
+                </StackPanel>
+                <ListBox Grid.Row="1" x:Name="ListGroups" DisplayMemberPath="Name"
+                         BorderThickness="0" Background="Transparent"
+                         FontFamily="{StaticResource AppFontFamily}"
+                         SelectionChanged="OnGroupSelected"/>
+            </StackPanel>
+        </Border>
+
+        <Border Grid.Row="1" Grid.Column="1" Style="{StaticResource CardStyle}" Margin="0">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,8">
+                    <TextBlock Text="主题：" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}"/>
+                    <TextBlock x:Name="TxtSubject" TextWrapping="Wrap" FontWeight="Medium"/>
+                </StackPanel>
+
+                <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,8">
+                    <TextBlock Text="收件人：" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}"/>
+                    <TextBlock x:Name="TxtTo" TextWrapping="Wrap" Foreground="{StaticResource AccentBrush}"/>
+                </StackPanel>
+
+                <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,0,0,12"
+                            x:Name="CcBccPanel" Visibility="Collapsed">
+                    <TextBlock Text="抄送：" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}"/>
+                    <TextBlock x:Name="TxtCc" TextWrapping="Wrap" Foreground="{StaticResource SuccessBrush}"/>
+                    <TextBlock Text="密送：" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" Margin="20,0,0,0"
+                               x:Name="BccLabel"/>
+                    <TextBlock x:Name="TxtBcc" TextWrapping="Wrap" Foreground="{StaticResource WarningBrush}"/>
+                </StackPanel>
+
+                <Border Grid.Row="3" BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="1"
+                        CornerRadius="{StaticResource CornerRadiusMD}" ClipToBounds="True">
+                    <WebBrowser x:Name="PreviewBrowser"/>
+                </Border>
+
+                <StackPanel Grid.Row="4" Margin="0,8,0,0">
+                    <TextBlock Text="附件清单" FontWeight="SemiBold" FontSize="13"
+                               Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
+                    <ItemsControl x:Name="PanelAttachments"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>

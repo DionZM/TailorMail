@@ -1,0 +1,168 @@
+<ui:FluentWindow x:Class="TailorMail.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+        Title="千函 - TailorMail" Height="800" Width="1200"
+        MinWidth="960" MinHeight="640"
+        WindowStartupLocation="CenterScreen"
+        ExtendsContentIntoTitleBar="True"
+        FontFamily="{StaticResource AppFontFamily}"
+        Background="{StaticResource SurfaceBrush}">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <ui:TitleBar Grid.Row="0" Title="千函 - TailorMail"
+                     Icon="{ui:SymbolIcon Mail24}"
+                     HorizontalAlignment="Stretch"
+                     ShowMaximize="True" ShowMinimize="True" ShowClose="True"/>
+
+        <Border Grid.Row="1" Background="{StaticResource SurfaceElevatedBrush}"
+                BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="0,0,0,1">
+            <Grid Margin="32,12,32,14" HorizontalAlignment="Center">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <Button Grid.Column="0" x:Name="StepBtn0" Click="OnStepClick" Tag="0"
+                        Background="Transparent" BorderThickness="0" Padding="0" Margin="0" Cursor="Hand">
+                    <StackPanel Orientation="Horizontal">
+                        <Border x:Name="StepCircle0" Width="26" Height="26" CornerRadius="13"
+                                Background="{StaticResource AccentBrush}" Margin="0,0,6,0">
+                            <TextBlock Text="1" Foreground="White" FontWeight="SemiBold" FontSize="12"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <TextBlock x:Name="StepLabel0" Text="对象选择" VerticalAlignment="Center" FontSize="13"
+                                   FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                    </StackPanel>
+                </Button>
+
+                <Rectangle Grid.Column="1" Width="24" Height="2" Fill="{StaticResource BorderSubtleBrush}"
+                           VerticalAlignment="Center" Margin="8,0" x:Name="StepLine0"/>
+
+                <Button Grid.Column="2" x:Name="StepBtn1" Click="OnStepClick" Tag="1"
+                        Background="Transparent" BorderThickness="0" Padding="0" Margin="0" Cursor="Hand">
+                    <StackPanel Orientation="Horizontal">
+                        <Border x:Name="StepCircle1" Width="26" Height="26" CornerRadius="13"
+                                Background="{StaticResource SurfaceBrush}"
+                                BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="1.5"
+                                Margin="0,0,6,0">
+                            <TextBlock Text="2" Foreground="{StaticResource TextTertiaryBrush}" FontWeight="SemiBold" FontSize="12"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <TextBlock x:Name="StepLabel1" Text="变量维护" VerticalAlignment="Center" FontSize="13"
+                                   FontWeight="Medium" Foreground="{StaticResource TextTertiaryBrush}"/>
+                    </StackPanel>
+                </Button>
+
+                <Rectangle Grid.Column="3" Width="24" Height="2" Fill="{StaticResource BorderSubtleBrush}"
+                           VerticalAlignment="Center" Margin="8,0" x:Name="StepLine1"/>
+
+                <Button Grid.Column="4" x:Name="StepBtn2" Click="OnStepClick" Tag="2"
+                        Background="Transparent" BorderThickness="0" Padding="0" Margin="0" Cursor="Hand">
+                    <StackPanel Orientation="Horizontal">
+                        <Border x:Name="StepCircle2" Width="26" Height="26" CornerRadius="13"
+                                Background="{StaticResource SurfaceBrush}"
+                                BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="1.5"
+                                Margin="0,0,6,0">
+                            <TextBlock Text="3" Foreground="{StaticResource TextTertiaryBrush}" FontWeight="SemiBold" FontSize="12"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <TextBlock x:Name="StepLabel2" Text="内容撰写" VerticalAlignment="Center" FontSize="13"
+                                   FontWeight="Medium" Foreground="{StaticResource TextTertiaryBrush}"/>
+                    </StackPanel>
+                </Button>
+
+                <Rectangle Grid.Column="5" Width="24" Height="2" Fill="{StaticResource BorderSubtleBrush}"
+                           VerticalAlignment="Center" Margin="8,0" x:Name="StepLine2"/>
+
+                <Button Grid.Column="6" x:Name="StepBtn3" Click="OnStepClick" Tag="3"
+                        Background="Transparent" BorderThickness="0" Padding="0" Margin="0" Cursor="Hand">
+                    <StackPanel Orientation="Horizontal">
+                        <Border x:Name="StepCircle3" Width="26" Height="26" CornerRadius="13"
+                                Background="{StaticResource SurfaceBrush}"
+                                BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="1.5"
+                                Margin="0,0,6,0">
+                            <TextBlock Text="4" Foreground="{StaticResource TextTertiaryBrush}" FontWeight="SemiBold" FontSize="12"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <TextBlock x:Name="StepLabel3" Text="附件选择" VerticalAlignment="Center" FontSize="13"
+                                   FontWeight="Medium" Foreground="{StaticResource TextTertiaryBrush}"/>
+                    </StackPanel>
+                </Button>
+
+                <Rectangle Grid.Column="7" Width="24" Height="2" Fill="{StaticResource BorderSubtleBrush}"
+                           VerticalAlignment="Center" Margin="8,0" x:Name="StepLine3"/>
+
+                <Button Grid.Column="8" x:Name="StepBtn4" Click="OnStepClick" Tag="4"
+                        Background="Transparent" BorderThickness="0" Padding="0" Margin="0" Cursor="Hand">
+                    <StackPanel Orientation="Horizontal">
+                        <Border x:Name="StepCircle4" Width="26" Height="26" CornerRadius="13"
+                                Background="{StaticResource SurfaceBrush}"
+                                BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="1.5"
+                                Margin="0,0,6,0">
+                            <TextBlock Text="5" Foreground="{StaticResource TextTertiaryBrush}" FontWeight="SemiBold" FontSize="12"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <TextBlock x:Name="StepLabel4" Text="效果预览" VerticalAlignment="Center" FontSize="13"
+                                   FontWeight="Medium" Foreground="{StaticResource TextTertiaryBrush}"/>
+                    </StackPanel>
+                </Button>
+
+                <Rectangle Grid.Column="9" Width="24" Height="2" Fill="{StaticResource BorderSubtleBrush}"
+                           VerticalAlignment="Center" Margin="8,0" x:Name="StepLine4"/>
+
+                <Button Grid.Column="10" x:Name="StepBtn5" Click="OnStepClick" Tag="5"
+                        Background="Transparent" BorderThickness="0" Padding="0" Margin="0" Cursor="Hand">
+                    <StackPanel Orientation="Horizontal">
+                        <Border x:Name="StepCircle5" Width="26" Height="26" CornerRadius="13"
+                                Background="{StaticResource SurfaceBrush}"
+                                BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="1.5"
+                                Margin="0,0,6,0">
+                            <TextBlock Text="6" Foreground="{StaticResource TextTertiaryBrush}" FontWeight="SemiBold" FontSize="12"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <TextBlock x:Name="StepLabel5" Text="邮件发送" VerticalAlignment="Center" FontSize="13"
+                                   FontWeight="Medium" Foreground="{StaticResource TextTertiaryBrush}"/>
+                    </StackPanel>
+                </Button>
+            </Grid>
+        </Border>
+
+        <ContentControl Grid.Row="2" x:Name="MainContent" Margin="24,16"/>
+
+        <Border Grid.Row="3" Background="{StaticResource SurfaceElevatedBrush}"
+                BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="0,1,0,0"
+                Padding="24,10,24,12">
+            <Grid>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Center">
+                    <TextBlock x:Name="TxtStepHint" Text="步骤 1/6 · 发送对象"
+                               Style="{StaticResource CaptionTextStyle}"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Button x:Name="BtnPrev" Content="上一步" Padding="16,6" Margin="0,0,8,0"
+                            Click="BtnPrev_Click" Style="{StaticResource ToolButtonStyle}"/>
+                    <ui:Button x:Name="BtnNext" Content="下一步" Padding="20,6" Click="BtnNext_Click"/>
+                    <ui:Button x:Name="BtnNewMail" Content="新邮件" Padding="16,6" Margin="8,0,0,0"
+                               Click="BtnNewMail_Click" Appearance="Primary"/>
+                    <ui:Button x:Name="BtnSettings" Content="⚙" Padding="8,6" Margin="8,0,0,0"
+                               Click="BtnSettings_Click" ToolTip="设置" Appearance="Secondary"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+    </Grid>
+</ui:FluentWindow>

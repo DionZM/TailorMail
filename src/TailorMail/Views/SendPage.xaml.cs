@@ -1,0 +1,90 @@
+﻿using System.Windows;
+using System.Windows.Controls;
+using TailorMail.Models;
+using TailorMail.ViewModels;
+
+namespace TailorMail.Views;
+
+/// <summary>
+/// 邮件发送页面，提供发送方式选择、发送进度跟踪、失败重试和取消功能。
+/// </summary>
+public partial class SendPage : UserControl, IRefreshable
+{
+    private readonly SendViewModel _viewModel;
+
+    public SendPage()
+    {
+        InitializeComponent();
+        _viewModel = new SendViewModel(App.DataService);
+        DataContext = _viewModel;
+    }
+
+    public void RefreshData()
+    {
+        _viewModel.ReloadSettings();
+        UpdateChannelHint();
+        LoadResults();
+    }
+
+    private void UpdateChannelHint()
+    {
+        var channelName = _viewModel.SendMethod == SendMethod.Smtp ? "SMTP" : "Outlook";
+        TxtChannelHint.Text = $"当前发送通道为 {channelName}，可在设置中修改";
+    }
+
+    private void LoadResults()
+    {
+        var recipients = _viewModel.GetSelectedRecipients();
+        var results = recipients.Select(r => new
+        {
+            r.Id,
+            RecipientName = r.Name,
+            StatusText = "等待",
+            Status = SendStatus.Pending,
+            SendTime = (DateTime?)null,
+            ErrorMessage = ""
+        }).ToList();
+        DataGridResults.ItemsSource = results;
+        TxtProgress.Text = $"0/{results.Count}";
+    }
+
+    public void StartSend()
+    {
+        OnStartSend(this, new RoutedEventArgs());
+    }
+
+    private async void OnStartSend(object sender, RoutedEventArgs e)
+    {
+        var selectedRecipients = _viewModel.GetSelectedRecipients();
+        if (selectedRecipients.Count == 0)
+        {
+            MessageBox.Show("请先在「对象选择」步骤中选择要发送的对象", "提示",
+                MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+
+        string? smtpPassword = null;
+        if (_viewModel.SendMethod == SendMethod.Smtp)
+        {
+            var dialog = new SmtpPasswordDialog { Owner = Window.GetWindow(this) };
+            if (dialog.ShowDialog() != true) return;
+            smtpPassword = dialog.Password;
+        }
+
+        await _viewModel.ExecuteSend(selectedRecipients, smtpPassword);
+
+        DataGridResults.ItemsSource = _viewModel.SendResults;
+        var done = _viewModel.SuccessCount + _viewModel.FailedCount;
+        ProgressBar.Value = _viewModel.ProgressValue;
+        TxtProgress.Text = $"{done}/{_viewModel.TotalCount}";
+    }
+
+    private async void OnRetry(object sender, RoutedEventArgs e)
+    {
+        if (sender is FrameworkElement fe && fe.Tag is string id)
+        {
+            await _viewModel.RetryFailed();
+            DataGridResults.ItemsSource = _viewModel.SendResults;
+        }
+    }
+}
