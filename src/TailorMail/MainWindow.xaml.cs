@@ -1,6 +1,7 @@
-﻿﻿﻿using System.Windows;
+﻿﻿﻿﻿using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using System.Windows.Media.Animation;
 using System.Windows.Shapes;
 using TailorMail.Views;
 
@@ -53,6 +54,7 @@ public partial class MainWindow
     {
         InitializeComponent();
         Loaded += OnLoaded;
+        Closed += OnMainWindowClosed;
     }
 
     /// <summary>
@@ -108,6 +110,8 @@ public partial class MainWindow
             case 4: _step5 ??= new PreviewPage(); _step5.RefreshData(); MainContent.Content = _step5; break;
             case 5: _step6 ??= new SendPage(); _step6.RefreshData(); MainContent.Content = _step6; break;
         }
+
+        AnimateContentIn();
     }
 
     /// <summary>
@@ -281,6 +285,35 @@ public partial class MainWindow
             case 1: _step2?.SaveAll(); break;
             case 2: _step3?.SaveCurrent(); break;
         }
+    }
+
+    /// <summary>
+    /// 页面切换时的淡入+上滑过渡动画。
+    /// </summary>
+    private void AnimateContentIn()
+    {
+        MainContent.Opacity = 0;
+        MainContentTransform.Y = 12;
+
+        var opacityAnimation = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(250))
+        {
+            EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut }
+        };
+        var slideAnimation = new DoubleAnimation(12, 0, TimeSpan.FromMilliseconds(250))
+        {
+            EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut }
+        };
+
+        MainContent.BeginAnimation(UIElement.OpacityProperty, opacityAnimation);
+        MainContentTransform.BeginAnimation(TranslateTransform.YProperty, slideAnimation);
+    }
+
+    /// <summary>
+    /// 主窗口关闭时确保应用完全退出，防止后台进程残留。
+    /// </summary>
+    private void OnMainWindowClosed(object? sender, EventArgs e)
+    {
+        Application.Current.Shutdown();
     }
 }
 

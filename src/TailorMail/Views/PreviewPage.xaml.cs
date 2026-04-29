@@ -1,7 +1,8 @@
-﻿﻿﻿using System.IO;
+﻿﻿﻿﻿using System.IO;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
 using System.Windows.Documents;
 using System.Windows.Media;
 using TailorMail.Models;
@@ -153,5 +154,21 @@ public partial class PreviewPage : UserControl, IRefreshable
     {
         var idx = ListGroups.SelectedIndex;
         if (idx < ListGroups.Items.Count - 1) ListGroups.SelectedIndex = idx + 1;
+    }
+
+    private void OnSearchTextChanged(object sender, TextChangedEventArgs e)
+    {
+        var searchText = ((System.Windows.Controls.TextBox)sender).Text.Trim().ToLower();
+        var view = CollectionViewSource.GetDefaultView(ListGroups.ItemsSource);
+        if (view == null) return;
+        view.Filter = item =>
+        {
+            if (string.IsNullOrEmpty(searchText)) return true;
+            if (item is Recipient r)
+            {
+                return r.Name?.ToLower().Contains(searchText) == true;
+            }
+            return false;
+        };
     }
 }

@@ -1,4 +1,4 @@
-﻿<UserControl x:Class="TailorMail.Views.AttachmentPage"
+<UserControl x:Class="TailorMail.Views.AttachmentPage"
       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml">
@@ -14,97 +14,115 @@
         </Grid.ColumnDefinitions>
 
         <StackPanel Grid.Row="0" Grid.ColumnSpan="3" Margin="0,0,0,16">
-            <TextBlock Text="附件选择" Style="{StaticResource PageTitleStyle}" Margin="0,0,0,4"/>
+            <TextBlock Text="附件匹配" Style="{StaticResource PageTitleStyle}" Margin="0,0,0,4"/>
             <TextBlock Text="为每个收件对象配置公共附件和专有附件" Style="{StaticResource CaptionTextStyle}"/>
         </StackPanel>
 
-        <Border Grid.Row="1" Grid.Column="0" Style="{StaticResource CardStyle}" Margin="0">
-            <DockPanel>
-                <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,8">
-                    <TextBlock Text="公共附件" Style="{StaticResource SectionTitleStyle}"/>
-                    <Button Content="添加" Click="OnAddCommon" Margin="12,0,0,0" Padding="10,4"/>
-                    <Button Content="清空" Click="OnClearCommon" Margin="4,0,0,0" Padding="10,4"/>
+        <Grid Grid.Row="1" Grid.Column="0">
+            <Border Style="{StaticResource CardStyle}" Margin="0">
+                <DockPanel>
+                    <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,8">
+                        <TextBlock Text="公共附件" Style="{StaticResource SectionTitleStyle}"/>
+                        <Button Content="添加" Click="OnAddCommon" Margin="12,0,0,0" Padding="10,4"/>
+                        <Button Content="清空" Click="OnClearCommon" Margin="4,0,0,0" Padding="10,4"/>
+                    </StackPanel>
+                    <ListBox DockPanel.Dock="Bottom" x:Name="CommonList" BorderThickness="0" Background="Transparent"
+                             FontFamily="{StaticResource AppFontFamily}" MinHeight="60">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="{Binding Converter={StaticResource FileNameConverter}}" ToolTip="{Binding}" TextTrimming="CharacterEllipsis"
+                                               Style="{StaticResource BodyTextStyle}"/>
+                                    <Button Grid.Column="1" Content="×" Click="OnRemoveCommon" Tag="{Binding}"
+                                            Background="Transparent" BorderThickness="0" Foreground="{StaticResource DangerBrush}"
+                                            FontWeight="Bold" Padding="4,0" VerticalAlignment="Center"/>
+                                </Grid>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </DockPanel>
+            </Border>
+            <Border x:Name="CommonEmptyState" Style="{StaticResource EmptyStateStyle}" Visibility="Visible">
+                <StackPanel>
+                    <TextBlock Text="暂无公共附件" Style="{StaticResource EmptyStateTextStyle}" Margin="0,0,0,4"/>
+                    <TextBlock Text="点击「添加」按钮上传" Style="{StaticResource CaptionTextStyle}" HorizontalAlignment="Center"/>
                 </StackPanel>
-                <ListBox DockPanel.Dock="Bottom" x:Name="CommonList" BorderThickness="0" Background="Transparent"
-                         FontFamily="{StaticResource AppFontFamily}">
-                    <ListBox.ItemTemplate>
-                        <DataTemplate>
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Grid.Column="0" Text="{Binding Converter={StaticResource FileNameConverter}}" ToolTip="{Binding}" TextTrimming="CharacterEllipsis"
-                                           Style="{StaticResource BodyTextStyle}"/>
-                                <Button Grid.Column="1" Content="×" Click="OnRemoveCommon" Tag="{Binding}"
-                                        Background="Transparent" BorderThickness="0" Foreground="{StaticResource DangerBrush}"
-                                        FontWeight="Bold" Padding="4,0" VerticalAlignment="Center"/>
-                            </Grid>
-                        </DataTemplate>
-                    </ListBox.ItemTemplate>
-                </ListBox>
-            </DockPanel>
-        </Border>
+            </Border>
+        </Grid>
 
-        <Border Grid.Row="1" Grid.Column="2" Style="{StaticResource CardStyle}" Margin="0">
-            <DockPanel>
-                <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,8">
-                    <TextBlock Text="专有附件" Style="{StaticResource SectionTitleStyle}"/>
-                    <Button Content="选择文件夹" Click="OnSelectDirectory" Margin="12,0,0,0" Padding="10,4"/>
-                    <Button Content="自动匹配" Click="OnAutoMatch" Margin="4,0,0,0" Padding="10,4"/>
-                    <Button Content="清空" Click="OnClearSpecial" Margin="4,0,0,0" Padding="10,4"/>
-                    <TextBlock x:Name="TxtFolder" Text="" VerticalAlignment="Center" Margin="12,0,0,0"
-                               Style="{StaticResource CaptionTextStyle}"/>
+        <Grid Grid.Row="1" Grid.Column="2">
+            <Border Style="{StaticResource CardStyle}" Margin="0">
+                <DockPanel>
+                    <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,8">
+                        <TextBlock Text="专有附件" Style="{StaticResource SectionTitleStyle}"/>
+                        <Button Content="选择文件夹" Click="OnSelectDirectory" Margin="12,0,0,0" Padding="10,4"/>
+                        <Button Content="自动匹配" Click="OnAutoMatch" Margin="4,0,0,0" Padding="10,4"/>
+                        <Button Content="清空" Click="OnClearSpecial" Margin="4,0,0,0" Padding="10,4"/>
+                        <TextBlock x:Name="TxtFolder" Text="" VerticalAlignment="Center" Margin="12,0,0,0"
+                                   Style="{StaticResource CaptionTextStyle}"/>
+                    </StackPanel>
+
+                    <DataGrid x:Name="RecipientGrid" DockPanel.Dock="Bottom"
+                              AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False"
+                              SelectionMode="Single" BorderThickness="0" Background="Transparent"
+                              FontFamily="{StaticResource AppFontFamily}" FontSize="13"
+                              GridLinesVisibility="Horizontal" AlternatingRowBackground="{StaticResource SurfaceBrush}"
+                              HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="发送对象" Binding="{Binding RecipientName}" Width="120" IsReadOnly="True"/>
+                            <DataGridTemplateColumn Header="专有附件" Width="*">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Grid>
+                                            <ItemsControl ItemsSource="{Binding Files}" Margin="0,2">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <StackPanel Orientation="Horizontal" Margin="0,1">
+                                                            <TextBlock Text="{Binding Converter={StaticResource FileNameConverter}}" TextTrimming="CharacterEllipsis"
+                                                                       Foreground="{StaticResource SuccessBrush}" FontSize="12"
+                                                                       VerticalAlignment="Center" MaxWidth="300"
+                                                                       ToolTip="{Binding}"/>
+                                                            <Button Content="×" Click="OnRemoveSpecialFromGrid" Tag="{Binding}"
+                                                                    Background="Transparent" BorderThickness="0"
+                                                                    Foreground="{StaticResource DangerBrush}" FontWeight="Bold"
+                                                                    Padding="2,0" FontSize="12" VerticalAlignment="Center"
+                                                                    Margin="4,0,0,0" ToolTip="删除此附件"/>
+                                                        </StackPanel>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                            <TextBlock Text="暂无专有附件" FontSize="12" Foreground="{StaticResource TextTertiaryBrush}"
+                                                       VerticalAlignment="Center"
+                                                       Visibility="{Binding HasFiles, Converter={StaticResource InverseBoolToVisibilityConverter}}"/>
+                                        </Grid>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTemplateColumn Header="操作" Width="60" IsReadOnly="True">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Button Click="OnAddRecipientAttachmentFromGrid" Tag="{Binding}"
+                                                Background="Transparent" BorderThickness="0" Padding="4,2"
+                                                ToolTip="添加专有附件">
+                                            <ui:SymbolIcon Symbol="Add24" FontSize="14"/>
+                                        </Button>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </DockPanel>
+            </Border>
+            <Border x:Name="SpecialEmptyState" Style="{StaticResource EmptyStateStyle}" Visibility="Collapsed">
+                <StackPanel>
+                    <TextBlock Text="暂无专有附件" Style="{StaticResource EmptyStateTextStyle}" Margin="0,0,0,4"/>
+                    <TextBlock Text="选择文件夹后点击「自动匹配」" Style="{StaticResource CaptionTextStyle}" HorizontalAlignment="Center"/>
                 </StackPanel>
-
-                <DataGrid x:Name="RecipientGrid" DockPanel.Dock="Bottom"
-                          AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False"
-                          SelectionMode="Single" BorderThickness="0" Background="Transparent"
-                          FontFamily="{StaticResource AppFontFamily}" FontSize="13"
-                          GridLinesVisibility="Horizontal" AlternatingRowBackground="{StaticResource SurfaceBrush}"
-                          HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
-                    <DataGrid.Columns>
-                        <DataGridTextColumn Header="发送对象" Binding="{Binding RecipientName}" Width="120" IsReadOnly="True"/>
-                        <DataGridTemplateColumn Header="专有附件" Width="*">
-                            <DataGridTemplateColumn.CellTemplate>
-                                <DataTemplate>
-                                    <Grid>
-                                        <ItemsControl ItemsSource="{Binding Files}" Margin="0,2">
-                                            <ItemsControl.ItemTemplate>
-                                                <DataTemplate>
-                                                    <StackPanel Orientation="Horizontal" Margin="0,1">
-                                                        <TextBlock Text="{Binding Converter={StaticResource FileNameConverter}}" TextTrimming="CharacterEllipsis"
-                                                                   Foreground="{StaticResource SuccessBrush}" FontSize="12"
-                                                                   VerticalAlignment="Center" MaxWidth="300"
-                                                                   ToolTip="{Binding}"/>
-                                                        <Button Content="×" Click="OnRemoveSpecialFromGrid" Tag="{Binding}"
-                                                                Background="Transparent" BorderThickness="0"
-                                                                Foreground="{StaticResource DangerBrush}" FontWeight="Bold"
-                                                                Padding="2,0" FontSize="12" VerticalAlignment="Center"
-                                                                Margin="4,0,0,0" ToolTip="删除此附件"/>
-                                                    </StackPanel>
-                                                </DataTemplate>
-                                            </ItemsControl.ItemTemplate>
-                                        </ItemsControl>
-                                        <TextBlock Text="暂无专有附件" FontSize="12" Opacity="0.4"
-                                                   VerticalAlignment="Center"
-                                                   Visibility="{Binding HasFiles, Converter={StaticResource InverseBoolToVisibilityConverter}}"/>
-                                    </Grid>
-                                </DataTemplate>
-                            </DataGridTemplateColumn.CellTemplate>
-                        </DataGridTemplateColumn>
-                        <DataGridTemplateColumn Header="操作" Width="60" IsReadOnly="True">
-                            <DataGridTemplateColumn.CellTemplate>
-                                <DataTemplate>
-                                    <Button Content="📎" Click="OnAddRecipientAttachmentFromGrid" Tag="{Binding}"
-                                            Background="Transparent" BorderThickness="0" Padding="4,2"
-                                            ToolTip="添加专有附件" FontSize="14"/>
-                                </DataTemplate>
-                            </DataGridTemplateColumn.CellTemplate>
-                        </DataGridTemplateColumn>
-                    </DataGrid.Columns>
-                </DataGrid>
-            </DockPanel>
-        </Border>
+            </Border>
+        </Grid>
     </Grid>
 </UserControl>

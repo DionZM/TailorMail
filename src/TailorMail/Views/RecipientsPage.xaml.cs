@@ -1,4 +1,4 @@
-﻿using System.ComponentModel;
+﻿﻿using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
@@ -31,7 +31,42 @@ public partial class RecipientsPage : UserControl, IRefreshable
 
     public void RefreshData() => _vm.LoadGroups();
 
-    private void OnSelectedGroupChanged() => UpdateHeaderCheckBox();
+    private void OnSelectedGroupChanged()
+    {
+        UpdateHeaderCheckBox();
+        UpdateEmptyState();
+    }
+
+    private void OnSearchTextChanged(object sender, TextChangedEventArgs e)
+    {
+        var searchText = ((System.Windows.Controls.TextBox)sender).Text.Trim().ToLower();
+        var view = CollectionViewSource.GetDefaultView(_vm.CurrentRecipients);
+        view.Filter = item =>
+        {
+            if (string.IsNullOrEmpty(searchText)) return true;
+            if (item is Models.Recipient r)
+            {
+                return (r.Name?.ToLower().Contains(searchText) == true) ||
+                       (r.ToEmails?.ToLower().Contains(searchText) == true) ||
+                       (r.ShortName?.ToLower().Contains(searchText) == true);
+            }
+            return false;
+        };
+    }
+
+    private void OnDeleteGroup(object sender, RoutedEventArgs e)
+    {
+        if (_vm.SelectedGroup == null) return;
+        if (MessageBox.Show($"确定删除分组「{_vm.SelectedGroup.Name}」及其所有收件人？", "确认删除",
+            MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) return;
+        _vm.DeleteGroupCommand.Execute(null);
+        UpdateEmptyState();
+    }
+
+    private void UpdateEmptyState()
+    {
+        EmptyState.Visibility = _vm.CurrentRecipients.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+    }
 
     private void OnHeaderCheckBoxClick(object sender, RoutedEventArgs e)
     {

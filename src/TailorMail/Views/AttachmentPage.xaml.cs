@@ -1,4 +1,4 @@
-﻿using System.Windows;
+﻿﻿using System.Windows;
 using System.Windows.Controls;
 using TailorMail.Models;
 using TailorMail.ViewModels;
@@ -32,6 +32,13 @@ public partial class AttachmentPage : UserControl, IRefreshable
         CommonList.ItemsSource = _vm.CommonAttachments;
         RecipientGrid.ItemsSource = _vm.RecipientAttachments;
         TxtFolder.Text = string.IsNullOrEmpty(_vm.MatchDirectory) ? "" : _vm.MatchDirectory;
+        UpdateEmptyStates();
+    }
+
+    private void UpdateEmptyStates()
+    {
+        CommonEmptyState.Visibility = _vm.CommonAttachments.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+        SpecialEmptyState.Visibility = _vm.RecipientAttachments.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
     }
 
     private void OnAddCommon(object sender, RoutedEventArgs e)
@@ -39,6 +46,7 @@ public partial class AttachmentPage : UserControl, IRefreshable
         _vm.AddCommonAttachmentCommand.Execute(null);
         CommonList.ItemsSource = null;
         CommonList.ItemsSource = _vm.CommonAttachments;
+        UpdateEmptyStates();
 
         if (string.IsNullOrEmpty(_vm.MatchDirectory) && _vm.CommonAttachments.Count > 0)
         {
@@ -60,6 +68,7 @@ public partial class AttachmentPage : UserControl, IRefreshable
         _vm.CommonAttachments.Clear();
         _vm.SaveConfig();
         CommonList.ItemsSource = null;
+        UpdateEmptyStates();
     }
 
     private void OnRemoveCommon(object sender, RoutedEventArgs e)
@@ -72,6 +81,7 @@ public partial class AttachmentPage : UserControl, IRefreshable
             _vm.SaveConfig();
             CommonList.ItemsSource = null;
             CommonList.ItemsSource = _vm.CommonAttachments;
+            UpdateEmptyStates();
         }
     }
 
@@ -91,6 +101,7 @@ public partial class AttachmentPage : UserControl, IRefreshable
     {
         _vm.AutoMatchCommand.Execute(null);
         RefreshGrid();
+        UpdateEmptyStates();
     }
 
     private void OnAddRecipientAttachmentFromGrid(object sender, RoutedEventArgs e)

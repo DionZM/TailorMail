@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿using System.IO;
+﻿﻿﻿﻿﻿﻿﻿using System.IO;
 using System.Windows;
 using System.Windows.Threading;
 using TailorMail.Services;
@@ -41,6 +41,8 @@ public partial class App : System.Windows.Application
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
+
+        ShutdownMode = ShutdownMode.OnMainWindowClose;
 
         // UI 线程未处理异常：记录日志并显示错误对话框，防止应用崩溃
         DispatcherUnhandledException += (s, args) =>

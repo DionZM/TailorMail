@@ -21,9 +21,9 @@
             <Color x:Key="BorderSubtleColor">#E0E5EC</Color>
             <Color x:Key="TextPrimaryColor">#1A2332</Color>
             <Color x:Key="TextSecondaryColor">#5A6A7E</Color>
-            <Color x:Key="TextTertiaryColor">#94A3B8</Color>
-            <Color x:Key="SuccessColor">#0D9462</Color>
-            <Color x:Key="WarningColor">#C27803</Color>
+            <Color x:Key="TextTertiaryColor">#626F82</Color>
+            <Color x:Key="SuccessColor">#047857</Color>
+            <Color x:Key="WarningColor">#A16207</Color>
             <Color x:Key="DangerColor">#C42B1C</Color>
 
             <SolidColorBrush x:Key="AccentBrush" Color="{StaticResource AccentColor}"/>
@@ -58,6 +58,14 @@
             <CornerRadius x:Key="CornerRadiusMD">8</CornerRadius>
             <CornerRadius x:Key="CornerRadiusLG">12</CornerRadius>
             <CornerRadius x:Key="CornerRadiusXL">16</CornerRadius>
+
+            <DropShadowEffect x:Key="ShadowSM" x:Shared="False" BlurRadius="4" ShadowDepth="1" Opacity="0.06" Color="{StaticResource TextPrimaryColor}" Direction="270"/>
+            <DropShadowEffect x:Key="ShadowMD" x:Shared="False" BlurRadius="12" ShadowDepth="2" Opacity="0.08" Color="{StaticResource TextPrimaryColor}" Direction="270"/>
+            <DropShadowEffect x:Key="ShadowLG" x:Shared="False" BlurRadius="20" ShadowDepth="4" Opacity="0.12" Color="{StaticResource TextPrimaryColor}" Direction="270"/>
+
+            <sys:Double x:Key="DurationFast" xmlns:sys="clr-namespace:System;assembly=mscorlib">150</sys:Double>
+            <sys:Double x:Key="DurationNormal" xmlns:sys="clr-namespace:System;assembly=mscorlib">250</sys:Double>
+            <sys:Double x:Key="DurationSlow" xmlns:sys="clr-namespace:System;assembly=mscorlib">350</sys:Double>
 
             <Style TargetType="TextBlock" x:Key="PageTitleStyle">
                 <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}"/>
@@ -107,11 +115,7 @@
                 <Setter Property="CornerRadius" Value="{StaticResource CornerRadiusLG}"/>
                 <Setter Property="Padding" Value="20,18"/>
                 <Setter Property="Margin" Value="0,0,0,16"/>
-                <Setter Property="Effect">
-                    <Setter.Value>
-                        <DropShadowEffect BlurRadius="12" ShadowDepth="2" Opacity="0.08" Color="#1A2332" Direction="270"/>
-                    </Setter.Value>
-                </Setter>
+                <Setter Property="Effect" Value="{StaticResource ShadowMD}"/>
             </Style>
 
             <Style TargetType="Border" x:Key="CardFlatStyle">
@@ -136,10 +140,32 @@
                 <Setter Property="FontSize" Value="13"/>
                 <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}"/>
                 <Setter Property="Cursor" Value="Hand"/>
+                <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+                <Style.Triggers>
+                    <Trigger Property="IsMouseOver" Value="True">
+                        <Setter Property="Foreground" Value="{StaticResource AccentBrush}"/>
+                    </Trigger>
+                </Style.Triggers>
             </Style>
 
             <Style TargetType="Button" x:Key="DangerButtonStyle" BasedOn="{StaticResource ToolButtonStyle}">
                 <Setter Property="Foreground" Value="{StaticResource DangerBrush}"/>
+            </Style>
+
+            <Style TargetType="Border" x:Key="EmptyStateStyle">
+                <Setter Property="Background" Value="{StaticResource SurfaceBrush}"/>
+                <Setter Property="CornerRadius" Value="{StaticResource CornerRadiusLG}"/>
+                <Setter Property="Padding" Value="24,32"/>
+                <Setter Property="HorizontalAlignment" Value="Center"/>
+                <Setter Property="VerticalAlignment" Value="Center"/>
+            </Style>
+
+            <Style TargetType="TextBlock" x:Key="EmptyStateTextStyle">
+                <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}"/>
+                <Setter Property="FontSize" Value="{StaticResource FontSizeBase}"/>
+                <Setter Property="Foreground" Value="{StaticResource TextTertiaryBrush}"/>
+                <Setter Property="HorizontalAlignment" Value="Center"/>
+                <Setter Property="TextAlignment" Value="Center"/>
             </Style>
 
             <converters:EnumToBoolConverter x:Key="EnumToBoolConverter"/>

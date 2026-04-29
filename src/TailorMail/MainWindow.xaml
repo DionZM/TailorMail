@@ -146,7 +146,12 @@
             </Grid>
         </Border>
 
-        <ContentControl Grid.Row="2" x:Name="MainContent" Margin="24,16"/>
+        <ContentControl Grid.Row="2" x:Name="MainContent" Margin="24,16"
+                        RenderTransformOrigin="0.5,0.5">
+            <ContentControl.RenderTransform>
+                <TranslateTransform x:Name="MainContentTransform" Y="0"/>
+            </ContentControl.RenderTransform>
+        </ContentControl>
 
         <Border Grid.Row="3" Background="{StaticResource SurfaceElevatedBrush}"
                 BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="0,1,0,0"
@@ -157,8 +162,8 @@
                                Style="{StaticResource CaptionTextStyle}"/>
                 </StackPanel>
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                    <Button x:Name="BtnPrev" Content="上一步" Padding="16,6" Margin="0,0,8,0"
-                            Click="BtnPrev_Click" Style="{StaticResource ToolButtonStyle}"/>
+                    <ui:Button x:Name="BtnPrev" Content="上一步" Padding="16,6" Margin="0,0,8,0"
+                               Click="BtnPrev_Click" Appearance="Secondary"/>
                     <ui:Button x:Name="BtnNewMail" Content="新邮件" Padding="16,6" Margin="0,0,8,0"
                                Click="BtnNewMail_Click" Appearance="Primary"/>
                     <ui:Button x:Name="BtnNext" Content="下一步" Padding="20,6" Click="BtnNext_Click"/>

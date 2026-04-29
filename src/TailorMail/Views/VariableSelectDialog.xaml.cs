@@ -1,13 +1,11 @@
-﻿using System.Windows;
+﻿﻿using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media;
 using TailorMail.ViewModels;
 
 namespace TailorMail.Views;
 
-/// <summary>
-/// 变量选择对话框，用于选择要删除的自定义变量。
-/// </summary>
-public partial class VariableSelectDialog : Window
+public partial class VariableSelectDialog : Wpf.Ui.Controls.FluentWindow
 {
     public List<string> SelectedVariables { get; private set; } = [];
 
@@ -20,26 +18,27 @@ public partial class VariableSelectDialog : Window
         WindowStartupLocation = WindowStartupLocation.CenterOwner;
         ResizeMode = ResizeMode.NoResize;
 
-        var panel = new StackPanel { Margin = new Thickness(16) };
+        var panel = new StackPanel { Margin = new Thickness(20) };
 
-        var hint = new System.Windows.Controls.TextBlock
+        var hint = new TextBlock
         {
             Text = "请勾选要删除的变量：",
-            FontWeight = FontWeights.SemiBold,
+            Style = (Style)FindResource("SectionTitleStyle"),
             Margin = new Thickness(0, 0, 0, 12)
         };
         panel.Children.Add(hint);
 
         var scrollViewer = new ScrollViewer { VerticalScrollBarVisibility = ScrollBarVisibility.Auto, MaxHeight = 250 };
         var itemsPanel = new StackPanel();
-        var checkBoxes = new List<System.Windows.Controls.CheckBox>();
+        var checkBoxes = new List<CheckBox>();
 
         foreach (var name in variableNames)
         {
-            var cb = new System.Windows.Controls.CheckBox
+            var cb = new CheckBox
             {
                 Content = name,
                 Margin = new Thickness(0, 4, 0, 4),
+                FontFamily = (FontFamily)FindResource("AppFontFamily"),
                 Tag = name
             };
             checkBoxes.Add(cb);
@@ -50,12 +49,12 @@ public partial class VariableSelectDialog : Window
 
         var btnPanel = new StackPanel
         {
-            Orientation = System.Windows.Controls.Orientation.Horizontal,
+            Orientation = Orientation.Horizontal,
             HorizontalAlignment = HorizontalAlignment.Right,
             Margin = new Thickness(0, 16, 0, 0)
         };
 
-        var btnOk = new System.Windows.Controls.Button
+        var btnOk = new Wpf.Ui.Controls.Button
         {
             Content = "删除",
             Padding = new Thickness(20, 6, 20, 6),
@@ -68,10 +67,11 @@ public partial class VariableSelectDialog : Window
             DialogResult = true;
         };
 
-        var btnCancel = new System.Windows.Controls.Button
+        var btnCancel = new Wpf.Ui.Controls.Button
         {
             Content = "取消",
-            Padding = new Thickness(20, 6, 20, 6)
+            Padding = new Thickness(20, 6, 20, 6),
+            Appearance = Wpf.Ui.Controls.ControlAppearance.Secondary
         };
         btnCancel.Click += (_, _) => { DialogResult = false; };
 

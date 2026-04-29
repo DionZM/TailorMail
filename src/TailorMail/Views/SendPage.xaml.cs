@@ -1,13 +1,11 @@
-﻿using System.Windows;
+﻿﻿using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
 using TailorMail.Models;
 using TailorMail.ViewModels;
 
 namespace TailorMail.Views;
 
-/// <summary>
-/// 邮件发送页面，提供发送方式选择、发送进度跟踪、失败重试和取消功能。
-/// </summary>
 public partial class SendPage : UserControl, IRefreshable
 {
     private readonly SendViewModel _viewModel;
@@ -71,20 +69,75 @@ public partial class SendPage : UserControl, IRefreshable
             smtpPassword = dialog.Password;
         }
 
-        await _viewModel.ExecuteSend(selectedRecipients, smtpPassword);
+        LoadingOverlay.Visibility = Visibility.Visible;
+        LoadingText.Text = "正在发送邮件...";
 
-        DataGridResults.ItemsSource = _viewModel.SendResults;
-        var done = _viewModel.SuccessCount + _viewModel.FailedCount;
-        ProgressBar.Value = _viewModel.ProgressValue;
-        TxtProgress.Text = $"{done}/{_viewModel.TotalCount}";
+        try
+        {
+            await _viewModel.ExecuteSend(selectedRecipients, smtpPassword);
+
+            DataGridResults.ItemsSource = _viewModel.SendResults;
+            var done = _viewModel.SuccessCount + _viewModel.FailedCount;
+            ProgressBar.Value = _viewModel.ProgressValue;
+            TxtProgress.Text = $"{done}/{_viewModel.TotalCount}";
+        }
+        finally
+        {
+            LoadingOverlay.Visibility = Visibility.Collapsed;
+        }
     }
 
     private async void OnRetry(object sender, RoutedEventArgs e)
     {
         if (sender is FrameworkElement fe && fe.Tag is string id)
         {
-            await _viewModel.RetryFailed();
-            DataGridResults.ItemsSource = _viewModel.SendResults;
+            LoadingOverlay.Visibility = Visibility.Visible;
+            LoadingText.Text = "正在重试...";
+
+            try
+            {
+                await _viewModel.RetryFailed();
+                DataGridResults.ItemsSource = _viewModel.SendResults;
+            }
+            finally
+            {
+                LoadingOverlay.Visibility = Visibility.Collapsed;
+            }
+        }
+    }
+
+    private void OnFilterChanged(object sender, RoutedEventArgs e)
+    {
+        var view = CollectionViewSource.GetDefaultView(DataGridResults.ItemsSource);
+        if (view == null) return;
+
+        if (FilterSuccess.IsChecked == true)
+        {
+            view.Filter = item =>
+            {
+                var status = item?.GetType().GetProperty("Status")?.GetValue(item);
+                return status is SendStatus s && s == SendStatus.Success;
+            };
+        }
+        else if (FilterFailed.IsChecked == true)
+        {
+            view.Filter = item =>
+            {
+                var status = item?.GetType().GetProperty("Status")?.GetValue(item);
+                return status is SendStatus s && s == SendStatus.Failed;
+            };
+        }
+        else if (FilterPending.IsChecked == true)
+        {
+            view.Filter = item =>
+            {
+                var status = item?.GetType().GetProperty("Status")?.GetValue(item);
+                return status is SendStatus s && s == SendStatus.Pending;
+            };
+        }
+        else
+        {
+            view.Filter = null;
         }
     }
 }

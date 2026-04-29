@@ -1,4 +1,4 @@
-﻿using System.Windows;
+﻿﻿using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Input;
@@ -31,6 +31,8 @@ public partial class VariablesPage : UserControl, IRefreshable
     {
         VariablesGrid.Columns.Clear();
         VariablesGrid.ItemsSource = null;
+
+        VarEmptyState.Visibility = _vm.VariableNames.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
 
         var nameCol = new DataGridTextColumn
         {
