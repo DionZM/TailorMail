@@ -1,4 +1,4 @@
-﻿﻿using System.Collections.ObjectModel;
+﻿﻿﻿using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using TailorMail.Models;
@@ -425,7 +425,7 @@ public partial class RecipientsViewModel : ObservableObject
     /// 同步收件人数据并保存到数据服务。
     /// 保存前先从文件重新加载最新数据，将当前分组的收件人变更合并进去，
     /// 仅更新收件人的基本字段（名称、简称、邮箱、备注、选择状态），
-    /// 保留文件中的变量数据，避免覆盖其他页面（如变量维护页）已保存的修改。
+    /// 保留文件中的变量数据，避免覆盖其他页面（如变量配置页）已保存的修改。
     /// </summary>
     public void SaveAll()
     {

@@ -1,0 +1,52 @@
+<ui:FluentWindow x:Class="TailorMail.Views.AboutWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+        Title="关于 千函" Height="380" Width="440"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize"
+        FontFamily="{StaticResource AppFontFamily}"
+        Background="{StaticResource SurfaceBrush}">
+    <Grid Margin="28,24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0" Margin="0,0,0,20" Orientation="Horizontal">
+            <Image Source="pack://application:,,,/logo_256.png" Width="64" Height="64" Margin="0,0,14,0" VerticalAlignment="Center" RenderOptions.BitmapScalingMode="HighQuality"/>
+            <StackPanel VerticalAlignment="Center">
+                <TextBlock Text="千函" FontSize="28" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,2"/>
+                <TextBlock Text="TailorMail" FontSize="14" Foreground="{StaticResource TextTertiaryBrush}" Margin="0,0,0,4"/>
+                <TextBlock Text="v0.9.1" FontSize="12" Foreground="{StaticResource TextTertiaryBrush}"/>
+            </StackPanel>
+        </StackPanel>
+
+        <Border Grid.Row="1" Style="{StaticResource CardStyle}" Margin="0">
+            <StackPanel>
+                <TextBlock Text="千人千面的个性化邮件群发工具" FontSize="14" Foreground="{StaticResource TextPrimaryBrush}"
+                           Margin="0,0,0,16" TextWrapping="Wrap"/>
+
+                <TextBlock Text="项目地址" Style="{StaticResource SectionTitleStyle}" Margin="0,0,0,6"/>
+                <TextBlock Margin="0,0,0,16">
+                    <Hyperlink NavigateUri="https://github.com/DionZM/TailorMail"
+                               Foreground="{StaticResource AccentBrush}" TextDecorations="None"
+                               RequestNavigate="OnLinkClick">
+                        https://github.com/DionZM/TailorMail
+                    </Hyperlink>
+                </TextBlock>
+
+                <TextBlock Text="开源授权" Style="{StaticResource SectionTitleStyle}" Margin="0,0,0,6"/>
+                <TextBlock TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}" FontSize="13" LineHeight="22">
+                    <Run>Apache License 2.0</Run><LineBreak/>
+                    <Run>可自由使用、修改和分发，需保留版权声明和授权声明。</Run>
+                </TextBlock>
+            </StackPanel>
+        </Border>
+
+        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
+            <ui:Button Content="确定" Click="BtnClose_Click" Padding="28,8" Appearance="Primary"/>
+        </StackPanel>
+    </Grid>
+</ui:FluentWindow>

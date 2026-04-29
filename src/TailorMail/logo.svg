@@ -1,0 +1,150 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <!-- Gradients for the Envelope -->
+    <linearGradient id="backGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#0F172A"/>
+      <stop offset="100%" stop-color="#1E3A8A"/>
+    </linearGradient>
+
+    <linearGradient id="topFlapGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#60A5FA"/>
+      <stop offset="100%" stop-color="#2563EB"/>
+    </linearGradient>
+
+    <linearGradient id="leftFlapGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1E40AF"/>
+      <stop offset="100%" stop-color="#1D4ED8"/>
+    </linearGradient>
+
+    <linearGradient id="rightFlapGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#2563EB"/>
+      <stop offset="100%" stop-color="#1D4ED8"/>
+    </linearGradient>
+
+    <linearGradient id="bottomFlapGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#3B82F6"/>
+      <stop offset="100%" stop-color="#1D4ED8"/>
+    </linearGradient>
+
+    <!-- Gradients for the Personalized Variables Concept -->
+    <linearGradient id="braceGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#8B5CF6"/>
+      <stop offset="100%" stop-color="#EC4899"/>
+    </linearGradient>
+
+    <linearGradient id="avatarGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FBBF24"/>
+      <stop offset="100%" stop-color="#F97316"/>
+    </linearGradient>
+
+    <!-- Soft Drop Shadows for 3D Layering -->
+    <filter id="sheetShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="2" stdDeviation="4" flood-opacity="0.15" />
+    </filter>
+
+    <filter id="mainShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="6" stdDeviation="8" flood-opacity="0.25" />
+    </filter>
+
+    <!-- Envelope Pocket Clip Path -->
+    <clipPath id="envClip">
+      <path d="M 70,260 L 442,260 L 442,410 C 442,435 425,450 400,450 L 112,450 C 87,450 70,435 70,410 Z"/>
+    </clipPath>
+  </defs>
+
+  <!-- Left Side Decor: Group Recipient Management Network -->
+  <g id="RecipientNetwork">
+    <!-- Connecting Lines -->
+    <path d="M 100,210 L 50,170 M 100,210 L 40,210 M 100,210 L 50,250" fill="none" stroke="#94A3B8" stroke-width="2" stroke-linecap="round"/>
+    <!-- Nodes -->
+    <circle cx="100" cy="210" r="6" fill="#64748B"/>
+    <circle cx="50" cy="170" r="6" fill="#F43F5E"/>
+    <circle cx="40" cy="210" r="6" fill="#F59E0B"/>
+    <circle cx="50" cy="250" r="6" fill="#10B981"/>
+  </g>
+
+  <!-- Envelope Back Shell & Open Top Flap -->
+  <g filter="url(#sheetShadow)">
+    <path d="M 70,260 L 442,260 L 442,410 C 442,435 425,450 400,450 L 112,450 C 87,450 70,435 70,410 Z" fill="url(#backGrad)"/>
+    <path d="M 70,260 L 246,125 C 252,120 260,120 266,125 L 442,260 Z" fill="url(#topFlapGrad)"/>
+  </g>
+
+  <!-- Sheet 1 (Background Left - Represents Bulk) -->
+  <g id="Sheet1" transform="translate(256, 260) rotate(-12) translate(-256, -260)" filter="url(#sheetShadow)">
+    <rect x="146" y="70" width="220" height="260" rx="12" fill="#F1F5F9"/>
+    <rect x="166" y="100" width="100" height="10" rx="5" fill="#CBD5E1"/>
+    <rect x="166" y="120" width="150" height="10" rx="5" fill="#E2E8F0"/>
+    <rect x="166" y="140" width="130" height="10" rx="5" fill="#E2E8F0"/>
+    <!-- Varied Avatar Dot -->
+    <circle cx="180" cy="180" r="12" fill="#F43F5E" opacity="0.8"/>
+  </g>
+
+  <!-- Sheet 2 (Background Right - Represents Bulk) -->
+  <g id="Sheet2" transform="translate(256, 260) rotate(12) translate(-256, -260)" filter="url(#sheetShadow)">
+    <rect x="146" y="70" width="220" height="260" rx="12" fill="#E2E8F0"/>
+    <rect x="166" y="100" width="110" height="10" rx="5" fill="#94A3B8"/>
+    <rect x="166" y="120" width="140" height="10" rx="5" fill="#CBD5E1"/>
+    <rect x="166" y="140" width="160" height="10" rx="5" fill="#CBD5E1"/>
+    <!-- Varied Avatar Dot -->
+    <circle cx="180" cy="180" r="12" fill="#10B981" opacity="0.8"/>
+  </g>
+
+  <!-- Sheet 3 (Center Foreground - The Personalized "Tailored" Email Template) -->
+  <g id="Sheet3" filter="url(#mainShadow)">
+    <rect x="126" y="40" width="260" height="340" rx="16" fill="#FFFFFF"/>
+    
+    <!-- Subtle Stitch Border (Representing the "Tailor" Aspect without overpowering) -->
+    <rect x="138" y="52" width="236" height="316" rx="10" fill="none" stroke="#E2E8F0" stroke-width="2" stroke-dasharray="8, 8"/>
+    
+    <!-- Document Formatting -->
+    <rect x="160" y="75" width="190" height="16" rx="8" fill="#E2E8F0"/>
+    <rect x="160" y="100" width="140" height="12" rx="6" fill="#F1F5F9"/>
+    
+    <!-- Top Right Paperclip representing "Differential Attachments" -->
+    <g transform="translate(375, 60) rotate(15)">
+      <path d="M 8,30 L 8,12 A 4,4 0 0,0 0,12 L 0,36 A 8,8 0 0,1 -16,36 L -16,8 A 12,12 0 0,1 8,8 L 8,30" fill="none" stroke="#94A3B8" stroke-width="4" stroke-linecap="round"/>
+    </g>
+
+    <!-- Central Personalized Variable Icon { 👤 } -->
+    <!-- Left Brace -->
+    <path d="M 180,140 C 165,140 160,148 160,160 L 160,180 C 160,195 150,200 140,200 C 150,200 160,205 160,220 L 160,240 C 160,252 165,260 180,260" fill="none" stroke="url(#braceGrad)" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+    <!-- Right Brace -->
+    <path d="M 332,140 C 347,140 352,148 352,160 L 352,180 C 352,195 362,200 372,200 C 362,200 352,205 352,220 L 352,240 C 352,252 347,260 332,260" fill="none" stroke="url(#braceGrad)" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+    
+    <!-- User Avatar inside Braces -->
+    <circle cx="256" cy="170" r="22" fill="url(#avatarGrad)"/>
+    <path d="M 216 250 L 216 230 A 40 35 0 0 1 296 230 L 296 250 Z" fill="url(#avatarGrad)"/>
+
+    <!-- Bottom Content Formatting -->
+    <rect x="160" y="280" width="190" height="12" rx="6" fill="#F1F5F9"/>
+    <rect x="160" y="300" width="130" height="12" rx="6" fill="#F1F5F9"/>
+    <rect x="160" y="320" width="160" height="12" rx="6" fill="#F1F5F9"/>
+  </g>
+
+  <!-- Mail Sent Trail Swoosh -->
+  <path d="M 380,280 C 420,280 440,240 460,225" fill="none" stroke="#94A3B8" stroke-width="3" stroke-dasharray="6,6" stroke-linecap="round"/>
+
+  <!-- Front Pocket of Envelope (with clean intersections) -->
+  <g filter="url(#mainShadow)">
+    <g clip-path="url(#envClip)">
+      <!-- Left Triangle Flap -->
+      <polygon points="70,260 256,380 70,480" fill="url(#leftFlapGrad)"/>
+      <!-- Right Triangle Flap -->
+      <polygon points="442,260 256,380 442,480" fill="url(#rightFlapGrad)"/>
+      
+      <!-- Inner Drop Shadow cast by the Bottom Flap -->
+      <polygon points="20,490 256,335 492,490" fill="#0F172A" opacity="0.25"/>
+      <!-- Bottom Triangle Flap covering the side flaps -->
+      <polygon points="20,480 256,325 492,480" fill="url(#bottomFlapGrad)"/>
+      <!-- Highlight edge on the bottom flap to simulate depth -->
+      <polyline points="20,480 256,325 492,480" fill="none" stroke="#93C5FD" stroke-width="2" opacity="0.6"/>
+    </g>
+  </g>
+
+  <!-- Paper Plane Representing Dual-channel Sending & Speed -->
+  <g filter="url(#sheetShadow)">
+    <polygon points="500,170 440,205 465,215" fill="#60A5FA"/>
+    <polygon points="500,170 465,215 490,225" fill="#3B82F6"/>
+    <polygon points="465,215 465,235 475,220" fill="#1E3A8A"/>
+  </g>
+</svg>

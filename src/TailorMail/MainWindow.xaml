@@ -17,9 +17,12 @@
         </Grid.RowDefinitions>
 
         <ui:TitleBar Grid.Row="0" Title="千函 - TailorMail"
-                     Icon="{ui:SymbolIcon Mail24}"
                      HorizontalAlignment="Stretch"
-                     ShowMaximize="True" ShowMinimize="True" ShowClose="True"/>
+                     ShowMaximize="True" ShowMinimize="True" ShowClose="True">
+            <ui:TitleBar.Icon>
+                <ui:ImageIcon Source="pack://application:,,,/logo_64.png" Width="16" Height="16"/>
+            </ui:TitleBar.Icon>
+        </ui:TitleBar>
 
         <Border Grid.Row="1" Background="{StaticResource SurfaceElevatedBrush}"
                 BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="0,0,0,1">
@@ -46,7 +49,7 @@
                             <TextBlock Text="1" Foreground="White" FontWeight="SemiBold" FontSize="12"
                                        HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
-                        <TextBlock x:Name="StepLabel0" Text="对象选择" VerticalAlignment="Center" FontSize="13"
+                        <TextBlock x:Name="StepLabel0" Text="收件选择" VerticalAlignment="Center" FontSize="13"
                                    FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
                     </StackPanel>
                 </Button>
@@ -64,7 +67,7 @@
                             <TextBlock Text="2" Foreground="{StaticResource TextTertiaryBrush}" FontWeight="SemiBold" FontSize="12"
                                        HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
-                        <TextBlock x:Name="StepLabel1" Text="变量维护" VerticalAlignment="Center" FontSize="13"
+                        <TextBlock x:Name="StepLabel1" Text="变量配置" VerticalAlignment="Center" FontSize="13"
                                    FontWeight="Medium" Foreground="{StaticResource TextTertiaryBrush}"/>
                     </StackPanel>
                 </Button>
@@ -82,7 +85,7 @@
                             <TextBlock Text="3" Foreground="{StaticResource TextTertiaryBrush}" FontWeight="SemiBold" FontSize="12"
                                        HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
-                        <TextBlock x:Name="StepLabel2" Text="内容撰写" VerticalAlignment="Center" FontSize="13"
+                        <TextBlock x:Name="StepLabel2" Text="模板撰写" VerticalAlignment="Center" FontSize="13"
                                    FontWeight="Medium" Foreground="{StaticResource TextTertiaryBrush}"/>
                     </StackPanel>
                 </Button>
@@ -100,7 +103,7 @@
                             <TextBlock Text="4" Foreground="{StaticResource TextTertiaryBrush}" FontWeight="SemiBold" FontSize="12"
                                        HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
-                        <TextBlock x:Name="StepLabel3" Text="附件选择" VerticalAlignment="Center" FontSize="13"
+                        <TextBlock x:Name="StepLabel3" Text="附件匹配" VerticalAlignment="Center" FontSize="13"
                                    FontWeight="Medium" Foreground="{StaticResource TextTertiaryBrush}"/>
                     </StackPanel>
                 </Button>
@@ -136,7 +139,7 @@
                             <TextBlock Text="6" Foreground="{StaticResource TextTertiaryBrush}" FontWeight="SemiBold" FontSize="12"
                                        HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
-                        <TextBlock x:Name="StepLabel5" Text="邮件发送" VerticalAlignment="Center" FontSize="13"
+                        <TextBlock x:Name="StepLabel5" Text="批量发送" VerticalAlignment="Center" FontSize="13"
                                    FontWeight="Medium" Foreground="{StaticResource TextTertiaryBrush}"/>
                     </StackPanel>
                 </Button>
@@ -156,11 +159,21 @@
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                     <Button x:Name="BtnPrev" Content="上一步" Padding="16,6" Margin="0,0,8,0"
                             Click="BtnPrev_Click" Style="{StaticResource ToolButtonStyle}"/>
-                    <ui:Button x:Name="BtnNext" Content="下一步" Padding="20,6" Click="BtnNext_Click"/>
-                    <ui:Button x:Name="BtnNewMail" Content="新邮件" Padding="16,6" Margin="8,0,0,0"
+                    <ui:Button x:Name="BtnNewMail" Content="新邮件" Padding="16,6" Margin="0,0,8,0"
                                Click="BtnNewMail_Click" Appearance="Primary"/>
-                    <ui:Button x:Name="BtnSettings" Content="⚙" Padding="8,6" Margin="8,0,0,0"
-                               Click="BtnSettings_Click" ToolTip="设置" Appearance="Secondary"/>
+                    <ui:Button x:Name="BtnNext" Content="下一步" Padding="20,6" Click="BtnNext_Click"/>
+                    <ui:DropDownButton x:Name="BtnMenu" Padding="8,6" Margin="8,0,0,0"
+                                       Appearance="Secondary">
+                        <ui:DropDownButton.Icon>
+                            <ui:SymbolIcon Symbol="MoreVertical24"/>
+                        </ui:DropDownButton.Icon>
+                        <ui:DropDownButton.Flyout>
+                            <ContextMenu>
+                                <MenuItem Header="设置" Click="BtnSettings_Click"/>
+                                <MenuItem Header="关于" Click="BtnAbout_Click"/>
+                            </ContextMenu>
+                        </ui:DropDownButton.Flyout>
+                    </ui:DropDownButton>
                 </StackPanel>
             </Grid>
         </Border>

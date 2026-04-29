@@ -1,4 +1,4 @@
-﻿﻿using System.Collections.Generic;
+﻿﻿﻿using System.Collections.Generic;
 using TailorMail.Models;
 using MailKit.Net.Smtp;
 using MimeKit;

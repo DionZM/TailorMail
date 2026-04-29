@@ -10,7 +10,7 @@
         </Grid.RowDefinitions>
 
         <StackPanel Grid.Row="0" Margin="0,0,0,16">
-            <TextBlock Text="变量维护" Style="{StaticResource PageTitleStyle}" Margin="0,0,0,4"/>
+            <TextBlock Text="变量配置" Style="{StaticResource PageTitleStyle}" Margin="0,0,0,4"/>
             <TextBlock Text="为每个收件对象定义模板变量，邮件发送时将自动替换" Style="{StaticResource CaptionTextStyle}"/>
         </StackPanel>
 

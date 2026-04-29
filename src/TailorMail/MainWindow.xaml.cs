@@ -1,4 +1,4 @@
-﻿﻿using System.Windows;
+﻿﻿﻿using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Shapes;
@@ -8,7 +8,7 @@ namespace TailorMail;
 
 /// <summary>
 /// 应用程序主窗口，采用 6 步骤向导式导航设计：
-/// 步骤1 对象选择 → 步骤2 变量维护 → 步骤3 内容撰写 → 步骤4 附件选择 → 步骤5 效果预览 → 步骤6 邮件发送。
+/// 步骤1 收件选择 → 步骤2 变量配置 → 步骤3 模板撰写 → 步骤4 附件匹配 → 步骤5 效果预览 → 步骤6 批量发送。
 /// 各步骤页面采用延迟初始化策略，仅在首次访问时创建实例。
 /// </summary>
 public partial class MainWindow
@@ -28,13 +28,13 @@ public partial class MainWindow
     /// <summary>步骤之间的连接线数组。</summary>
     private readonly Rectangle[] _stepLines = new Rectangle[5];
 
-    /// <summary>步骤1：收件人管理页面（延迟初始化）。</summary>
+    /// <summary>步骤1：收件选择页面（延迟初始化）。</summary>
     private RecipientsPage? _step1;
 
     /// <summary>步骤2：变量管理页面（延迟初始化）。</summary>
     private VariablesPage? _step2;
 
-    /// <summary>步骤3：邮件撰写页面（延迟初始化）。</summary>
+    /// <summary>步骤3：模板撰写页面（延迟初始化）。</summary>
     private MailComposePage? _step3;
 
     /// <summary>步骤4：附件管理页面（延迟初始化）。</summary>
@@ -47,7 +47,7 @@ public partial class MainWindow
     private SendPage? _step6;
 
     /// <summary>6 个步骤的显示名称。</summary>
-    private static readonly string[] StepNames = ["对象选择", "变量维护", "内容撰写", "附件选择", "效果预览", "邮件发送"];
+    private static readonly string[] StepNames = ["收件选择", "变量配置", "模板撰写", "附件匹配", "效果预览", "批量发送"];
 
     public MainWindow()
     {
@@ -224,7 +224,7 @@ public partial class MainWindow
     }
 
     /// <summary>
-    /// "新建邮件"按钮点击处理。清除已撰写内容和附件配置，重置步骤页面实例。
+    /// "新建邮件"按钮点击处理。清除已撰写内容和附件配置，重置后续步骤页面实例。
     /// </summary>
     private void BtnNewMail_Click(object sender, RoutedEventArgs e)
     {
@@ -258,6 +258,15 @@ public partial class MainWindow
     private void BtnSettings_Click(object sender, RoutedEventArgs e)
     {
         var win = new SettingsWindow { Owner = this };
+        win.ShowDialog();
+    }
+
+    /// <summary>
+    /// "关于"按钮点击处理，打开关于窗口。
+    /// </summary>
+    private void BtnAbout_Click(object sender, RoutedEventArgs e)
+    {
+        var win = new AboutWindow { Owner = this };
         win.ShowDialog();
     }
 
