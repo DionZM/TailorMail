@@ -9,6 +9,7 @@ namespace TailorMail.Views;
 public partial class SendPage : UserControl, IRefreshable, IDynamicStepDesc
 {
     private readonly SendViewModel _viewModel;
+    private List<Recipient> _pendingRecipients = [];
 
     public event Action? StepDescriptionChanged;
 
@@ -22,30 +23,19 @@ public partial class SendPage : UserControl, IRefreshable, IDynamicStepDesc
     public void RefreshData()
     {
         _viewModel.ReloadSettings();
-        LoadResults();
+        _pendingRecipients = _viewModel.GetSelectedRecipients();
+        DataGridResults.ItemsSource = null;
+        TxtProgress.Text = $"0/{_pendingRecipients.Count}";
         StepDescriptionChanged?.Invoke();
     }
 
     public string GetStepDescription()
     {
         var channelName = _viewModel.SendMethod == SendMethod.Smtp ? "SMTP" : "Outlook";
-        return $"当前发送通道为 {channelName}，可在设置中修改";
-    }
-
-    private void LoadResults()
-    {
-        var recipients = _viewModel.GetSelectedRecipients();
-        var results = recipients.Select(r => new
-        {
-            r.Id,
-            RecipientName = r.Name,
-            StatusText = "等待",
-            Status = SendStatus.Pending,
-            SendTime = (DateTime?)null,
-            ErrorMessage = ""
-        }).ToList();
-        DataGridResults.ItemsSource = results;
-        TxtProgress.Text = $"0/{results.Count}";
+        var count = _pendingRecipients.Count;
+        return count > 0
+            ? $"待发送 {count} 封，通道 {channelName}"
+            : $"当前发送通道为 {channelName}，可在设置中修改";
     }
 
     public void StartSend()
@@ -55,8 +45,12 @@ public partial class SendPage : UserControl, IRefreshable, IDynamicStepDesc
 
     private async void OnStartSend(object sender, RoutedEventArgs e)
     {
-        var selectedRecipients = _viewModel.GetSelectedRecipients();
-        if (selectedRecipients.Count == 0)
+        if (_pendingRecipients.Count == 0)
+        {
+            _pendingRecipients = _viewModel.GetSelectedRecipients();
+        }
+
+        if (_pendingRecipients.Count == 0)
         {
             MessageBox.Show("请先在「对象选择」步骤中选择要发送的对象", "提示",
                 MessageBoxButton.OK, MessageBoxImage.Warning);
@@ -76,7 +70,7 @@ public partial class SendPage : UserControl, IRefreshable, IDynamicStepDesc
 
         try
         {
-            await _viewModel.ExecuteSend(selectedRecipients, smtpPassword);
+            await _viewModel.ExecuteSend(_pendingRecipients, smtpPassword);
 
             DataGridResults.ItemsSource = _viewModel.SendResults;
             var done = _viewModel.SuccessCount + _viewModel.FailedCount;

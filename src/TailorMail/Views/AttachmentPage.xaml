@@ -68,7 +68,11 @@
                               SelectionMode="Single" BorderThickness="0" Background="Transparent"
                               FontFamily="{StaticResource AppFontFamily}" FontSize="13"
                               GridLinesVisibility="Horizontal" AlternatingRowBackground="{StaticResource SurfaceBrush}"
-                              HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+                              HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto"
+                              VirtualizingPanel.IsVirtualizing="True"
+                              VirtualizingPanel.VirtualizationMode="Recycling"
+                              EnableRowVirtualization="True"
+                              EnableColumnVirtualization="True">
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="发送对象" Binding="{Binding RecipientName}" Width="120" IsReadOnly="True"/>
                             <DataGridTemplateColumn Header="专有附件" Width="*">

@@ -47,7 +47,11 @@
                           HorizontalScrollBarVisibility="Auto"
                           VerticalScrollBarVisibility="Auto"
                           RowHeight="NaN"
-                          IsSynchronizedWithCurrentItem="False">
+                          IsSynchronizedWithCurrentItem="False"
+                          VirtualizingPanel.IsVirtualizing="True"
+                          VirtualizingPanel.VirtualizationMode="Recycling"
+                          EnableRowVirtualization="True"
+                          EnableColumnVirtualization="True">
                     <DataGrid.ContextMenu>
                         <ContextMenu>
                             <MenuItem Header="上移" Click="OnMoveUp"/>

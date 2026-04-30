@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Windows.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using TailorMail.Models;
@@ -7,59 +8,31 @@ using OfficeOpenXml;
 
 namespace TailorMail.ViewModels;
 
-/// <summary>
-/// 收件人管理视图模型，负责收件人分组的增删改查、收件人的导入导出、
-/// 选择状态维护以及与数据服务的交互。
-/// 支持从 Excel 文件和其他分组导入收件人，采用"按名称匹配、仅更新非空字段"的合并策略。
-/// </summary>
 public partial class RecipientsViewModel : ObservableObject
 {
     private readonly IDataService _dataService;
-
-    /// <summary>
-    /// 记录切换分组前是否全选，用于在切换分组后恢复选择状态。
-    /// </summary>
     private bool _wasAllSelected;
+    private DispatcherTimer? _saveTimer;
+    private bool _hasUnsavedChanges;
 
-    /// <summary>
-    /// 获取或设置收件人分组列表。
-    /// </summary>
     [ObservableProperty]
     private ObservableCollection<RecipientGroup> _groups = [];
 
-    /// <summary>
-    /// 获取或设置当前选中的分组。切换分组时会自动保存旧分组数据并加载新分组的收件人。
-    /// </summary>
     [ObservableProperty]
     private RecipientGroup? _selectedGroup;
 
-    /// <summary>
-    /// 获取或设置当前分组下的收件人列表（用于界面绑定）。
-    /// </summary>
     [ObservableProperty]
     private ObservableCollection<Recipient> _currentRecipients = [];
 
-    /// <summary>
-    /// 获取或设置新分组的名称输入。
-    /// </summary>
     [ObservableProperty]
     private string _newGroupName = string.Empty;
 
-    /// <summary>
-    /// 获取或设置所有分组中被选中的收件人总数。
-    /// </summary>
     [ObservableProperty]
     private int _selectedCount;
 
-    /// <summary>
-    /// 获取或设置所有分组中的收件人总数。
-    /// </summary>
     [ObservableProperty]
     private int _totalCount;
 
-    /// <summary>
-    /// 当选中的分组发生变化时触发，用于通知界面刷新。
-    /// </summary>
     public event Action? SelectedGroupChanged;
 
     public RecipientsViewModel(IDataService dataService)
@@ -68,9 +41,6 @@ public partial class RecipientsViewModel : ObservableObject
         LoadGroups();
     }
 
-    /// <summary>
-    /// 从数据服务加载所有分组，并默认选中第一个分组。
-    /// </summary>
     public void LoadGroups()
     {
         var groups = _dataService.LoadRecipientGroups();
@@ -79,27 +49,20 @@ public partial class RecipientsViewModel : ObservableObject
             SelectedGroup = Groups[0];
     }
 
-    /// <summary>
-    /// 分组切换前的处理：记录当前分组是否全选，并保存当前数据。
-    /// </summary>
     partial void OnSelectedGroupChanging(RecipientGroup? value)
     {
         if (SelectedGroup != null)
         {
             _wasAllSelected = CurrentRecipients.Count > 0 && CurrentRecipients.All(r => r.IsSelected);
         }
-        SaveAll();
+        FlushSave();
     }
 
-    /// <summary>
-    /// 分组切换后的处理：加载新分组的收件人，恢复选择状态，更新计数。
-    /// </summary>
     partial void OnSelectedGroupChanged(RecipientGroup? value)
     {
         if (value != null)
         {
             CurrentRecipients = new ObservableCollection<Recipient>(value.Recipients);
-            // 根据之前分组的全选状态决定新分组的选择状态
             if (_wasAllSelected)
             {
                 foreach (var r in CurrentRecipients) r.IsSelected = true;
@@ -117,9 +80,6 @@ public partial class RecipientsViewModel : ObservableObject
         SelectedGroupChanged?.Invoke();
     }
 
-    /// <summary>
-    /// 添加新分组。若分组名已存在则提示用户。
-    /// </summary>
     [RelayCommand]
     private void AddGroup()
     {
@@ -134,9 +94,6 @@ public partial class RecipientsViewModel : ObservableObject
         SaveAll();
     }
 
-    /// <summary>
-    /// 删除当前选中的分组（至少保留一个分组）。删除前弹出确认对话框。
-    /// </summary>
     [RelayCommand]
     private void DeleteGroup()
     {
@@ -149,24 +106,16 @@ public partial class RecipientsViewModel : ObservableObject
         SaveAll();
     }
 
-    /// <summary>
-    /// 删除指定的收件人。
-    /// </summary>
-    /// <param name="r">要删除的收件人对象。</param>
     [RelayCommand]
     private void DeleteRecipient(Recipient r)
     {
         if (SelectedGroup == null) return;
         SelectedGroup.Recipients.Remove(r);
         CurrentRecipients.Remove(r);
-        SaveAll();
+        ScheduleSave();
         UpdateCounts();
     }
 
-    /// <summary>
-    /// 将指定收件人在列表中上移一位。
-    /// </summary>
-    /// <param name="r">要移动的收件人对象。</param>
     public void MoveUp(Recipient r)
     {
         if (SelectedGroup == null) return;
@@ -174,13 +123,9 @@ public partial class RecipientsViewModel : ObservableObject
         if (idx <= 0) return;
         CurrentRecipients.Move(idx, idx - 1);
         SyncRecipientsToGroup();
-        SaveAll();
+        ScheduleSave();
     }
 
-    /// <summary>
-    /// 将指定收件人在列表中下移一位。
-    /// </summary>
-    /// <param name="r">要移动的收件人对象。</param>
     public void MoveDown(Recipient r)
     {
         if (SelectedGroup == null) return;
@@ -188,12 +133,9 @@ public partial class RecipientsViewModel : ObservableObject
         if (idx < 0 || idx >= CurrentRecipients.Count - 1) return;
         CurrentRecipients.Move(idx, idx + 1);
         SyncRecipientsToGroup();
-        SaveAll();
+        ScheduleSave();
     }
 
-    /// <summary>
-    /// 将界面上的收件人列表同步回分组对象，过滤掉所有字段均为空的行。
-    /// </summary>
     private void SyncRecipientsToGroup()
     {
         if (SelectedGroup == null) return;
@@ -207,9 +149,6 @@ public partial class RecipientsViewModel : ObservableObject
             .ToList();
     }
 
-    /// <summary>
-    /// 移除名称为空的收件人行。
-    /// </summary>
     public void RemoveEmptyRows()
     {
         var emptyRows = CurrentRecipients.Where(r => string.IsNullOrEmpty(r.Name)).ToList();
@@ -219,24 +158,24 @@ public partial class RecipientsViewModel : ObservableObject
             if (SelectedGroup != null)
                 SelectedGroup.Recipients.Remove(r);
         }
-        SaveAll();
+        ScheduleSave();
     }
 
-    /// <summary>
-    /// 合并收件人列表到当前分组。采用"按名称匹配"策略：
-    /// 若名称已存在则仅更新非空字段，否则新增收件人。
-    /// </summary>
-    /// <param name="incoming">待合并的收件人列表。</param>
     private void MergeRecipients(List<Recipient> incoming)
     {
         if (SelectedGroup == null) return;
         int updated = 0, added = 0;
+        var nameIndex = new Dictionary<string, Recipient>();
+        foreach (var r in CurrentRecipients)
+        {
+            if (!string.IsNullOrEmpty(r.Name))
+                nameIndex[r.Name] = r;
+        }
+
         foreach (var src in incoming)
         {
-            var existing = CurrentRecipients.FirstOrDefault(r => r.Name == src.Name);
-            if (existing != null)
+            if (nameIndex.TryGetValue(src.Name, out var existing))
             {
-                // 仅更新非空字段，避免覆盖已有数据
                 if (!string.IsNullOrEmpty(src.ShortName)) existing.ShortName = src.ShortName;
                 if (!string.IsNullOrEmpty(src.ToEmails)) existing.ToEmails = src.ToEmails;
                 if (!string.IsNullOrEmpty(src.CcEmails)) existing.CcEmails = src.CcEmails;
@@ -255,6 +194,7 @@ public partial class RecipientsViewModel : ObservableObject
                 };
                 SelectedGroup.Recipients.Add(clone);
                 CurrentRecipients.Add(clone);
+                nameIndex[src.Name] = clone;
                 added++;
             }
         }
@@ -263,9 +203,6 @@ public partial class RecipientsViewModel : ObservableObject
         System.Windows.MessageBox.Show($"导入完成：新增 {added} 项，更新 {updated} 项", "导入完成");
     }
 
-    /// <summary>
-    /// 从 Excel 文件导入收件人。Excel 格式：第1列名称，第2列简称，第3列收件人邮箱，第4列抄送邮箱，第5列密送邮箱，第6列备注。
-    /// </summary>
     [RelayCommand]
     private void ImportFromExcel()
     {
@@ -288,9 +225,6 @@ public partial class RecipientsViewModel : ObservableObject
         }
     }
 
-    /// <summary>
-    /// 将当前分组的收件人导出为 Excel 文件。
-    /// </summary>
     [RelayCommand]
     private void ExportToExcel()
     {
@@ -339,9 +273,6 @@ public partial class RecipientsViewModel : ObservableObject
         }
     }
 
-    /// <summary>
-    /// 从其他分组中复制收件人到当前分组。弹出分组选择对话框供用户选择。
-    /// </summary>
     [RelayCommand]
     private void ImportFromOtherGroup()
     {
@@ -362,41 +293,33 @@ public partial class RecipientsViewModel : ObservableObject
         }
     }
 
-    /// <summary>
-    /// 全选所有收件人。
-    /// </summary>
     public void SelectAll()
     {
         foreach (var r in CurrentRecipients) r.IsSelected = true;
         UpdateCounts();
     }
 
-    /// <summary>
-    /// 取消全选所有收件人。
-    /// </summary>
     public void DeselectAll()
     {
         foreach (var r in CurrentRecipients) r.IsSelected = false;
         UpdateCounts();
     }
 
-    /// <summary>
-    /// 更新选中数量和总数量的统计。
-    /// </summary>
     public void UpdateCounts()
     {
-        var all = Groups.SelectMany(g => g.Recipients).ToList();
-        SelectedCount = all.Count(r => r.IsSelected);
-        TotalCount = all.Count;
+        int selected = 0, total = 0;
+        foreach (var g in Groups)
+        {
+            total += g.Recipients.Count;
+            for (int i = 0; i < g.Recipients.Count; i++)
+            {
+                if (g.Recipients[i].IsSelected) selected++;
+            }
+        }
+        SelectedCount = selected;
+        TotalCount = total;
     }
 
-    /// <summary>
-    /// 从 Excel 文件中读取收件人数据。
-    /// Excel 格式：第1列名称，第2列简称，第3列收件人邮箱，第4列抄送邮箱，第5列密送邮箱，第6列备注。
-    /// 跳过名称为空的行。
-    /// </summary>
-    /// <param name="filePath">Excel 文件路径。</param>
-    /// <returns>读取到的收件人列表。</returns>
     private List<Recipient> ImportFromFile(string filePath)
     {
         ExcelPackage.License.SetNonCommercialPersonal("TailorMail");
@@ -421,12 +344,39 @@ public partial class RecipientsViewModel : ObservableObject
         return recipients;
     }
 
-    /// <summary>
-    /// 同步收件人数据并保存到数据服务。
-    /// 保存前先从文件重新加载最新数据，将当前分组的收件人变更合并进去，
-    /// 仅更新收件人的基本字段（名称、简称、邮箱、备注、选择状态），
-    /// 保留文件中的变量数据，避免覆盖其他页面（如变量配置页）已保存的修改。
-    /// </summary>
+    public void ScheduleSave()
+    {
+        _hasUnsavedChanges = true;
+        if (_saveTimer == null)
+        {
+            _saveTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(500) };
+            _saveTimer.Tick += (s, e) =>
+            {
+                _saveTimer.Stop();
+                if (_hasUnsavedChanges)
+                {
+                    _hasUnsavedChanges = false;
+                    SaveAll();
+                }
+            };
+        }
+        _saveTimer.Stop();
+        _saveTimer.Start();
+    }
+
+    public void FlushSave()
+    {
+        if (_saveTimer != null)
+        {
+            _saveTimer.Stop();
+        }
+        if (_hasUnsavedChanges)
+        {
+            _hasUnsavedChanges = false;
+            SaveAll();
+        }
+    }
+
     public void SaveAll()
     {
         SyncRecipientsToGroup();
@@ -440,11 +390,14 @@ public partial class RecipientsViewModel : ObservableObject
             {
                 latestGroup.Name = group.Name;
 
+                var idIndex = new Dictionary<string, Recipient>();
+                foreach (var lr in latestGroup.Recipients)
+                    idIndex[lr.Id] = lr;
+
                 var updatedRecipients = new List<Recipient>();
                 foreach (var r in group.Recipients)
                 {
-                    var existingInFile = latestGroup.Recipients.FirstOrDefault(lr => lr.Id == r.Id);
-                    if (existingInFile != null)
+                    if (idIndex.TryGetValue(r.Id, out var existingInFile))
                     {
                         existingInFile.Name = r.Name;
                         existingInFile.ShortName = r.ShortName;

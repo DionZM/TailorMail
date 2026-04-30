@@ -147,14 +147,14 @@ public partial class RecipientsPage : UserControl, IRefreshable, IDynamicStepDes
                 }
             }
         }
-        _vm.SaveAll();
+        _vm.ScheduleSave();
     }
 
     private void OnRowEditEnding(object sender, DataGridRowEditEndingEventArgs e)
     {
         if (e.EditAction == DataGridEditAction.Commit)
         {
-            Dispatcher.BeginInvoke(() => _vm.SaveAll());
+            Dispatcher.BeginInvoke(() => _vm.ScheduleSave());
         }
     }
 

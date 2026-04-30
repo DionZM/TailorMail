@@ -77,10 +77,10 @@ public partial class App : System.Windows.Application
 
             // 配置依赖注入容器
             var services = new ServiceCollection();
-            services.AddSingleton<IDataService, JsonDataService>();    // JSON 文件数据服务
+            services.AddSingleton<IDataService, SqliteDataService>();   // SQLite 数据服务
             services.AddSingleton<AttachmentMatchService>();           // 附件自动匹配服务
             services.AddSingleton<OutlookEmailSender>();               // Outlook 邮件发送器
-            services.AddSingleton<SmtpEmailSender>();                  // SMTP 邮件发送器
+            services.AddTransient<SmtpEmailSender>();                  // SMTP 邮件发送器（每次发送创建新实例，支持连接复用后释放）
             Services = services.BuildServiceProvider();
             AppLogger.Info("DI容器初始化完成");
 

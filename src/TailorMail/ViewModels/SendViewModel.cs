@@ -187,6 +187,9 @@ public partial class SendViewModel : ObservableObject
             : $"发送完成: 成功 {SuccessCount} 封, 失败 {FailedCount} 封";
         IsSending = false;
         _cts = null;
+
+        if (sender is IDisposable disposable)
+            disposable.Dispose();
     }
 
     /// <summary>

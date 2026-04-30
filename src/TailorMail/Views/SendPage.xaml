@@ -43,7 +43,11 @@
                 <DataGrid x:Name="DataGridResults" AutoGenerateColumns="False" IsReadOnly="True"
                           GridLinesVisibility="Horizontal" AlternatingRowBackground="{StaticResource SurfaceBrush}"
                           FontSize="13" FontFamily="{StaticResource AppFontFamily}"
-                          BorderThickness="0" Background="Transparent">
+                          BorderThickness="0" Background="Transparent"
+                          VirtualizingPanel.IsVirtualizing="True"
+                          VirtualizingPanel.VirtualizationMode="Recycling"
+                          EnableRowVirtualization="True"
+                          EnableColumnVirtualization="True">
                     <DataGrid.Columns>
                         <DataGridTextColumn Header="发送对象" Binding="{Binding RecipientName}" Width="200">
                             <DataGridTextColumn.ElementStyle>

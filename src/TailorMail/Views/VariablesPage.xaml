@@ -33,7 +33,11 @@
                           PreviewKeyDown="OnGridPreviewKeyDown"
                           BorderThickness="0" Background="Transparent"
                           HorizontalScrollBarVisibility="Auto"
-                          VerticalScrollBarVisibility="Auto"/>
+                          VerticalScrollBarVisibility="Auto"
+                          VirtualizingPanel.IsVirtualizing="True"
+                          VirtualizingPanel.VirtualizationMode="Recycling"
+                          EnableRowVirtualization="True"
+                          EnableColumnVirtualization="True"/>
             </Border>
             <Border x:Name="VarEmptyState" Style="{StaticResource EmptyStateStyle}" Visibility="Collapsed">
                 <StackPanel>
