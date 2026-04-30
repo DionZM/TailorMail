@@ -17,6 +17,7 @@
                 Effect="{StaticResource ShadowSM}">
             <StackPanel>
                 <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                    <Border Style="{StaticResource SectionTitleAccentStyle}"/>
                     <TextBlock Text="发送对象" Style="{StaticResource SectionTitleStyle}"/>
                     <Button x:Name="BtnPrevGroup" Click="OnPrevGroup" Margin="12,0,0,0" Width="28" Padding="0"
                             ToolTip="上一个">
@@ -72,7 +73,10 @@
                 </Border>
 
                 <StackPanel Grid.Row="4" Margin="0,8,0,0">
-                    <TextBlock Text="附件清单" Style="{StaticResource SectionTitleStyle}" Margin="0,0,0,4"/>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                        <Border Style="{StaticResource SectionTitleAccentStyle}"/>
+                        <TextBlock Text="附件清单" Style="{StaticResource SectionTitleStyle}"/>
+                    </StackPanel>
                     <ItemsControl x:Name="PanelAttachments"/>
                 </StackPanel>
             </Grid>

@@ -20,13 +20,23 @@ public partial class VariableSelectDialog : Wpf.Ui.Controls.FluentWindow
 
         var panel = new StackPanel { Margin = new Thickness(20) };
 
+        var titleRow = new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            Margin = new Thickness(0, 0, 0, 12)
+        };
+        var accent = new Border
+        {
+            Style = (Style)FindResource("SectionTitleAccentStyle")
+        };
         var hint = new TextBlock
         {
             Text = "请勾选要删除的变量：",
-            Style = (Style)FindResource("SectionTitleStyle"),
-            Margin = new Thickness(0, 0, 0, 12)
+            Style = (Style)FindResource("SectionTitleStyle")
         };
-        panel.Children.Add(hint);
+        titleRow.Children.Add(accent);
+        titleRow.Children.Add(hint);
+        panel.Children.Add(titleRow);
 
         var scrollViewer = new ScrollViewer { VerticalScrollBarVisibility = ScrollBarVisibility.Auto, MaxHeight = 250 };
         var itemsPanel = new StackPanel();

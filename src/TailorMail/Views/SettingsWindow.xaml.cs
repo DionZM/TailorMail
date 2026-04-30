@@ -46,7 +46,7 @@ public partial class SettingsWindow
     {
         _vm.SendMethod = CmbChannel.SelectedIndex == 1 ? SendMethod.Smtp : SendMethod.Outlook;
         _vm.SmtpHost = TxtServer.Text;
-        _vm.SmtpPort = (int)TxtPort.Value;
+        _vm.SmtpPort = (int)(TxtPort.Value ?? 587);
         _vm.SmtpUserName = TxtUsername.Text;
         _vm.SmtpUseSsl = ChkSsl.IsChecked ?? true;
         _vm.SmtpDisplayName = TxtSenderName.Text;

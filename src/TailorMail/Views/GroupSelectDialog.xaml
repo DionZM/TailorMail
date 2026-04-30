@@ -15,7 +15,10 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <TextBlock Grid.Row="0" Text="勾选要复制的发送对象" Style="{StaticResource SectionTitleStyle}" Margin="0,0,0,12"/>
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,12">
+            <Border Style="{StaticResource SectionTitleAccentStyle}"/>
+            <TextBlock Text="勾选要复制的发送对象" Style="{StaticResource SectionTitleStyle}"/>
+        </StackPanel>
 
         <TreeView Grid.Row="1" x:Name="GroupTree" BorderThickness="1"
                   BorderBrush="{StaticResource BorderSubtleBrush}" Background="{StaticResource SurfaceElevatedBrush}"

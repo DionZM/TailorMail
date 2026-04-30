@@ -14,13 +14,19 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <TextBlock Grid.Row="0" Text="发送配置" Style="{StaticResource PageTitleStyle}" Margin="0,0,0,16"/>
+        <StackPanel Grid.Row="0" Margin="0,0,0,16">
+            <TextBlock Text="发送配置" Style="{StaticResource PageTitleStyle}"/>
+            <Border Style="{StaticResource PageTitleAccentStyle}"/>
+        </StackPanel>
 
         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
             <StackPanel>
                 <Border Style="{StaticResource CardStyle}" Margin="0,0,0,16">
                     <StackPanel>
-                        <TextBlock Text="发送通道" Style="{StaticResource SectionTitleStyle}" Margin="0,0,0,12"/>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                            <Border Style="{StaticResource SectionTitleAccentStyle}"/>
+                            <TextBlock Text="发送通道" Style="{StaticResource SectionTitleStyle}"/>
+                        </StackPanel>
                         <ComboBox x:Name="CmbChannel" SelectedIndex="0" Padding="8,6" SelectionChanged="OnChannelChanged">
                             <ComboBoxItem Content="Outlook"/>
                             <ComboBoxItem Content="SMTP"/>
@@ -40,7 +46,10 @@
 
                 <Border Style="{StaticResource CardStyle}" Margin="0">
                     <StackPanel>
-                        <TextBlock Text="SMTP 配置" Style="{StaticResource SectionTitleStyle}" Margin="0,0,0,12"/>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                            <Border Style="{StaticResource SectionTitleAccentStyle}"/>
+                            <TextBlock Text="SMTP 配置" Style="{StaticResource SectionTitleStyle}"/>
+                        </StackPanel>
                         <Grid>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>

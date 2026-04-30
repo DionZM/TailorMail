@@ -1,10 +1,7 @@
-using System.IO;
-using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Documents;
-using System.Windows.Media;
 using TailorMail.Models;
 using TailorMail.ViewModels;
 
@@ -138,10 +135,6 @@ public partial class PreviewPage : UserControl, IRefreshable
     {
         var html = _viewModel.GetPreviewHtml();
         if (string.IsNullOrEmpty(html)) return;
-
-        var dpi = VisualTreeHelper.GetDpi(this);
-        var scaledFontSize = (int)Math.Round(15 * dpi.DpiScaleX);
-        html = html.Replace("font-size:15px", $"font-size:{scaledFontSize}px");
 
         if (_webViewReady && PreviewBrowser.CoreWebView2 != null)
         {

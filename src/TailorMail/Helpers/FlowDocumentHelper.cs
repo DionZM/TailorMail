@@ -600,7 +600,7 @@ public static class FlowDocumentHelper
         sb.Append("<style>");
         sb.Append("html,body{margin:0;padding:0;width:100%;overflow-x:hidden;}");
         sb.Append("body{font-family:'Segoe UI','Microsoft YaHei UI',sans-serif;font-size:15px;line-height:1.7;color:#2F3437;word-wrap:break-word;overflow-wrap:break-word;padding:8px 12px;}");
-        sb.Append("body>div{max-width:100%!important;margin:0!important;padding:4px 0!important;background:none!important;}");
+        sb.Append("body>div{max-width:100%!important;margin:0!important;padding:4px 12px!important;background:none!important;}");
         sb.Append("a{color:#1F6C9F;}");
         sb.Append("p,h1,h2,h3,h4,ul,ol,blockquote,table{max-width:100%;overflow-wrap:break-word;word-wrap:break-word;}");
         sb.Append("td{word-wrap:break-word;overflow-wrap:break-word;}");

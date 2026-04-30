@@ -205,11 +205,11 @@ public partial class MailComposePage : UserControl, IRefreshable
         {
             var color = (Color)ColorConverter.ConvertFromString(input);
             ApplyColor(input);
-            CustomColorInput.Text = "";
+            if (CustomColorInput != null) CustomColorInput.Text = "";
         }
         catch
         {
-            CustomColorInput.Text = "";
+            if (CustomColorInput != null) CustomColorInput.Text = "";
         }
     }
 

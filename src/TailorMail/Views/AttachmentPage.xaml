@@ -16,6 +16,7 @@
             <Border Style="{StaticResource CardStyle}" Margin="0">
                 <DockPanel>
                     <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,8">
+                        <Border Style="{StaticResource SectionTitleAccentStyle}"/>
                         <TextBlock Text="公共附件" Style="{StaticResource SectionTitleStyle}"/>
                         <Button Content="添加" Click="OnAddCommon" Margin="12,0,0,0" Padding="10,4"/>
                         <Button Content="清空" Click="OnClearCommon" Margin="4,0,0,0" Padding="10,4"/>
@@ -53,6 +54,7 @@
             <Border Style="{StaticResource CardStyle}" Margin="0">
                 <DockPanel>
                     <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,8">
+                        <Border Style="{StaticResource SectionTitleAccentStyle}"/>
                         <TextBlock Text="专有附件" Style="{StaticResource SectionTitleStyle}"/>
                         <Button Content="选择文件夹" Click="OnSelectDirectory" Margin="12,0,0,0" Padding="10,4"/>
                         <Button Content="自动匹配" Click="OnAutoMatch" Margin="4,0,0,0" Padding="10,4"/>

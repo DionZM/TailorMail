@@ -12,7 +12,10 @@
 
         <Border Grid.Row="0" Style="{StaticResource CardStyle}" Margin="0,0,0,16">
             <StackPanel>
-                <TextBlock Text="邮件主题" Style="{StaticResource SectionTitleStyle}" Margin="0,0,0,8"/>
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                    <Border Style="{StaticResource SectionTitleAccentStyle}"/>
+                    <TextBlock Text="邮件主题" Style="{StaticResource SectionTitleStyle}"/>
+                </StackPanel>
                 <ui:TextBox Text="{Binding Subject,UpdateSourceTrigger=PropertyChanged}"
                             PlaceholderText="请输入邮件主题，支持 {变量名} 格式" FontSize="14"
                             FontFamily="{StaticResource AppFontFamily}"/>
