@@ -22,7 +22,7 @@
             <StackPanel VerticalAlignment="Center">
                 <TextBlock Text="千函" FontSize="28" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,2"/>
                 <TextBlock Text="TailorMail" FontSize="14" Foreground="{StaticResource TextTertiaryBrush}" Margin="0,0,0,4"/>
-                <TextBlock Text="v0.9.2" FontSize="12" Foreground="{StaticResource AccentBrush}" FontWeight="SemiBold"/>
+                <TextBlock Text="v0.9.3" FontSize="12" Foreground="{StaticResource AccentBrush}" FontWeight="SemiBold"/>
             </StackPanel>
         </StackPanel>
 
