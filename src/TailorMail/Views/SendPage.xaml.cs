@@ -1,4 +1,4 @@
-﻿﻿using System.Windows;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using TailorMail.Models;
@@ -6,9 +6,11 @@ using TailorMail.ViewModels;
 
 namespace TailorMail.Views;
 
-public partial class SendPage : UserControl, IRefreshable
+public partial class SendPage : UserControl, IRefreshable, IDynamicStepDesc
 {
     private readonly SendViewModel _viewModel;
+
+    public event Action? StepDescriptionChanged;
 
     public SendPage()
     {
@@ -20,14 +22,14 @@ public partial class SendPage : UserControl, IRefreshable
     public void RefreshData()
     {
         _viewModel.ReloadSettings();
-        UpdateChannelHint();
         LoadResults();
+        StepDescriptionChanged?.Invoke();
     }
 
-    private void UpdateChannelHint()
+    public string GetStepDescription()
     {
         var channelName = _viewModel.SendMethod == SendMethod.Smtp ? "SMTP" : "Outlook";
-        TxtChannelHint.Text = $"当前发送通道为 {channelName}，可在设置中修改";
+        return $"当前发送通道为 {channelName}，可在设置中修改";
     }
 
     private void LoadResults()

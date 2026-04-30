@@ -1,4 +1,4 @@
-﻿﻿﻿using System.Windows;
+using System.Windows;
 
 // 程序集主题信息配置，用于 WPF 主题资源字典的查找策略。
 [assembly:ThemeInfo(

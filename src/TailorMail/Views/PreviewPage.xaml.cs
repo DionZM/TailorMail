@@ -1,4 +1,4 @@
-﻿﻿﻿﻿using System.IO;
+using System.IO;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
@@ -10,13 +10,10 @@ using TailorMail.ViewModels;
 
 namespace TailorMail.Views;
 
-/// <summary>
-/// 邮件预览页面，提供收件人选择、邮件主题/正文/附件的预览功能。
-/// </summary>
 public partial class PreviewPage : UserControl, IRefreshable
 {
     private readonly PreviewViewModel _viewModel;
-    private string? _tempHtmlPath;
+    private bool _webViewReady;
 
     public PreviewPage()
     {
@@ -24,6 +21,20 @@ public partial class PreviewPage : UserControl, IRefreshable
         _viewModel = new PreviewViewModel(App.DataService);
         DataContext = _viewModel;
         _viewModel.SelectedRecipientChanged += UpdateBrowser;
+        InitializeWebView();
+    }
+
+    private async void InitializeWebView()
+    {
+        try
+        {
+            await PreviewBrowser.EnsureCoreWebView2Async();
+            _webViewReady = true;
+        }
+        catch
+        {
+            _webViewReady = false;
+        }
     }
 
     public void RefreshData()
@@ -132,16 +143,10 @@ public partial class PreviewPage : UserControl, IRefreshable
         var scaledFontSize = (int)Math.Round(15 * dpi.DpiScaleX);
         html = html.Replace("font-size:15px", $"font-size:{scaledFontSize}px");
 
-        try
+        if (_webViewReady && PreviewBrowser.CoreWebView2 != null)
         {
-            if (_tempHtmlPath != null && File.Exists(_tempHtmlPath))
-                File.Delete(_tempHtmlPath);
+            PreviewBrowser.CoreWebView2.NavigateToString(html);
         }
-        catch { }
-
-        _tempHtmlPath = Path.Combine(Path.GetTempPath(), $"tailormail_preview_{Guid.NewGuid():N}.html");
-        File.WriteAllText(_tempHtmlPath, html, Encoding.UTF8);
-        PreviewBrowser.Navigate(new Uri(_tempHtmlPath));
     }
 
     private void OnPrevGroup(object sender, RoutedEventArgs e)

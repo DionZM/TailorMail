@@ -1,4 +1,4 @@
-﻿<Application x:Class="TailorMail.App"
+<Application x:Class="TailorMail.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
@@ -54,6 +54,7 @@
             <sys:Double x:Key="FontSizeXL" xmlns:sys="clr-namespace:System;assembly=mscorlib">24</sys:Double>
             <sys:Double x:Key="FontSize2XL" xmlns:sys="clr-namespace:System;assembly=mscorlib">30</sys:Double>
 
+            <CornerRadius x:Key="CornerRadiusXS">2</CornerRadius>
             <CornerRadius x:Key="CornerRadiusSM">4</CornerRadius>
             <CornerRadius x:Key="CornerRadiusMD">8</CornerRadius>
             <CornerRadius x:Key="CornerRadiusLG">12</CornerRadius>
@@ -69,7 +70,7 @@
 
             <Style TargetType="TextBlock" x:Key="PageTitleStyle">
                 <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}"/>
-                <Setter Property="FontSize" Value="{StaticResource FontSizeXL}"/>
+                <Setter Property="FontSize" Value="{StaticResource FontSize2XL}"/>
                 <Setter Property="FontWeight" Value="Bold"/>
                 <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
             </Style>
@@ -99,6 +100,12 @@
                 <Setter Property="FontSize" Value="{StaticResource FontSizeSM}"/>
                 <Setter Property="FontWeight" Value="Medium"/>
                 <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}"/>
+                <Setter Property="Typography.NumeralAlignment" Value="Tabular"/>
+            </Style>
+
+            <Style TargetType="TextBlock" x:Key="TabularNumberStyle">
+                <Setter Property="FontFamily" Value="{StaticResource AppMonoFontFamily}"/>
+                <Setter Property="Typography.NumeralAlignment" Value="Tabular"/>
             </Style>
 
             <Style TargetType="TextBlock" x:Key="WrappingCellStyle">
@@ -113,14 +120,14 @@
             <Style TargetType="Border" x:Key="CardStyle">
                 <Setter Property="Background" Value="{StaticResource SurfaceElevatedBrush}"/>
                 <Setter Property="CornerRadius" Value="{StaticResource CornerRadiusLG}"/>
-                <Setter Property="Padding" Value="20,18"/>
+                <Setter Property="Padding" Value="20,16,20,24"/>
                 <Setter Property="Margin" Value="0,0,0,16"/>
                 <Setter Property="Effect" Value="{StaticResource ShadowMD}"/>
             </Style>
 
             <Style TargetType="Border" x:Key="CardFlatStyle">
                 <Setter Property="Background" Value="{StaticResource SurfaceElevatedBrush}"/>
-                <Setter Property="CornerRadius" Value="{StaticResource CornerRadiusMD}"/>
+                <Setter Property="CornerRadius" Value="{StaticResource CornerRadiusSM}"/>
                 <Setter Property="Padding" Value="12,8"/>
                 <Setter Property="BorderBrush" Value="{StaticResource BorderSubtleBrush}"/>
                 <Setter Property="BorderThickness" Value="1"/>
@@ -128,7 +135,7 @@
 
             <Style TargetType="Border" x:Key="ToolbarStyle">
                 <Setter Property="Background" Value="{StaticResource SurfaceElevatedBrush}"/>
-                <Setter Property="CornerRadius" Value="{StaticResource CornerRadiusMD}"/>
+                <Setter Property="CornerRadius" Value="{StaticResource CornerRadiusSM}"/>
                 <Setter Property="Padding" Value="12,8"/>
                 <Setter Property="Margin" Value="0,0,0,12"/>
                 <Setter Property="BorderBrush" Value="{StaticResource BorderSubtleBrush}"/>
@@ -150,7 +157,46 @@
 
             <Style TargetType="Button" x:Key="DangerButtonStyle" BasedOn="{StaticResource ToolButtonStyle}">
                 <Setter Property="Foreground" Value="{StaticResource DangerBrush}"/>
+                <Style.Triggers>
+                    <Trigger Property="IsMouseOver" Value="True">
+                        <Setter Property="Foreground" Value="#A02018"/>
+                    </Trigger>
+                </Style.Triggers>
             </Style>
+
+            <Style TargetType="Button" x:Key="DeleteRowButtonStyle">
+                <Setter Property="Content" Value="×"/>
+                <Setter Property="Background" Value="Transparent"/>
+                <Setter Property="BorderThickness" Value="0"/>
+                <Setter Property="Foreground" Value="{StaticResource DangerBrush}"/>
+                <Setter Property="FontWeight" Value="Bold"/>
+                <Setter Property="Padding" Value="4,0"/>
+                <Setter Property="FontSize" Value="14"/>
+                <Setter Property="Cursor" Value="Hand"/>
+                <Setter Property="VerticalAlignment" Value="Center"/>
+                <Setter Property="HorizontalAlignment" Value="Center"/>
+                <Style.Triggers>
+                    <Trigger Property="IsMouseOver" Value="True">
+                        <Setter Property="Background" Value="#1AC42B1C"/>
+                        <Setter Property="Foreground" Value="#A02018"/>
+                    </Trigger>
+                </Style.Triggers>
+            </Style>
+
+            <DrawingBrush x:Key="NoiseBrush" TileMode="Tile" Viewport="0,0,128,128" ViewportUnits="Absolute">
+                <DrawingBrush.Drawing>
+                    <DrawingGroup>
+                        <GeometryDrawing>
+                            <GeometryDrawing.Pen>
+                                <Pen Brush="#08000000" Thickness="0.5"/>
+                            </GeometryDrawing.Pen>
+                            <GeometryDrawing.Geometry>
+                                <PathGeometry Figures="M10,20 L12,18 M30,40 L32,38 M50,10 L52,8 M70,60 L72,58 M90,30 L92,28 M110,50 L112,48 M20,80 L22,78 M40,100 L42,98 M60,70 L62,68 M80,110 L82,108 M100,90 L102,88 M120,20 L122,18 M15,55 L17,53 M35,75 L37,73 M55,95 L57,93 M75,15 L77,13 M95,45 L97,43 M115,85 L117,83"/>
+                            </GeometryDrawing.Geometry>
+                        </GeometryDrawing>
+                    </DrawingGroup>
+                </DrawingBrush.Drawing>
+            </DrawingBrush>
 
             <Style TargetType="Border" x:Key="EmptyStateStyle">
                 <Setter Property="Background" Value="{StaticResource SurfaceBrush}"/>
@@ -160,12 +206,25 @@
                 <Setter Property="VerticalAlignment" Value="Center"/>
             </Style>
 
+            <Style TargetType="ui:SymbolIcon" x:Key="EmptyStateIconStyle">
+                <Setter Property="FontSize" Value="32"/>
+                <Setter Property="Foreground" Value="{StaticResource BorderSubtleBrush}"/>
+                <Setter Property="HorizontalAlignment" Value="Center"/>
+                <Setter Property="Margin" Value="0,0,0,8"/>
+            </Style>
+
             <Style TargetType="TextBlock" x:Key="EmptyStateTextStyle">
                 <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}"/>
                 <Setter Property="FontSize" Value="{StaticResource FontSizeBase}"/>
                 <Setter Property="Foreground" Value="{StaticResource TextTertiaryBrush}"/>
                 <Setter Property="HorizontalAlignment" Value="Center"/>
                 <Setter Property="TextAlignment" Value="Center"/>
+            </Style>
+
+            <Style TargetType="Border" x:Key="SkeletonLineStyle">
+                <Setter Property="Background" Value="#E8ECF0"/>
+                <Setter Property="CornerRadius" Value="4"/>
+                <Setter Property="Height" Value="14"/>
             </Style>
 
             <converters:EnumToBoolConverter x:Key="EnumToBoolConverter"/>

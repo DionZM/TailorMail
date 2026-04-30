@@ -1,54 +1,30 @@
-﻿﻿﻿﻿using System.Windows;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
-using System.Windows.Shapes;
+using CommunityToolkit.Mvvm.ComponentModel;
 using TailorMail.Views;
 
 namespace TailorMail;
 
-/// <summary>
-/// 应用程序主窗口，采用 6 步骤向导式导航设计：
-/// 步骤1 收件选择 → 步骤2 变量配置 → 步骤3 模板撰写 → 步骤4 附件匹配 → 步骤5 效果预览 → 步骤6 批量发送。
-/// 各步骤页面采用延迟初始化策略，仅在首次访问时创建实例。
-/// </summary>
 public partial class MainWindow
 {
-    /// <summary>当前步骤索引（0-5）。</summary>
     private int _currentStep;
 
-    /// <summary>步骤导航按钮数组。</summary>
-    private readonly Button[] _stepBtns = new Button[6];
+    private ObservableCollection<StepItem> _steps = null!;
 
-    /// <summary>步骤指示器圆形图标数组。</summary>
-    private readonly Border[] _stepCircles = new Border[6];
-
-    /// <summary>步骤标签文本数组。</summary>
-    private readonly TextBlock[] _stepLabels = new TextBlock[6];
-
-    /// <summary>步骤之间的连接线数组。</summary>
-    private readonly Rectangle[] _stepLines = new Rectangle[5];
-
-    /// <summary>步骤1：收件选择页面（延迟初始化）。</summary>
     private RecipientsPage? _step1;
-
-    /// <summary>步骤2：变量管理页面（延迟初始化）。</summary>
     private VariablesPage? _step2;
-
-    /// <summary>步骤3：模板撰写页面（延迟初始化）。</summary>
     private MailComposePage? _step3;
-
-    /// <summary>步骤4：附件管理页面（延迟初始化）。</summary>
     private AttachmentPage? _step4;
-
-    /// <summary>步骤5：邮件预览页面（延迟初始化）。</summary>
     private PreviewPage? _step5;
-
-    /// <summary>步骤6：邮件发送页面（延迟初始化）。</summary>
     private SendPage? _step6;
 
-    /// <summary>6 个步骤的显示名称。</summary>
     private static readonly string[] StepNames = ["收件选择", "变量配置", "模板撰写", "附件匹配", "效果预览", "批量发送"];
+
+    private static readonly string[] StepDescs = ["选择收件对象", "定义模板变量，发送时自动替换", "编辑邮件主题和正文", "配置公共附件和专有附件", "查看每个收件人的邮件效果", "确认后开始批量发送"];
 
     public MainWindow()
     {
@@ -57,43 +33,24 @@ public partial class MainWindow
         Closed += OnMainWindowClosed;
     }
 
-    /// <summary>
-    /// 窗口加载时初始化步骤导航控件映射并导航到第一步。
-    /// </summary>
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
-        _stepBtns[0] = StepBtn0; _stepBtns[1] = StepBtn1; _stepBtns[2] = StepBtn2;
-        _stepBtns[3] = StepBtn3; _stepBtns[4] = StepBtn4; _stepBtns[5] = StepBtn5;
-
-        _stepCircles[0] = StepCircle0; _stepCircles[1] = StepCircle1; _stepCircles[2] = StepCircle2;
-        _stepCircles[3] = StepCircle3; _stepCircles[4] = StepCircle4; _stepCircles[5] = StepCircle5;
-
-        _stepLabels[0] = StepLabel0; _stepLabels[1] = StepLabel1; _stepLabels[2] = StepLabel2;
-        _stepLabels[3] = StepLabel3; _stepLabels[4] = StepLabel4; _stepLabels[5] = StepLabel5;
-
-        _stepLines[0] = StepLine0; _stepLines[1] = StepLine1; _stepLines[2] = StepLine2;
-        _stepLines[3] = StepLine3; _stepLines[4] = StepLine4;
+        _steps = new ObservableCollection<StepItem>(
+            StepNames.Select((name, i) => new StepItem(i, name)));
+        StepItems.ItemsSource = _steps;
 
         NavigateToStep(0);
     }
 
-    /// <summary>
-    /// 步骤按钮点击处理：保存当前步骤数据并导航到目标步骤。
-    /// </summary>
     private void OnStepClick(object sender, RoutedEventArgs e)
     {
-        if (sender is Button btn && btn.Tag is string tag && int.TryParse(tag, out var step))
+        if (sender is Button btn && btn.Tag is int step)
         {
             SaveCurrentStep();
             NavigateToStep(step);
         }
     }
 
-    /// <summary>
-    /// 导航到指定步骤。采用延迟初始化策略，页面仅在首次访问时创建。
-    /// 导航时会刷新页面数据并更新步骤指示器。
-    /// </summary>
-    /// <param name="step">目标步骤索引（0-5）。</param>
     private void NavigateToStep(int step)
     {
         _currentStep = step;
@@ -101,22 +58,59 @@ public partial class MainWindow
         UpdateButtons();
         TxtStepHint.Text = $"步骤 {step + 1}/6 · {StepNames[step]}";
 
-        switch (step)
-        {
-            case 0: _step1 ??= new RecipientsPage(); MainContent.Content = _step1; break;
-            case 1: _step2 ??= new VariablesPage(); _step2.RefreshData(); MainContent.Content = _step2; break;
-            case 2: _step3 ??= new MailComposePage(); _step3.RefreshData(); MainContent.Content = _step3; break;
-            case 3: _step4 ??= new AttachmentPage(); _step4.RefreshData(); MainContent.Content = _step4; break;
-            case 4: _step5 ??= new PreviewPage(); _step5.RefreshData(); MainContent.Content = _step5; break;
-            case 5: _step6 ??= new SendPage(); _step6.RefreshData(); MainContent.Content = _step6; break;
-        }
+        UnsubscribeDynamicDesc();
 
-        AnimateContentIn();
+        SkeletonPanel.Visibility = Visibility.Visible;
+        MainContent.Visibility = Visibility.Collapsed;
+
+        Dispatcher.BeginInvoke(() =>
+        {
+            switch (step)
+            {
+                case 0: _step1 ??= new RecipientsPage(); MainContent.Content = _step1; break;
+                case 1: _step2 ??= new VariablesPage(); _step2.RefreshData(); MainContent.Content = _step2; break;
+                case 2: _step3 ??= new MailComposePage(); _step3.RefreshData(); MainContent.Content = _step3; break;
+                case 3: _step4 ??= new AttachmentPage(); _step4.RefreshData(); MainContent.Content = _step4; break;
+                case 4: _step5 ??= new PreviewPage(); _step5.RefreshData(); MainContent.Content = _step5; break;
+                case 5: _step6 ??= new SendPage(); _step6.RefreshData(); MainContent.Content = _step6; break;
+            }
+
+            SubscribeDynamicDesc();
+            UpdateStepDesc();
+
+            SkeletonPanel.Visibility = Visibility.Collapsed;
+            MainContent.Visibility = Visibility.Visible;
+            AnimateContentIn();
+        }, System.Windows.Threading.DispatcherPriority.Loaded);
     }
 
-    /// <summary>
-    /// 根据当前步骤更新导航按钮的可见性和文字。
-    /// </summary>
+    private void UnsubscribeDynamicDesc()
+    {
+        if (_step1 is IDynamicStepDesc d1) d1.StepDescriptionChanged -= OnDynamicDescChanged;
+        if (_step6 is IDynamicStepDesc d6) d6.StepDescriptionChanged -= OnDynamicDescChanged;
+    }
+
+    private void SubscribeDynamicDesc()
+    {
+        if (_currentStep == 0 && _step1 is IDynamicStepDesc d1) d1.StepDescriptionChanged += OnDynamicDescChanged;
+        if (_currentStep == 5 && _step6 is IDynamicStepDesc d6) d6.StepDescriptionChanged += OnDynamicDescChanged;
+    }
+
+    private void OnDynamicDescChanged()
+    {
+        Dispatcher.BeginInvoke(() => UpdateStepDesc());
+    }
+
+    private void UpdateStepDesc()
+    {
+        TxtStepDesc.Text = _currentStep switch
+        {
+            0 when _step1 is IDynamicStepDesc d0 => d0.GetStepDescription(),
+            5 when _step6 is IDynamicStepDesc d5 => d5.GetStepDescription(),
+            _ => StepDescs[_currentStep]
+        };
+    }
+
     private void UpdateButtons()
     {
         BtnPrev.Visibility = _currentStep > 0 ? Visibility.Visible : Visibility.Collapsed;
@@ -136,75 +130,22 @@ public partial class MainWindow
         }
     }
 
-    /// <summary>
-    /// 更新步骤指示器的视觉状态。三种状态：
-    /// - 已完成（i &lt; currentStep）：浅色背景 + 强调色边框 + ✓ 标记
-    /// - 当前步骤（i == currentStep）：强调色背景 + 白色文字
-    /// - 未到达（i &gt; currentStep）：灰色背景 + 灰色文字
-    /// </summary>
     private void UpdateStepIndicator()
     {
-        var accentBrush = (Brush)FindResource("AccentBrush");
-        var accentLightBrush = (Brush)FindResource("AccentLightBrush");
-        var surfaceBrush = (Brush)FindResource("SurfaceBrush");
-        var borderSubtleBrush = (Brush)FindResource("BorderSubtleBrush");
-        var primaryBrush = (Brush)FindResource("TextPrimaryBrush");
-        var tertiaryBrush = (Brush)FindResource("TextTertiaryBrush");
-
-        for (int i = 0; i < 6; i++)
+        for (int i = 0; i < _steps.Count; i++)
         {
-            var circle = _stepCircles[i];
-            var label = _stepLabels[i];
-            var circleText = circle.Child as TextBlock;
-
-            if (i < _currentStep)
-            {
-                // 已完成步骤
-                circle.Background = accentLightBrush;
-                circle.BorderBrush = accentBrush;
-                circle.BorderThickness = new Thickness(1.5);
-                if (circleText != null) { circleText.Foreground = accentBrush; circleText.Text = "✓"; }
-                if (label != null) { label.Foreground = accentBrush; label.FontWeight = FontWeights.Medium; }
-            }
-            else if (i == _currentStep)
-            {
-                // 当前步骤
-                circle.Background = accentBrush;
-                circle.BorderBrush = null;
-                circle.BorderThickness = new Thickness(0);
-                if (circleText != null) { circleText.Foreground = Brushes.White; }
-                if (label != null) { label.Foreground = primaryBrush; label.FontWeight = FontWeights.SemiBold; }
-            }
-            else
-            {
-                // 未到达步骤
-                circle.Background = surfaceBrush;
-                circle.BorderBrush = borderSubtleBrush;
-                circle.BorderThickness = new Thickness(1.5);
-                if (circleText != null) { circleText.Foreground = tertiaryBrush; }
-                if (label != null) { label.Foreground = tertiaryBrush; label.FontWeight = FontWeights.Medium; }
-            }
-        }
-
-        // 更新连接线颜色
-        for (int i = 0; i < 5; i++)
-        {
-            _stepLines[i].Fill = i < _currentStep ? accentBrush : borderSubtleBrush;
+            _steps[i].State = i < _currentStep ? StepState.Completed
+                : i == _currentStep ? StepState.Current
+                : StepState.Upcoming;
         }
     }
 
-    /// <summary>
-    /// "上一步"按钮点击处理。
-    /// </summary>
     private void BtnPrev_Click(object sender, RoutedEventArgs e)
     {
         SaveCurrentStep();
         if (_currentStep > 0) NavigateToStep(_currentStep - 1);
     }
 
-    /// <summary>
-    /// "下一步"按钮点击处理。若当前在最后一步则触发发送。
-    /// </summary>
     private void BtnNext_Click(object sender, RoutedEventArgs e)
     {
         SaveCurrentStep();
@@ -215,10 +156,6 @@ public partial class MainWindow
         }
     }
 
-    /// <summary>
-    /// 检查是否存在已编辑的邮件内容。
-    /// </summary>
-    /// <returns>若存在已编辑的主题或正文则返回 true。</returns>
     private bool HasEditedContent()
     {
         var settings = App.DataService.LoadSettings();
@@ -227,9 +164,6 @@ public partial class MainWindow
                !string.IsNullOrEmpty(settings.LastBodyXaml);
     }
 
-    /// <summary>
-    /// "新建邮件"按钮点击处理。清除已撰写内容和附件配置，重置后续步骤页面实例。
-    /// </summary>
     private void BtnNewMail_Click(object sender, RoutedEventArgs e)
     {
         if (HasEditedContent())
@@ -247,7 +181,6 @@ public partial class MainWindow
 
         App.DataService.SaveAttachmentConfig(new Models.AttachmentConfig());
 
-        // 重置后续步骤页面实例，强制重新初始化
         _step3 = null;
         _step4 = null;
         _step5 = null;
@@ -256,27 +189,18 @@ public partial class MainWindow
         NavigateToStep(1);
     }
 
-    /// <summary>
-    /// "设置"按钮点击处理，打开设置窗口。
-    /// </summary>
     private void BtnSettings_Click(object sender, RoutedEventArgs e)
     {
         var win = new SettingsWindow { Owner = this };
         win.ShowDialog();
     }
 
-    /// <summary>
-    /// "关于"按钮点击处理，打开关于窗口。
-    /// </summary>
     private void BtnAbout_Click(object sender, RoutedEventArgs e)
     {
         var win = new AboutWindow { Owner = this };
         win.ShowDialog();
     }
 
-    /// <summary>
-    /// 保存当前步骤页面的数据。仅对需要保存的步骤（0-2）执行保存操作。
-    /// </summary>
     private void SaveCurrentStep()
     {
         switch (_currentStep)
@@ -287,9 +211,6 @@ public partial class MainWindow
         }
     }
 
-    /// <summary>
-    /// 页面切换时的淡入+上滑过渡动画。
-    /// </summary>
     private void AnimateContentIn()
     {
         MainContent.Opacity = 0;
@@ -297,33 +218,60 @@ public partial class MainWindow
 
         var opacityAnimation = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(250))
         {
-            EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut }
+            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
         };
         var slideAnimation = new DoubleAnimation(12, 0, TimeSpan.FromMilliseconds(250))
         {
-            EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut }
+            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
         };
 
         MainContent.BeginAnimation(UIElement.OpacityProperty, opacityAnimation);
         MainContentTransform.BeginAnimation(TranslateTransform.YProperty, slideAnimation);
     }
 
-    /// <summary>
-    /// 主窗口关闭时确保应用完全退出，防止后台进程残留。
-    /// </summary>
     private void OnMainWindowClosed(object? sender, EventArgs e)
     {
         Application.Current.Shutdown();
     }
 }
 
-/// <summary>
-/// 可刷新数据接口，由各步骤页面实现，用于在导航到该步骤时刷新数据。
-/// </summary>
+public enum StepState { Upcoming, Current, Completed }
+
+public class StepItem : ObservableObject
+{
+    public int Index { get; }
+    public string Label { get; }
+
+    private StepState _state;
+    public StepState State
+    {
+        get => _state;
+        set => SetProperty(ref _state, value);
+    }
+
+    public string DisplayIndex => State == StepState.Completed ? "✓" : (Index + 1).ToString();
+
+    public StepItem(int index, string label)
+    {
+        Index = index;
+        Label = label;
+    }
+
+    protected override void OnPropertyChanged(PropertyChangedEventArgs e)
+    {
+        base.OnPropertyChanged(e);
+        if (e.PropertyName == nameof(State))
+            OnPropertyChanged(nameof(DisplayIndex));
+    }
+}
+
 public interface IRefreshable
 {
-    /// <summary>
-    /// 刷新页面数据。
-    /// </summary>
     void RefreshData();
+}
+
+public interface IDynamicStepDesc
+{
+    string GetStepDescription();
+    event Action? StepDescriptionChanged;
 }

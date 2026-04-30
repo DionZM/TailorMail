@@ -5,17 +5,11 @@
     <Grid Margin="0">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <StackPanel Grid.Row="0" Margin="0,0,0,16">
-            <TextBlock Text="变量配置" Style="{StaticResource PageTitleStyle}" Margin="0,0,0,4"/>
-            <TextBlock Text="为每个收件对象定义模板变量，邮件发送时将自动替换" Style="{StaticResource CaptionTextStyle}"/>
-        </StackPanel>
-
-        <Grid Grid.Row="1" Margin="0,0,0,16">
-            <Border Style="{StaticResource CardStyle}" Margin="0" Padding="12,8">
+        <Grid Grid.Row="0" Margin="0,0,0,16">
+            <Border Style="{StaticResource CardStyle}" Margin="0" Padding="16,8">
                 <WrapPanel Orientation="Horizontal">
                     <ui:TextBox x:Name="NewVarTextBox" Text="{Binding NewVariableName,UpdateSourceTrigger=PropertyChanged}"
                                 PlaceholderText="新变量名" Width="120" Margin="0,0,8,0" KeyDown="OnNewVarKeyDown"/>
@@ -29,7 +23,7 @@
             </StackPanel>
         </Grid>
 
-        <Grid Grid.Row="2">
+        <Grid Grid.Row="1">
             <Border Style="{StaticResource CardStyle}" Margin="0">
                 <DataGrid x:Name="VariablesGrid" AutoGenerateColumns="False"
                           CanUserAddRows="False" CanUserDeleteRows="False"
@@ -43,6 +37,7 @@
             </Border>
             <Border x:Name="VarEmptyState" Style="{StaticResource EmptyStateStyle}" Visibility="Collapsed">
                 <StackPanel>
+                    <ui:SymbolIcon Symbol="Tag24" Style="{StaticResource EmptyStateIconStyle}"/>
                     <TextBlock Text="暂无变量" Style="{StaticResource EmptyStateTextStyle}" Margin="0,0,0,4"/>
                     <TextBlock Text="请在上方输入变量名并点击添加" Style="{StaticResource CaptionTextStyle}" HorizontalAlignment="Center"/>
                 </StackPanel>

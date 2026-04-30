@@ -4,21 +4,15 @@
       xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml">
     <Grid Margin="0">
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="*" MinWidth="200"/>
             <ColumnDefinition Width="16"/>
-            <ColumnDefinition Width="2*"/>
+            <ColumnDefinition Width="2*" MinWidth="320"/>
         </Grid.ColumnDefinitions>
 
-        <StackPanel Grid.Row="0" Grid.ColumnSpan="3" Margin="0,0,0,16">
-            <TextBlock Text="附件匹配" Style="{StaticResource PageTitleStyle}" Margin="0,0,0,4"/>
-            <TextBlock Text="为每个收件对象配置公共附件和专有附件" Style="{StaticResource CaptionTextStyle}"/>
-        </StackPanel>
-
-        <Grid Grid.Row="1" Grid.Column="0">
+        <Grid Grid.Row="0" Grid.Column="0">
             <Border Style="{StaticResource CardStyle}" Margin="0">
                 <DockPanel>
                     <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,8">
@@ -37,9 +31,9 @@
                                     </Grid.ColumnDefinitions>
                                     <TextBlock Grid.Column="0" Text="{Binding Converter={StaticResource FileNameConverter}}" ToolTip="{Binding}" TextTrimming="CharacterEllipsis"
                                                Style="{StaticResource BodyTextStyle}"/>
-                                    <Button Grid.Column="1" Content="×" Click="OnRemoveCommon" Tag="{Binding}"
-                                            Background="Transparent" BorderThickness="0" Foreground="{StaticResource DangerBrush}"
-                                            FontWeight="Bold" Padding="4,0" VerticalAlignment="Center"/>
+                                    <Button Grid.Column="1" Click="OnRemoveCommon" Tag="{Binding}"
+                                            Style="{StaticResource DeleteRowButtonStyle}"
+                                            ToolTip="删除此附件"/>
                                 </Grid>
                             </DataTemplate>
                         </ListBox.ItemTemplate>
@@ -48,13 +42,14 @@
             </Border>
             <Border x:Name="CommonEmptyState" Style="{StaticResource EmptyStateStyle}" Visibility="Visible">
                 <StackPanel>
+                    <ui:SymbolIcon Symbol="Document24" Style="{StaticResource EmptyStateIconStyle}"/>
                     <TextBlock Text="暂无公共附件" Style="{StaticResource EmptyStateTextStyle}" Margin="0,0,0,4"/>
                     <TextBlock Text="点击「添加」按钮上传" Style="{StaticResource CaptionTextStyle}" HorizontalAlignment="Center"/>
                 </StackPanel>
             </Border>
         </Grid>
 
-        <Grid Grid.Row="1" Grid.Column="2">
+        <Grid Grid.Row="0" Grid.Column="2">
             <Border Style="{StaticResource CardStyle}" Margin="0">
                 <DockPanel>
                     <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,8">
@@ -86,11 +81,10 @@
                                                                        Foreground="{StaticResource SuccessBrush}" FontSize="12"
                                                                        VerticalAlignment="Center" MaxWidth="300"
                                                                        ToolTip="{Binding}"/>
-                                                            <Button Content="×" Click="OnRemoveSpecialFromGrid" Tag="{Binding}"
-                                                                    Background="Transparent" BorderThickness="0"
-                                                                    Foreground="{StaticResource DangerBrush}" FontWeight="Bold"
-                                                                    Padding="2,0" FontSize="12" VerticalAlignment="Center"
-                                                                    Margin="4,0,0,0" ToolTip="删除此附件"/>
+                                                            <Button Click="OnRemoveSpecialFromGrid" Tag="{Binding}"
+                                                                    Style="{StaticResource DeleteRowButtonStyle}"
+                                                                    FontSize="12" Margin="4,0,0,0"
+                                                                    ToolTip="删除此附件"/>
                                                         </StackPanel>
                                                     </DataTemplate>
                                                 </ItemsControl.ItemTemplate>
@@ -106,7 +100,7 @@
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
                                         <Button Click="OnAddRecipientAttachmentFromGrid" Tag="{Binding}"
-                                                Background="Transparent" BorderThickness="0" Padding="4,2"
+                                                Background="Transparent" BorderThickness="0" Padding="4,4"
                                                 ToolTip="添加专有附件">
                                             <ui:SymbolIcon Symbol="Add24" FontSize="14"/>
                                         </Button>
@@ -119,6 +113,7 @@
             </Border>
             <Border x:Name="SpecialEmptyState" Style="{StaticResource EmptyStateStyle}" Visibility="Collapsed">
                 <StackPanel>
+                    <ui:SymbolIcon Symbol="Folder24" Style="{StaticResource EmptyStateIconStyle}"/>
                     <TextBlock Text="暂无专有附件" Style="{StaticResource EmptyStateTextStyle}" Margin="0,0,0,4"/>
                     <TextBlock Text="选择文件夹后点击「自动匹配」" Style="{StaticResource CaptionTextStyle}" HorizontalAlignment="Center"/>
                 </StackPanel>

@@ -1,4 +1,4 @@
-﻿﻿using System.ComponentModel;
+using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
@@ -12,11 +12,13 @@ namespace TailorMail.Views;
 /// <summary>
 /// 收件人管理页面，提供收件人分组的切换、收件人的增删改查、Excel 导入导出、全选/取消全选等功能。
 /// </summary>
-public partial class RecipientsPage : UserControl, IRefreshable
+public partial class RecipientsPage : UserControl, IRefreshable, IDynamicStepDesc
 {
     private readonly RecipientsViewModel _vm;
     private ListSortDirection _sortDirection;
     private bool _skipNextSort;
+
+    public event Action? StepDescriptionChanged;
 
     private const int FirstEditableColIndex = 1;
     private int LastEditableColIndex => RecipientsGrid.Columns.Count - 2;
@@ -27,7 +29,14 @@ public partial class RecipientsPage : UserControl, IRefreshable
         _vm = new RecipientsViewModel(App.DataService);
         DataContext = _vm;
         _vm.SelectedGroupChanged += OnSelectedGroupChanged;
+        _vm.PropertyChanged += (s, e) =>
+        {
+            if (e.PropertyName is nameof(_vm.SelectedCount) or nameof(_vm.TotalCount))
+                StepDescriptionChanged?.Invoke();
+        };
     }
+
+    public string GetStepDescription() => $"已选 {_vm.SelectedCount} / 共 {_vm.TotalCount}";
 
     public void RefreshData() => _vm.LoadGroups();
 
@@ -176,6 +185,7 @@ public partial class RecipientsPage : UserControl, IRefreshable
                 var lastIdx = RecipientsGrid.Items.Count - 1;
                 RecipientsGrid.UpdateLayout();
                 RecipientsGrid.ScrollIntoView(RecipientsGrid.Items[lastIdx]);
+                RecipientsGrid.SelectedItem = RecipientsGrid.Items[lastIdx];
                 var firstCol = RecipientsGrid.Columns[FirstEditableColIndex];
                 RecipientsGrid.CurrentCell = new DataGridCellInfo(RecipientsGrid.Items[lastIdx], firstCol);
                 RecipientsGrid.Focus();
@@ -257,6 +267,7 @@ public partial class RecipientsPage : UserControl, IRefreshable
     private void MoveToCell(DataGrid grid, int rowIndex, DataGridColumn? column, bool beginEdit)
     {
         if (rowIndex < 0 || rowIndex >= grid.Items.Count || column == null) return;
+        grid.SelectedItem = grid.Items[rowIndex];
         grid.CurrentCell = new DataGridCellInfo(grid.Items[rowIndex], column);
         grid.ScrollIntoView(grid.Items[rowIndex]);
         if (beginEdit)
@@ -349,14 +360,28 @@ public partial class RecipientsPage : UserControl, IRefreshable
         }
         else if (e.Key == Key.Down && Keyboard.Modifiers == ModifierKeys.None)
         {
-            if (rowIndex == grid.Items.Count - 1)
+            e.Handled = true;
+            if (rowIndex + 1 < grid.Items.Count)
+            {
+                var sameCol = grid.CurrentColumn ?? RecipientsGrid.Columns[FirstEditableColIndex];
+                MoveToCell(grid, rowIndex + 1, sameCol, true);
+            }
+            else
             {
                 var current = grid.Items[rowIndex] as Recipient;
                 if (current != null && !string.IsNullOrEmpty(current.Name))
                 {
-                    e.Handled = true;
                     AddNewRowAndFocus();
                 }
+            }
+        }
+        else if (e.Key == Key.Up && Keyboard.Modifiers == ModifierKeys.None)
+        {
+            if (rowIndex > 0)
+            {
+                e.Handled = true;
+                var sameCol = grid.CurrentColumn ?? RecipientsGrid.Columns[FirstEditableColIndex];
+                MoveToCell(grid, rowIndex - 1, sameCol, true);
             }
         }
         else if (e.Key == Key.Escape)

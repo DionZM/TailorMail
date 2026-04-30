@@ -1,4 +1,4 @@
-﻿﻿﻿﻿namespace TailorMail.Models;
+namespace TailorMail.Models;
 
 /// <summary>
 /// 应用程序全局配置模型，包含邮件发送方式、SMTP 服务器设置

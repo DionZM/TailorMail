@@ -3,11 +3,11 @@
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
       Title="设置">
-    <ScrollViewer Margin="16,12,16,8" VerticalScrollBarVisibility="Auto">
+    <ScrollViewer Margin="24,16,24,8" VerticalScrollBarVisibility="Auto">
         <StackPanel>
             <TextBlock Text="设置" Style="{StaticResource PageTitleStyle}" Margin="0,0,0,8"/>
 
-            <ui:Card Margin="0,0,0,6" Padding="10,8">
+            <Border Style="{StaticResource CardStyle}" Margin="0,0,0,6" Padding="16,12">
                 <StackPanel>
                     <TextBlock Text="发送方式" Style="{StaticResource SectionTitleStyle}" Margin="0,0,0,8"/>
                     <RadioButton Content="通过 Outlook 发送" Margin="0,0,0,6"
@@ -24,9 +24,9 @@
                     <RadioButton Content="通过 SMTP 发送"
                                  IsChecked="{Binding SendMethod, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=Smtp}"/>
                 </StackPanel>
-            </ui:Card>
+            </Border>
 
-            <ui:Card Margin="0,0,0,6" Padding="10,8">
+            <Border Style="{StaticResource CardStyle}" Margin="0,0,0,6" Padding="16,12">
                 <StackPanel>
                     <TextBlock Text="SMTP 配置" Style="{StaticResource SectionTitleStyle}" Margin="0,0,0,8"/>
                     <ui:InfoBar Title="安全提示" Message="密码仅在发送时输入，不会保存到配置文件中。"
@@ -65,7 +65,7 @@
                                     PlaceholderText="收件人看到的发件人名称" Margin="0,0,0,6"/>
                     </Grid>
                 </StackPanel>
-            </ui:Card>
+            </Border>
 
             <ui:Button Content="保存设置" Icon="{ui:SymbolIcon Save24}" Appearance="Primary"
                        Command="{Binding SaveCommand}" HorizontalAlignment="Right" Padding="16,4"/>

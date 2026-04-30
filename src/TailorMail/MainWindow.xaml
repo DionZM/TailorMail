@@ -9,6 +9,9 @@
         FontFamily="{StaticResource AppFontFamily}"
         Background="{StaticResource SurfaceBrush}">
     <Grid>
+        <Grid.Background>
+            <DrawingBrush Drawing="{Binding Source={StaticResource NoiseBrush}, Path=Drawing}" Opacity="0.3"/>
+        </Grid.Background>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
@@ -26,139 +29,115 @@
 
         <Border Grid.Row="1" Background="{StaticResource SurfaceElevatedBrush}"
                 BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="0,0,0,1">
-            <Grid Margin="32,12,32,14" HorizontalAlignment="Center">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
-
-                <Button Grid.Column="0" x:Name="StepBtn0" Click="OnStepClick" Tag="0"
-                        Background="Transparent" BorderThickness="0" Padding="0" Margin="0" Cursor="Hand">
-                    <StackPanel Orientation="Horizontal">
-                        <Border x:Name="StepCircle0" Width="26" Height="26" CornerRadius="13"
-                                Background="{StaticResource AccentBrush}" Margin="0,0,6,0">
-                            <TextBlock Text="1" Foreground="White" FontWeight="SemiBold" FontSize="12"
-                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Border>
-                        <TextBlock x:Name="StepLabel0" Text="收件选择" VerticalAlignment="Center" FontSize="13"
-                                   FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
-                    </StackPanel>
-                </Button>
-
-                <Rectangle Grid.Column="1" Width="24" Height="2" Fill="{StaticResource BorderSubtleBrush}"
-                           VerticalAlignment="Center" Margin="8,0" x:Name="StepLine0"/>
-
-                <Button Grid.Column="2" x:Name="StepBtn1" Click="OnStepClick" Tag="1"
-                        Background="Transparent" BorderThickness="0" Padding="0" Margin="0" Cursor="Hand">
-                    <StackPanel Orientation="Horizontal">
-                        <Border x:Name="StepCircle1" Width="26" Height="26" CornerRadius="13"
-                                Background="{StaticResource SurfaceBrush}"
-                                BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="1.5"
-                                Margin="0,0,6,0">
-                            <TextBlock Text="2" Foreground="{StaticResource TextTertiaryBrush}" FontWeight="SemiBold" FontSize="12"
-                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Border>
-                        <TextBlock x:Name="StepLabel1" Text="变量配置" VerticalAlignment="Center" FontSize="13"
-                                   FontWeight="Medium" Foreground="{StaticResource TextTertiaryBrush}"/>
-                    </StackPanel>
-                </Button>
-
-                <Rectangle Grid.Column="3" Width="24" Height="2" Fill="{StaticResource BorderSubtleBrush}"
-                           VerticalAlignment="Center" Margin="8,0" x:Name="StepLine1"/>
-
-                <Button Grid.Column="4" x:Name="StepBtn2" Click="OnStepClick" Tag="2"
-                        Background="Transparent" BorderThickness="0" Padding="0" Margin="0" Cursor="Hand">
-                    <StackPanel Orientation="Horizontal">
-                        <Border x:Name="StepCircle2" Width="26" Height="26" CornerRadius="13"
-                                Background="{StaticResource SurfaceBrush}"
-                                BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="1.5"
-                                Margin="0,0,6,0">
-                            <TextBlock Text="3" Foreground="{StaticResource TextTertiaryBrush}" FontWeight="SemiBold" FontSize="12"
-                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Border>
-                        <TextBlock x:Name="StepLabel2" Text="模板撰写" VerticalAlignment="Center" FontSize="13"
-                                   FontWeight="Medium" Foreground="{StaticResource TextTertiaryBrush}"/>
-                    </StackPanel>
-                </Button>
-
-                <Rectangle Grid.Column="5" Width="24" Height="2" Fill="{StaticResource BorderSubtleBrush}"
-                           VerticalAlignment="Center" Margin="8,0" x:Name="StepLine2"/>
-
-                <Button Grid.Column="6" x:Name="StepBtn3" Click="OnStepClick" Tag="3"
-                        Background="Transparent" BorderThickness="0" Padding="0" Margin="0" Cursor="Hand">
-                    <StackPanel Orientation="Horizontal">
-                        <Border x:Name="StepCircle3" Width="26" Height="26" CornerRadius="13"
-                                Background="{StaticResource SurfaceBrush}"
-                                BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="1.5"
-                                Margin="0,0,6,0">
-                            <TextBlock Text="4" Foreground="{StaticResource TextTertiaryBrush}" FontWeight="SemiBold" FontSize="12"
-                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Border>
-                        <TextBlock x:Name="StepLabel3" Text="附件匹配" VerticalAlignment="Center" FontSize="13"
-                                   FontWeight="Medium" Foreground="{StaticResource TextTertiaryBrush}"/>
-                    </StackPanel>
-                </Button>
-
-                <Rectangle Grid.Column="7" Width="24" Height="2" Fill="{StaticResource BorderSubtleBrush}"
-                           VerticalAlignment="Center" Margin="8,0" x:Name="StepLine3"/>
-
-                <Button Grid.Column="8" x:Name="StepBtn4" Click="OnStepClick" Tag="4"
-                        Background="Transparent" BorderThickness="0" Padding="0" Margin="0" Cursor="Hand">
-                    <StackPanel Orientation="Horizontal">
-                        <Border x:Name="StepCircle4" Width="26" Height="26" CornerRadius="13"
-                                Background="{StaticResource SurfaceBrush}"
-                                BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="1.5"
-                                Margin="0,0,6,0">
-                            <TextBlock Text="5" Foreground="{StaticResource TextTertiaryBrush}" FontWeight="SemiBold" FontSize="12"
-                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Border>
-                        <TextBlock x:Name="StepLabel4" Text="效果预览" VerticalAlignment="Center" FontSize="13"
-                                   FontWeight="Medium" Foreground="{StaticResource TextTertiaryBrush}"/>
-                    </StackPanel>
-                </Button>
-
-                <Rectangle Grid.Column="9" Width="24" Height="2" Fill="{StaticResource BorderSubtleBrush}"
-                           VerticalAlignment="Center" Margin="8,0" x:Name="StepLine4"/>
-
-                <Button Grid.Column="10" x:Name="StepBtn5" Click="OnStepClick" Tag="5"
-                        Background="Transparent" BorderThickness="0" Padding="0" Margin="0" Cursor="Hand">
-                    <StackPanel Orientation="Horizontal">
-                        <Border x:Name="StepCircle5" Width="26" Height="26" CornerRadius="13"
-                                Background="{StaticResource SurfaceBrush}"
-                                BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="1.5"
-                                Margin="0,0,6,0">
-                            <TextBlock Text="6" Foreground="{StaticResource TextTertiaryBrush}" FontWeight="SemiBold" FontSize="12"
-                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Border>
-                        <TextBlock x:Name="StepLabel5" Text="批量发送" VerticalAlignment="Center" FontSize="13"
-                                   FontWeight="Medium" Foreground="{StaticResource TextTertiaryBrush}"/>
-                    </StackPanel>
-                </Button>
+            <Grid Margin="32,10,32,12" HorizontalAlignment="Center">
+                <Border x:Name="PillStepper" Background="{StaticResource SurfaceBrush}"
+                        CornerRadius="20" Padding="4" HorizontalAlignment="Center">
+                    <ItemsControl x:Name="StepItems">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Orientation="Horizontal"/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Button Click="OnStepClick" Tag="{Binding Index}"
+                                        Background="Transparent" BorderThickness="0" Padding="0" Margin="0" Cursor="Hand">
+                                    <Border CornerRadius="16" Padding="14,6" MinWidth="90">
+                                        <Border.Style>
+                                            <Style TargetType="Border">
+                                                <Setter Property="Background" Value="Transparent"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding State}" Value="Current">
+                                                        <Setter Property="Background" Value="{StaticResource AccentBrush}"/>
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding State}" Value="Completed">
+                                                        <Setter Property="Background" Value="{StaticResource AccentLightBrush}"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Border.Style>
+                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                            <TextBlock FontWeight="SemiBold" FontSize="12"
+                                                       VerticalAlignment="Center" Margin="0,0,6,0">
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock">
+                                                        <Setter Property="Foreground" Value="{StaticResource TextTertiaryBrush}"/>
+                                                        <Setter Property="Text" Value="{Binding DisplayIndex}"/>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding State}" Value="Current">
+                                                                <Setter Property="Foreground" Value="White"/>
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding State}" Value="Completed">
+                                                                <Setter Property="Foreground" Value="{StaticResource AccentBrush}"/>
+                                                                <Setter Property="Text" Value="✓"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
+                                            <TextBlock VerticalAlignment="Center" FontSize="13">
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock">
+                                                        <Setter Property="Foreground" Value="{StaticResource TextTertiaryBrush}"/>
+                                                        <Setter Property="FontWeight" Value="Medium"/>
+                                                        <Setter Property="Text" Value="{Binding Label}"/>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding State}" Value="Current">
+                                                                <Setter Property="Foreground" Value="White"/>
+                                                                <Setter Property="FontWeight" Value="SemiBold"/>
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding State}" Value="Completed">
+                                                                <Setter Property="Foreground" Value="{StaticResource AccentBrush}"/>
+                                                                <Setter Property="FontWeight" Value="Medium"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
+                                        </StackPanel>
+                                    </Border>
+                                </Button>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </Border>
             </Grid>
         </Border>
 
-        <ContentControl Grid.Row="2" x:Name="MainContent" Margin="24,16"
+        <ContentControl Grid.Row="2" x:Name="MainContent" Margin="24,8,24,16"
                         RenderTransformOrigin="0.5,0.5">
             <ContentControl.RenderTransform>
                 <TranslateTransform x:Name="MainContentTransform" Y="0"/>
             </ContentControl.RenderTransform>
         </ContentControl>
 
+        <StackPanel Grid.Row="2" x:Name="SkeletonPanel" Margin="24,8,24,16" Visibility="Collapsed">
+            <Border Style="{StaticResource CardStyle}" Margin="0">
+                <StackPanel Margin="4">
+                    <Border Style="{StaticResource SkeletonLineStyle}" Width="180" Margin="0,0,0,12"/>
+                    <Border Style="{StaticResource SkeletonLineStyle}" Width="100" Margin="0,0,0,8"/>
+                    <Border Style="{StaticResource SkeletonLineStyle}" Width="320" Margin="0,0,0,8"/>
+                    <Border Style="{StaticResource SkeletonLineStyle}" Width="240"/>
+                </StackPanel>
+            </Border>
+            <Border Style="{StaticResource CardStyle}" Margin="0">
+                <StackPanel Margin="4">
+                    <Border Style="{StaticResource SkeletonLineStyle}" Width="140" Margin="0,0,0,12"/>
+                    <Border Style="{StaticResource SkeletonLineStyle}" Width="400" Margin="0,0,0,8"/>
+                    <Border Style="{StaticResource SkeletonLineStyle}" Width="360"/>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+
         <Border Grid.Row="3" Background="{StaticResource SurfaceElevatedBrush}"
                 BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="0,1,0,0"
                 Padding="24,10,24,12">
             <Grid>
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Center">
-                    <TextBlock x:Name="TxtStepHint" Text="步骤 1/6 · 发送对象"
+                    <TextBlock x:Name="TxtStepHint" Text="步骤 1/6 · 收件选择"
+                               Style="{StaticResource CaptionTextStyle}"/>
+                    <TextBlock Text=" — " Foreground="{StaticResource BorderSubtleBrush}" VerticalAlignment="Center"/>
+                    <TextBlock x:Name="TxtStepDesc" Text="选择收件对象"
                                Style="{StaticResource CaptionTextStyle}"/>
                 </StackPanel>
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">

@@ -1,4 +1,4 @@
-﻿using System.Windows;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Documents;
 using System.Windows.Input;
@@ -192,13 +192,35 @@ public partial class MailComposePage : UserControl, IRefreshable
     {
         if (sender is FrameworkElement fe && fe.Tag is string colorStr)
         {
-            var color = (Color)ColorConverter.ConvertFromString(colorStr);
-            var brush = new SolidColorBrush(color);
-            Editor.Selection.ApplyPropertyValue(TextElement.ForegroundProperty, brush);
-            ColorPreview.Background = brush;
-            ColorPopup.IsOpen = false;
-            Editor.Focus();
+            ApplyColor(colorStr);
         }
+    }
+
+    private void OnApplyCustomColor(object sender, RoutedEventArgs e)
+    {
+        var input = CustomColorInput?.Text?.Trim();
+        if (string.IsNullOrEmpty(input)) return;
+        if (!input.StartsWith("#")) input = "#" + input;
+        try
+        {
+            var color = (Color)ColorConverter.ConvertFromString(input);
+            ApplyColor(input);
+            CustomColorInput.Text = "";
+        }
+        catch
+        {
+            CustomColorInput.Text = "";
+        }
+    }
+
+    private void ApplyColor(string colorStr)
+    {
+        var color = (Color)ColorConverter.ConvertFromString(colorStr);
+        var brush = new SolidColorBrush(color);
+        Editor.Selection.ApplyPropertyValue(TextElement.ForegroundProperty, brush);
+        ColorPreview.Background = brush;
+        ColorPopup.IsOpen = false;
+        Editor.Focus();
     }
 
     private void OnInsertVariable(object sender, RoutedEventArgs e)

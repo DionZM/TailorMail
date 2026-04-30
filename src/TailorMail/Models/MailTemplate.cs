@@ -1,4 +1,4 @@
-﻿﻿﻿﻿namespace TailorMail.Models;
+namespace TailorMail.Models;
 
 /// <summary>
 /// 邮件模板模型，用于定义可复用的邮件内容模板。

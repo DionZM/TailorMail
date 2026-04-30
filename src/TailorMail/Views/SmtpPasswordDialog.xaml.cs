@@ -1,4 +1,4 @@
-﻿using System.Windows;
+using System.Windows;
 using Wpf.Ui.Controls;
 
 namespace TailorMail.Views;

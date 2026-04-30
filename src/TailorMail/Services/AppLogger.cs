@@ -1,4 +1,4 @@
-﻿﻿﻿namespace TailorMail.Services;
+namespace TailorMail.Services;
 
 /// <summary>
 /// 应用程序日志工具类，提供线程安全的文件日志功能。

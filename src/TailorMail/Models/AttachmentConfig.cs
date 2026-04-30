@@ -1,4 +1,4 @@
-﻿namespace TailorMail.Models;
+namespace TailorMail.Models;
 
 /// <summary>
 /// 附件配置模型，管理邮件发送时的附件信息。

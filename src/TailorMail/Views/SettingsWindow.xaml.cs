@@ -1,12 +1,10 @@
-﻿using System.Windows;
+using System.Windows;
+using System.Windows.Controls;
 using TailorMail.Models;
 using TailorMail.ViewModels;
 
 namespace TailorMail.Views;
 
-/// <summary>
-/// 设置窗口，承载设置页面的独立窗口。
-/// </summary>
 public partial class SettingsWindow
 {
     private readonly SettingsViewModel _vm;
@@ -16,6 +14,7 @@ public partial class SettingsWindow
         InitializeComponent();
         _vm = new SettingsViewModel(App.DataService);
         LoadSettings();
+        UpdateOutlookStatus();
     }
 
     private void LoadSettings()
@@ -29,6 +28,18 @@ public partial class SettingsWindow
         TxtSenderEmail.Text = !string.IsNullOrEmpty(_vm.SmtpSenderEmail)
             ? _vm.SmtpSenderEmail
             : _vm.SmtpUserName;
+    }
+
+    private void UpdateOutlookStatus()
+    {
+        var isAvailable = _vm.IsOutlookAvailable;
+        OutlookAvailableBar.IsOpen = isAvailable;
+        OutlookUnavailableBar.IsOpen = !isAvailable;
+    }
+
+    private void OnChannelChanged(object sender, SelectionChangedEventArgs e)
+    {
+        UpdateOutlookStatus();
     }
 
     private void BtnSave_Click(object sender, RoutedEventArgs e)
