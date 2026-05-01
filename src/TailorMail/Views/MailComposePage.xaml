@@ -62,25 +62,23 @@
                             BorderBrush="{StaticResource AccentBrush}" BorderThickness="2"
                             Cursor="Hand" MouseLeftButtonUp="OnColorPickerClick" ToolTip="文字颜色"/>
                     <Popup x:Name="ColorPopup" StaysOpen="False" Placement="Bottom">
-                        <Border Background="{StaticResource SurfaceElevatedBrush}" CornerRadius="8" Padding="12"
-                                BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="1"
-                                Effect="{StaticResource ShadowLG}">
+                        <Border Style="{StaticResource ColorPickerPopupStyle}">
                             <StackPanel>
                                 <WrapPanel Width="220" Orientation="Horizontal">
-                                    <Rectangle Width="24" Height="24" Fill="Black" Margin="2" Cursor="Hand" MouseLeftButtonUp="OnColorSelected" Tag="Black" RadiusX="4" RadiusY="4"/>
-                                    <Rectangle Width="24" Height="24" Fill="#333333" Margin="2" Cursor="Hand" MouseLeftButtonUp="OnColorSelected" Tag="#333333" RadiusX="4" RadiusY="4"/>
-                                    <Rectangle Width="24" Height="24" Fill="#666666" Margin="2" Cursor="Hand" MouseLeftButtonUp="OnColorSelected" Tag="#666666" RadiusX="4" RadiusY="4"/>
-                                    <Rectangle Width="24" Height="24" Fill="#999999" Margin="2" Cursor="Hand" MouseLeftButtonUp="OnColorSelected" Tag="#999999" RadiusX="4" RadiusY="4"/>
-                                    <Rectangle Width="24" Height="24" Fill="#DC2626" Margin="2" Cursor="Hand" MouseLeftButtonUp="OnColorSelected" Tag="#DC2626" RadiusX="4" RadiusY="4"/>
-                                    <Rectangle Width="24" Height="24" Fill="#EA580C" Margin="2" Cursor="Hand" MouseLeftButtonUp="OnColorSelected" Tag="#EA580C" RadiusX="4" RadiusY="4"/>
-                                    <Rectangle Width="24" Height="24" Fill="#D97706" Margin="2" Cursor="Hand" MouseLeftButtonUp="OnColorSelected" Tag="#D97706" RadiusX="4" RadiusY="4"/>
-                                    <Rectangle Width="24" Height="24" Fill="#059669" Margin="2" Cursor="Hand" MouseLeftButtonUp="OnColorSelected" Tag="#059669" RadiusX="4" RadiusY="4"/>
-                                    <Rectangle Width="24" Height="24" Fill="#2563EB" Margin="2" Cursor="Hand" MouseLeftButtonUp="OnColorSelected" Tag="#2563EB" RadiusX="4" RadiusY="4"/>
-                                    <Rectangle Width="24" Height="24" Fill="#7C3AED" Margin="2" Cursor="Hand" MouseLeftButtonUp="OnColorSelected" Tag="#7C3AED" RadiusX="4" RadiusY="4"/>
-                                    <Rectangle Width="24" Height="24" Fill="#DB2777" Margin="2" Cursor="Hand" MouseLeftButtonUp="OnColorSelected" Tag="#DB2777" RadiusX="4" RadiusY="4"/>
-                                    <Rectangle Width="24" Height="24" Fill="#0891B2" Margin="2" Cursor="Hand" MouseLeftButtonUp="OnColorSelected" Tag="#0891B2" RadiusX="4" RadiusY="4"/>
-                                    <Rectangle Width="24" Height="24" Fill="#4F46E5" Margin="2" Cursor="Hand" MouseLeftButtonUp="OnColorSelected" Tag="#4F46E5" RadiusX="4" RadiusY="4"/>
-                                    <Rectangle Width="24" Height="24" Fill="#15803D" Margin="2" Cursor="Hand" MouseLeftButtonUp="OnColorSelected" Tag="#15803D" RadiusX="4" RadiusY="4"/>
+                                    <Rectangle Fill="Black" MouseLeftButtonUp="OnColorSelected" Tag="Black" Style="{StaticResource ColorSwatchStyle}"/>
+                                    <Rectangle Fill="#333333" MouseLeftButtonUp="OnColorSelected" Tag="#333333" Style="{StaticResource ColorSwatchStyle}"/>
+                                    <Rectangle Fill="#666666" MouseLeftButtonUp="OnColorSelected" Tag="#666666" Style="{StaticResource ColorSwatchStyle}"/>
+                                    <Rectangle Fill="#999999" MouseLeftButtonUp="OnColorSelected" Tag="#999999" Style="{StaticResource ColorSwatchStyle}"/>
+                                    <Rectangle Fill="#DC2626" MouseLeftButtonUp="OnColorSelected" Tag="#DC2626" Style="{StaticResource ColorSwatchStyle}"/>
+                                    <Rectangle Fill="#EA580C" MouseLeftButtonUp="OnColorSelected" Tag="#EA580C" Style="{StaticResource ColorSwatchStyle}"/>
+                                    <Rectangle Fill="#D97706" MouseLeftButtonUp="OnColorSelected" Tag="#D97706" Style="{StaticResource ColorSwatchStyle}"/>
+                                    <Rectangle Fill="#059669" MouseLeftButtonUp="OnColorSelected" Tag="#059669" Style="{StaticResource ColorSwatchStyle}"/>
+                                    <Rectangle Fill="#2563EB" MouseLeftButtonUp="OnColorSelected" Tag="#2563EB" Style="{StaticResource ColorSwatchStyle}"/>
+                                    <Rectangle Fill="#7C3AED" MouseLeftButtonUp="OnColorSelected" Tag="#7C3AED" Style="{StaticResource ColorSwatchStyle}"/>
+                                    <Rectangle Fill="#DB2777" MouseLeftButtonUp="OnColorSelected" Tag="#DB2777" Style="{StaticResource ColorSwatchStyle}"/>
+                                    <Rectangle Fill="#0891B2" MouseLeftButtonUp="OnColorSelected" Tag="#0891B2" Style="{StaticResource ColorSwatchStyle}"/>
+                                    <Rectangle Fill="#4F46E5" MouseLeftButtonUp="OnColorSelected" Tag="#4F46E5" Style="{StaticResource ColorSwatchStyle}"/>
+                                    <Rectangle Fill="#15803D" MouseLeftButtonUp="OnColorSelected" Tag="#15803D" Style="{StaticResource ColorSwatchStyle}"/>
                                 </WrapPanel>
                                 <Border Background="{StaticResource BorderSubtleBrush}" Height="1" Margin="0,8"/>
                                 <StackPanel Orientation="Horizontal">

@@ -47,7 +47,8 @@
                           VirtualizingPanel.IsVirtualizing="True"
                           VirtualizingPanel.VirtualizationMode="Recycling"
                           EnableRowVirtualization="True"
-                          EnableColumnVirtualization="True">
+                          EnableColumnVirtualization="True"
+                          RowStyle="{StaticResource HoverRowStyle}">
                     <DataGrid.Columns>
                         <DataGridTextColumn Header="发送对象" Binding="{Binding RecipientName}" Width="200">
                             <DataGridTextColumn.ElementStyle>

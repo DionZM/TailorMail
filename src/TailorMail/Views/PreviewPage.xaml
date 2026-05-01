@@ -50,21 +50,22 @@
 
                 <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,8">
                     <TextBlock Text="主题：" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}"/>
-                    <TextBlock x:Name="TxtSubject" TextWrapping="Wrap" FontWeight="Medium"/>
+                    <TextBlock Text="{Binding PreviewSubject}" TextWrapping="Wrap" FontWeight="Medium"/>
                 </StackPanel>
 
                 <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,8">
                     <TextBlock Text="收件人：" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}"/>
-                    <TextBlock x:Name="TxtTo" TextWrapping="Wrap" Foreground="{StaticResource AccentBrush}"/>
+                    <TextBlock Text="{Binding PreviewTo}" TextWrapping="Wrap" Foreground="{StaticResource AccentBrush}"/>
                 </StackPanel>
 
                 <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,0,0,12"
-                            x:Name="CcBccPanel" Visibility="Collapsed">
+                            Visibility="{Binding PreviewCc, Converter={StaticResource NullToCollapsedConverter}}">
                     <TextBlock Text="抄送：" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}"/>
-                    <TextBlock x:Name="TxtCc" TextWrapping="Wrap" Foreground="{StaticResource SuccessBrush}"/>
+                    <TextBlock Text="{Binding PreviewCc}" TextWrapping="Wrap" Foreground="{StaticResource SuccessBrush}"/>
                     <TextBlock Text="密送：" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" Margin="20,0,0,0"
-                               x:Name="BccLabel"/>
-                    <TextBlock x:Name="TxtBcc" TextWrapping="Wrap" Foreground="{StaticResource WarningBrush}"/>
+                               Visibility="{Binding PreviewBcc, Converter={StaticResource NullToCollapsedConverter}}"/>
+                    <TextBlock Text="{Binding PreviewBcc}" TextWrapping="Wrap" Foreground="{StaticResource WarningBrush}"
+                               Visibility="{Binding PreviewBcc, Converter={StaticResource NullToCollapsedConverter}}"/>
                 </StackPanel>
 
                 <Border Grid.Row="3" BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="1"

@@ -32,6 +32,7 @@ public partial class SettingsWindow
 
     private void UpdateOutlookStatus()
     {
+        if (_vm == null) return;
         var isAvailable = _vm.IsOutlookAvailable;
         OutlookAvailableBar.IsOpen = isAvailable;
         OutlookUnavailableBar.IsOpen = !isAvailable;

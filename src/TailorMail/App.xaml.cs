@@ -33,6 +33,27 @@ public partial class App : System.Windows.Application
     }
 
     /// <summary>
+    /// 在主窗口底部显示 Snackbar 通知（如保存成功、导出完成等）。
+    /// </summary>
+    /// <param name="title">通知标题。</param>
+    /// <param name="message">通知内容。</param>
+    /// <param name="durationMs">显示时长（毫秒），默认 2500ms。</param>
+    public static void ShowNotification(string title, string message, int durationMs = 2500)
+    {
+        if (Current.MainWindow is MainWindow mainWindow && mainWindow.SnackbarHost != null)
+        {
+            mainWindow.Dispatcher.Invoke(() =>
+            {
+                var snackbar = new Wpf.Ui.Controls.Snackbar(mainWindow.SnackbarHost);
+                snackbar.Timeout = TimeSpan.FromMilliseconds(durationMs);
+                snackbar.Appearance = Wpf.Ui.Controls.ControlAppearance.Info;
+                snackbar.Content = message;
+                snackbar.Show();
+            });
+        }
+    }
+
+    /// <summary>
     /// 应用程序启动时的初始化逻辑：
     /// 1. 注册三种全局异常处理器（UI 线程、非 UI 线程、Task 未观察异常）
     /// 2. 配置 DI 容器并注册所有服务

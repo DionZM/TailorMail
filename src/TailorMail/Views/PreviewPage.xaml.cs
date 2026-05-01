@@ -53,17 +53,6 @@ public partial class PreviewPage : UserControl, IRefreshable
         if (ListGroups.SelectedItem is Recipient r)
         {
             _viewModel.SelectRecipient(r);
-            TxtSubject.Text = _viewModel.PreviewSubject;
-            TxtTo.Text = _viewModel.PreviewTo;
-            TxtCc.Text = _viewModel.PreviewCc;
-            TxtBcc.Text = _viewModel.PreviewBcc;
-
-            var hasCc = !string.IsNullOrEmpty(_viewModel.PreviewCc);
-            var hasBcc = !string.IsNullOrEmpty(_viewModel.PreviewBcc);
-            CcBccPanel.Visibility = (hasCc || hasBcc) ? Visibility.Visible : Visibility.Collapsed;
-            BccLabel.Visibility = hasBcc ? Visibility.Visible : Visibility.Collapsed;
-            TxtBcc.Visibility = hasBcc ? Visibility.Visible : Visibility.Collapsed;
-
             UpdateAttachmentList();
             UpdateBrowser();
         }

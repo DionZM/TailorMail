@@ -30,8 +30,12 @@
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="Auto"/>
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0" Text="{Binding Converter={StaticResource FileNameConverter}}" ToolTip="{Binding}" TextTrimming="CharacterEllipsis"
-                                               Style="{StaticResource BodyTextStyle}"/>
+                                    <StackPanel Grid.Column="0" Orientation="Horizontal">
+                                        <TextBlock Text="{Binding Converter={StaticResource FileNameConverter}}" ToolTip="{Binding}" TextTrimming="CharacterEllipsis"
+                                                   Style="{StaticResource BodyTextStyle}" MaxWidth="200"/>
+                                        <TextBlock Text="{Binding Converter={StaticResource FilePathSizeConverter}}" Margin="6,0,0,0"
+                                                   Style="{StaticResource CaptionTextStyle}" VerticalAlignment="Center"/>
+                                    </StackPanel>
                                     <Button Grid.Column="1" Click="OnRemoveCommon" Tag="{Binding}"
                                             Style="{StaticResource DeleteRowButtonStyle}"
                                             ToolTip="删除此附件"/>
@@ -41,7 +45,7 @@
                     </ListBox>
                 </DockPanel>
             </Border>
-            <Border x:Name="CommonEmptyState" Style="{StaticResource EmptyStateStyle}" Visibility="Visible">
+            <Border x:Name="CommonEmptyState" Style="{StaticResource EmptyStateStyle}" Visibility="Collapsed">
                 <StackPanel>
                     <ui:SymbolIcon Symbol="Document24" Style="{StaticResource EmptyStateIconStyle}"/>
                     <TextBlock Text="暂无公共附件" Style="{StaticResource EmptyStateTextStyle}" Margin="0,0,0,4"/>
@@ -72,7 +76,8 @@
                               VirtualizingPanel.IsVirtualizing="True"
                               VirtualizingPanel.VirtualizationMode="Recycling"
                               EnableRowVirtualization="True"
-                              EnableColumnVirtualization="True">
+                              EnableColumnVirtualization="True"
+                              RowStyle="{StaticResource HoverRowStyle}">
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="发送对象" Binding="{Binding RecipientName}" Width="120" IsReadOnly="True"/>
                             <DataGridTemplateColumn Header="专有附件" Width="*">
@@ -85,8 +90,10 @@
                                                         <StackPanel Orientation="Horizontal" Margin="0,1">
                                                             <TextBlock Text="{Binding Converter={StaticResource FileNameConverter}}" TextTrimming="CharacterEllipsis"
                                                                        Foreground="{StaticResource SuccessBrush}" FontSize="12"
-                                                                       VerticalAlignment="Center" MaxWidth="300"
+                                                                       VerticalAlignment="Center" MaxWidth="200"
                                                                        ToolTip="{Binding}"/>
+                                                            <TextBlock Text="{Binding Converter={StaticResource FilePathSizeConverter}}" FontSize="11"
+                                                                       Foreground="{StaticResource TextTertiaryBrush}" VerticalAlignment="Center" Margin="6,0,0,0"/>
                                                             <Button Click="OnRemoveSpecialFromGrid" Tag="{Binding}"
                                                                     Style="{StaticResource DeleteRowButtonStyle}"
                                                                     FontSize="12" Margin="4,0,0,0"

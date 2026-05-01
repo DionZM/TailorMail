@@ -25,6 +25,7 @@
             <Color x:Key="SuccessColor">#047857</Color>
             <Color x:Key="WarningColor">#A16207</Color>
             <Color x:Key="DangerColor">#C42B1C</Color>
+            <Color x:Key="RowHoverColor">#EDF2F8</Color>
 
             <SolidColorBrush x:Key="AccentBrush" Color="{StaticResource AccentColor}"/>
             <SolidColorBrush x:Key="AccentHoverBrush" Color="{StaticResource AccentHoverColor}"/>
@@ -38,6 +39,7 @@
             <SolidColorBrush x:Key="SuccessBrush" Color="{StaticResource SuccessColor}"/>
             <SolidColorBrush x:Key="WarningBrush" Color="{StaticResource WarningColor}"/>
             <SolidColorBrush x:Key="DangerBrush" Color="{StaticResource DangerColor}"/>
+            <SolidColorBrush x:Key="RowHoverBrush" Color="{StaticResource RowHoverColor}"/>
 
             <sys:Double x:Key="SpacingXS" xmlns:sys="clr-namespace:System;assembly=mscorlib">4</sys:Double>
             <sys:Double x:Key="SpacingSM" xmlns:sys="clr-namespace:System;assembly=mscorlib">8</sys:Double>
@@ -63,6 +65,7 @@
             <DropShadowEffect x:Key="ShadowSM" x:Shared="False" BlurRadius="4" ShadowDepth="1" Opacity="0.06" Color="{StaticResource TextPrimaryColor}" Direction="270"/>
             <DropShadowEffect x:Key="ShadowMD" x:Shared="False" BlurRadius="12" ShadowDepth="2" Opacity="0.08" Color="{StaticResource TextPrimaryColor}" Direction="270"/>
             <DropShadowEffect x:Key="ShadowLG" x:Shared="False" BlurRadius="20" ShadowDepth="4" Opacity="0.12" Color="{StaticResource TextPrimaryColor}" Direction="270"/>
+            <DropShadowEffect x:Key="ShadowAccent" x:Shared="False" BlurRadius="12" ShadowDepth="2" Opacity="0.25" Color="{StaticResource AccentColor}" Direction="270"/>
 
             <sys:Double x:Key="DurationFast" xmlns:sys="clr-namespace:System;assembly=mscorlib">150</sys:Double>
             <sys:Double x:Key="DurationNormal" xmlns:sys="clr-namespace:System;assembly=mscorlib">250</sys:Double>
@@ -73,6 +76,7 @@
                 <Setter Property="FontSize" Value="{StaticResource FontSize2XL}"/>
                 <Setter Property="FontWeight" Value="Bold"/>
                 <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+                <Setter Property="TextOptions.TextFormattingMode" Value="Display"/>
             </Style>
 
             <Style TargetType="Border" x:Key="PageTitleAccentStyle">
@@ -103,6 +107,8 @@
                 <Setter Property="FontSize" Value="{StaticResource FontSizeBase}"/>
                 <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
                 <Setter Property="LineHeight" Value="22"/>
+                <Setter Property="TextWrapping" Value="Wrap"/>
+                <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
             </Style>
 
             <Style TargetType="TextBlock" x:Key="CaptionTextStyle">
@@ -133,6 +139,12 @@
                 <Setter Property="VerticalAlignment" Value="Center"/>
             </Style>
 
+            <Style TargetType="TextBlock" x:Key="DataGridWrappingCellStyle">
+                <Setter Property="TextWrapping" Value="Wrap"/>
+                <Setter Property="MaxHeight" Value="52"/>
+                <Setter Property="VerticalAlignment" Value="Center"/>
+            </Style>
+
             <Style TargetType="Border" x:Key="CardStyle">
                 <Setter Property="Background" Value="{StaticResource SurfaceElevatedBrush}"/>
                 <Setter Property="CornerRadius" Value="{StaticResource CornerRadiusLG}"/>
@@ -143,7 +155,7 @@
 
             <Style TargetType="Border" x:Key="CardFlatStyle">
                 <Setter Property="Background" Value="{StaticResource SurfaceElevatedBrush}"/>
-                <Setter Property="CornerRadius" Value="{StaticResource CornerRadiusSM}"/>
+                <Setter Property="CornerRadius" Value="{StaticResource CornerRadiusMD}"/>
                 <Setter Property="Padding" Value="12,8"/>
                 <Setter Property="BorderBrush" Value="{StaticResource BorderSubtleBrush}"/>
                 <Setter Property="BorderThickness" Value="1"/>
@@ -151,11 +163,47 @@
 
             <Style TargetType="Border" x:Key="ToolbarStyle">
                 <Setter Property="Background" Value="{StaticResource SurfaceElevatedBrush}"/>
-                <Setter Property="CornerRadius" Value="{StaticResource CornerRadiusSM}"/>
+                <Setter Property="CornerRadius" Value="{StaticResource CornerRadiusMD}"/>
                 <Setter Property="Padding" Value="12,8"/>
                 <Setter Property="Margin" Value="0,0,0,12"/>
                 <Setter Property="BorderBrush" Value="{StaticResource BorderSubtleBrush}"/>
                 <Setter Property="BorderThickness" Value="1"/>
+            </Style>
+
+            <Style TargetType="DataGridRow" x:Key="HoverRowStyle">
+                <Style.Triggers>
+                    <Trigger Property="IsMouseOver" Value="True">
+                        <Setter Property="Background" Value="{StaticResource RowHoverBrush}"/>
+                    </Trigger>
+                    <Trigger Property="IsSelected" Value="True">
+                        <Setter Property="Background" Value="{StaticResource AccentLightBrush}"/>
+                    </Trigger>
+                    <MultiTrigger>
+                        <MultiTrigger.Conditions>
+                            <Condition Property="IsSelected" Value="True"/>
+                            <Condition Property="IsMouseOver" Value="True"/>
+                        </MultiTrigger.Conditions>
+                        <Setter Property="Background" Value="#CCE0F0FF"/>
+                    </MultiTrigger>
+                </Style.Triggers>
+            </Style>
+
+            <Style TargetType="Border" x:Key="ColorPickerPopupStyle">
+                <Setter Property="Background" Value="{StaticResource SurfaceElevatedBrush}"/>
+                <Setter Property="CornerRadius" Value="{StaticResource CornerRadiusLG}"/>
+                <Setter Property="Padding" Value="12"/>
+                <Setter Property="BorderBrush" Value="{StaticResource BorderSubtleBrush}"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="Effect" Value="{StaticResource ShadowLG}"/>
+            </Style>
+
+            <Style TargetType="Rectangle" x:Key="ColorSwatchStyle">
+                <Setter Property="Width" Value="24"/>
+                <Setter Property="Height" Value="24"/>
+                <Setter Property="Margin" Value="2"/>
+                <Setter Property="Cursor" Value="Hand"/>
+                <Setter Property="RadiusX" Value="4"/>
+                <Setter Property="RadiusY" Value="4"/>
             </Style>
 
             <Style TargetType="Button" x:Key="ToolButtonStyle">
@@ -168,6 +216,9 @@
                     <Trigger Property="IsMouseOver" Value="True">
                         <Setter Property="Foreground" Value="{StaticResource AccentBrush}"/>
                     </Trigger>
+                    <Trigger Property="IsPressed" Value="True">
+                        <Setter Property="Foreground" Value="{StaticResource AccentHoverBrush}"/>
+                    </Trigger>
                 </Style.Triggers>
             </Style>
 
@@ -176,6 +227,9 @@
                 <Style.Triggers>
                     <Trigger Property="IsMouseOver" Value="True">
                         <Setter Property="Foreground" Value="#A02018"/>
+                    </Trigger>
+                    <Trigger Property="IsPressed" Value="True">
+                        <Setter Property="Foreground" Value="#801010"/>
                     </Trigger>
                 </Style.Triggers>
             </Style>
@@ -222,6 +276,14 @@
                 <Setter Property="VerticalAlignment" Value="Center"/>
             </Style>
 
+            <Style TargetType="Border" x:Key="ErrorStateStyle">
+                <Setter Property="Background" Value="{StaticResource SurfaceBrush}"/>
+                <Setter Property="CornerRadius" Value="{StaticResource CornerRadiusLG}"/>
+                <Setter Property="Padding" Value="24,32"/>
+                <Setter Property="HorizontalAlignment" Value="Center"/>
+                <Setter Property="VerticalAlignment" Value="Center"/>
+            </Style>
+
             <Style TargetType="ui:SymbolIcon" x:Key="EmptyStateIconStyle">
                 <Setter Property="FontSize" Value="32"/>
                 <Setter Property="Foreground" Value="{StaticResource BorderSubtleBrush}"/>
@@ -249,6 +311,8 @@
             <converters:NullToVisibleConverter x:Key="NullToVisibleConverter"/>
             <converters:IntToVisibleConverter x:Key="IntToVisibleConverter"/>
             <converters:FileNameConverter x:Key="FileNameConverter"/>
+            <converters:FileSizeConverter x:Key="FileSizeConverter"/>
+            <converters:FilePathSizeConverter x:Key="FilePathSizeConverter"/>
             <converters:InverseBoolToVisibilityConverter x:Key="InverseBoolToVisibilityConverter"/>
             <converters:FailedToVisibilityConverter x:Key="FailedToVisibilityConverter"/>
         </ResourceDictionary>

@@ -37,13 +37,21 @@
                           VirtualizingPanel.IsVirtualizing="True"
                           VirtualizingPanel.VirtualizationMode="Recycling"
                           EnableRowVirtualization="True"
-                          EnableColumnVirtualization="True"/>
+                          EnableColumnVirtualization="True"
+                          RowStyle="{StaticResource HoverRowStyle}"/>
             </Border>
             <Border x:Name="VarEmptyState" Style="{StaticResource EmptyStateStyle}" Visibility="Collapsed">
                 <StackPanel>
                     <ui:SymbolIcon Symbol="Tag24" Style="{StaticResource EmptyStateIconStyle}"/>
                     <TextBlock Text="暂无变量" Style="{StaticResource EmptyStateTextStyle}" Margin="0,0,0,4"/>
                     <TextBlock Text="请在上方输入变量名并点击添加" Style="{StaticResource CaptionTextStyle}" HorizontalAlignment="Center"/>
+                </StackPanel>
+            </Border>
+            <Border x:Name="VarErrorState" Style="{StaticResource ErrorStateStyle}" Visibility="Collapsed">
+                <StackPanel>
+                    <ui:SymbolIcon Symbol="ErrorCircle24" Style="{StaticResource EmptyStateIconStyle}" Foreground="{StaticResource DangerBrush}"/>
+                    <TextBlock Text="数据加载失败" Style="{StaticResource EmptyStateTextStyle}" Foreground="{StaticResource DangerBrush}" Margin="0,0,0,4"/>
+                    <TextBlock Text="请检查数据库连接后重试" Style="{StaticResource CaptionTextStyle}" HorizontalAlignment="Center"/>
                 </StackPanel>
             </Border>
         </Grid>

@@ -19,19 +19,15 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <ui:TitleBar Grid.Row="0" Title="千函 - TailorMail"
+        <ui:TitleBar Grid.Row="0" Title=""
                      HorizontalAlignment="Stretch"
                      ShowMaximize="True" ShowMinimize="True" ShowClose="True">
             <ui:TitleBar.Icon>
                 <ui:ImageIcon Source="pack://application:,,,/logo_64.png" Width="16" Height="16"/>
             </ui:TitleBar.Icon>
-        </ui:TitleBar>
-
-        <Border Grid.Row="1" Background="{StaticResource SurfaceElevatedBrush}"
-                BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="0,0,0,1">
-            <Grid Margin="32,10,32,12" HorizontalAlignment="Center">
+            <ui:TitleBar.CenterContent>
                 <Border x:Name="PillStepper" Background="{StaticResource SurfaceBrush}"
-                        CornerRadius="20" Padding="4" HorizontalAlignment="Center">
+                        CornerRadius="20" Padding="4" Margin="0,2,0,0">
                     <ItemsControl x:Name="StepItems">
                         <ItemsControl.ItemsPanel>
                             <ItemsPanelTemplate>
@@ -49,6 +45,7 @@
                                                 <Style.Triggers>
                                                     <DataTrigger Binding="{Binding State}" Value="Current">
                                                         <Setter Property="Background" Value="{StaticResource AccentBrush}"/>
+                                                        <Setter Property="Effect" Value="{StaticResource ShadowAccent}"/>
                                                     </DataTrigger>
                                                     <DataTrigger Binding="{Binding State}" Value="Completed">
                                                         <Setter Property="Background" Value="{StaticResource AccentLightBrush}"/>
@@ -68,7 +65,7 @@
                                                                 <Setter Property="Foreground" Value="White"/>
                                                             </DataTrigger>
                                                             <DataTrigger Binding="{Binding State}" Value="Completed">
-                                                                <Setter Property="Foreground" Value="{StaticResource AccentBrush}"/>
+                                                                <Setter Property="Foreground" Value="{StaticResource SuccessBrush}"/>
                                                                 <Setter Property="Text" Value="✓"/>
                                                             </DataTrigger>
                                                         </Style.Triggers>
@@ -101,7 +98,17 @@
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
                 </Border>
-            </Grid>
+            </ui:TitleBar.CenterContent>
+        </ui:TitleBar>
+
+        <Border Grid.Row="1" x:Name="AccentBar" Height="3" Margin="0">
+            <Border.Background>
+                <LinearGradientBrush StartPoint="0,0.5" EndPoint="1,0.5">
+                    <GradientStop Color="{StaticResource AccentColor}" Offset="0"/>
+                    <GradientStop Color="#4DA6E8" Offset="0.3"/>
+                    <GradientStop Color="Transparent" Offset="0.6"/>
+                </LinearGradientBrush>
+            </Border.Background>
         </Border>
 
         <ContentControl Grid.Row="2" x:Name="MainContent" Margin="24,8,24,16"
@@ -131,13 +138,14 @@
 
         <Border Grid.Row="3" Background="{StaticResource SurfaceElevatedBrush}"
                 BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="0,1,0,0"
-                Padding="24,10,24,12">
+                Padding="24,10,24,12"
+                Effect="{StaticResource ShadowSM}">
             <Grid>
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Center">
                     <TextBlock x:Name="TxtStepHint" Text="步骤 1/6 · 收件选择"
                                Style="{StaticResource CaptionTextStyle}"/>
                     <TextBlock Text=" — " Foreground="{StaticResource BorderSubtleBrush}" VerticalAlignment="Center"/>
-                    <TextBlock x:Name="TxtStepDesc" Text="选择收件对象"
+                    <TextBlock x:Name="TxtStepDesc"
                                Style="{StaticResource CaptionTextStyle}"/>
                 </StackPanel>
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
@@ -161,5 +169,9 @@
                 </StackPanel>
             </Grid>
         </Border>
+
+        <ui:SnackbarPresenter x:Name="SnackbarHost" Grid.RowSpan="4" VerticalAlignment="Bottom" HorizontalAlignment="Center"
+              Margin="0,0,0,20">
+        </ui:SnackbarPresenter>
     </Grid>
 </ui:FluentWindow>

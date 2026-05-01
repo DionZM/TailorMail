@@ -2,8 +2,11 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
+using System.Windows.Documents;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
+using System.Windows.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using TailorMail.Views;
 
@@ -103,12 +106,53 @@ public partial class MainWindow
 
     private void UpdateStepDesc()
     {
-        TxtStepDesc.Text = _currentStep switch
+        if (_currentStep == 5 && _step6 is IDynamicStepDesc d5)
         {
-            0 when _step1 is IDynamicStepDesc d0 => d0.GetStepDescription(),
-            5 when _step6 is IDynamicStepDesc d5 => d5.GetStepDescription(),
-            _ => StepDescs[_currentStep]
-        };
+            var desc = d5.GetStepDescription();
+            var linkIndex = desc.IndexOf("设置");
+            if (linkIndex >= 0)
+            {
+                TxtStepDesc.Inlines.Clear();
+                TxtStepDesc.Inlines.Add(new Run(desc[..linkIndex]));
+                var hyperlink = new Hyperlink(new Run("设置"))
+                {
+                    NavigateUri = new Uri("tailormail://settings"),
+                    Foreground = (Brush)FindResource("AccentBrush"),
+                    TextDecorations = null
+                };
+                hyperlink.RequestNavigate += OnSettingsLinkClick;
+                TxtStepDesc.Inlines.Add(hyperlink);
+                TxtStepDesc.Inlines.Add(new Run(desc[(linkIndex + 2)..]));
+            }
+            else
+            {
+                TxtStepDesc.Text = desc;
+            }
+        }
+        else if (_currentStep == 0 && _step1 is IDynamicStepDesc d0)
+        {
+            TxtStepDesc.Text = d0.GetStepDescription();
+        }
+        else
+        {
+            TxtStepDesc.Text = StepDescs[_currentStep];
+        }
+    }
+
+    private void OnSettingsLinkClick(object sender, System.Windows.Navigation.RequestNavigateEventArgs e)
+    {
+        if (sender is Hyperlink hl)
+        {
+            hl.Foreground = (Brush)FindResource("AccentHoverBrush");
+            var timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(300) };
+            timer.Tick += (_, _) =>
+            {
+                timer.Stop();
+                hl.Foreground = (Brush)FindResource("AccentBrush");
+            };
+            timer.Start();
+        }
+        BtnSettings_Click(sender, new RoutedEventArgs());
     }
 
     private void UpdateButtons()
@@ -138,6 +182,67 @@ public partial class MainWindow
                 : i == _currentStep ? StepState.Current
                 : StepState.Upcoming;
         }
+
+        Dispatcher.BeginInvoke(DispatcherPriority.Loaded, UpdateAccentBar);
+    }
+
+    private void UpdateAccentBar()
+    {
+        if (AccentBar == null || StepItems.ItemContainerGenerator.Status != GeneratorStatus.ContainersGenerated)
+            return;
+
+        var container = StepItems.ItemContainerGenerator.ContainerFromIndex(_currentStep);
+        if (container is not ContentPresenter contentContainer)
+        {
+            return;
+        }
+        var button = FindVisualChild<Button>(contentContainer);
+        if (button == null)
+            return;
+
+        try
+        {
+            var pillBounds = button.TransformToAncestor(this).TransformBounds(new Rect(0, 0, button.ActualWidth, button.ActualHeight));
+            var barBounds = AccentBar.TransformToAncestor(this).TransformBounds(new Rect(0, 0, AccentBar.ActualWidth, AccentBar.ActualHeight));
+
+            var pillCenterScreenX = pillBounds.Left + pillBounds.Width / 2;
+            var barLeftScreenX = barBounds.Left;
+            var barWidth = barBounds.Width;
+
+            if (barWidth <= 0) return;
+            var centerX = (pillCenterScreenX - barLeftScreenX) / barWidth;
+            centerX = Math.Max(0.05, Math.Min(0.95, centerX));
+
+            var halfSpread = 0.44;
+            AccentBar.Background = new LinearGradientBrush
+            {
+                StartPoint = new Point(0, 0.5),
+                EndPoint = new Point(1, 0.5),
+                GradientStops = new GradientStopCollection
+                {
+                    new GradientStop(Colors.Transparent, Math.Max(0, centerX - halfSpread)),
+                    new GradientStop((Color)FindResource("AccentColor"), centerX),
+                    new GradientStop(Colors.Transparent, Math.Min(1, centerX + halfSpread))
+                }
+            };
+        }
+        catch
+        {
+        }
+    }
+
+    private static T? FindVisualChild<T>(DependencyObject parent) where T : DependencyObject
+    {
+        for (int i = 0; i < VisualTreeHelper.GetChildrenCount(parent); i++)
+        {
+            var child = VisualTreeHelper.GetChild(parent, i);
+            if (child is T result)
+                return result;
+            var descendant = FindVisualChild<T>(child);
+            if (descendant != null)
+                return descendant;
+        }
+        return null;
     }
 
     private void BtnPrev_Click(object sender, RoutedEventArgs e)
@@ -191,8 +296,20 @@ public partial class MainWindow
 
     private void BtnSettings_Click(object sender, RoutedEventArgs e)
     {
-        var win = new SettingsWindow { Owner = this };
-        win.ShowDialog();
+        try
+        {
+            var win = new SettingsWindow { Owner = this };
+            win.ShowDialog();
+        }
+        catch (Exception ex)
+        {
+            Services.AppLogger.Error("打开设置窗口失败", ex);
+            var detail = ex.ToString();
+            if (ex.InnerException != null)
+                detail += "\n\n--- InnerException ---\n" + ex.InnerException.ToString();
+            MessageBox.Show($"打开设置窗口失败：\n\n{detail}", "错误",
+                MessageBoxButton.OK, MessageBoxImage.Error);
+        }
     }
 
     private void BtnAbout_Click(object sender, RoutedEventArgs e)

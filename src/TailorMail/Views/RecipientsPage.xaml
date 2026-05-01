@@ -10,23 +10,29 @@
 
         <Grid Grid.Row="0" Margin="0,0,0,16">
             <Border Style="{StaticResource CardStyle}" Margin="0" Padding="16,8">
-                <WrapPanel Orientation="Horizontal">
-                    <ComboBox x:Name="GroupComboBox" ItemsSource="{Binding Groups}"
-                              SelectedItem="{Binding SelectedGroup}" DisplayMemberPath="Name"
-                              Width="140" Margin="0,0,8,0" Padding="8,6"/>
-                    <ui:TextBox Text="{Binding NewGroupName,UpdateSourceTrigger=PropertyChanged}"
-                                PlaceholderText="新分组名" Width="110" Margin="0,0,8,0"/>
-                    <Button Content="添加分组" Command="{Binding AddGroupCommand}" Margin="0,0,4,0" Padding="12,6"/>
-                    <Button Content="删除分组" Click="OnDeleteGroup" Padding="12,6"/>
-                </WrapPanel>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <WrapPanel Grid.Column="0" Orientation="Horizontal">
+                        <ComboBox x:Name="GroupComboBox" ItemsSource="{Binding Groups}"
+                                  SelectedItem="{Binding SelectedGroup}" DisplayMemberPath="Name"
+                                  Width="140" Margin="0,0,8,0" Padding="8,6"/>
+                        <ui:TextBox Text="{Binding NewGroupName,UpdateSourceTrigger=PropertyChanged}"
+                                    PlaceholderText="新分组名" Width="110" Margin="0,0,8,0"/>
+                        <Button Content="添加分组" Command="{Binding AddGroupCommand}" Margin="0,0,4,0" Padding="12,6"/>
+                        <Button Content="删除分组" Click="OnDeleteGroup" Padding="12,6"/>
+                    </WrapPanel>
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                        <ui:TextBox x:Name="SearchBox" PlaceholderText="搜索收件人..." Width="140" Margin="0,0,4,0"
+                                    TextChanged="OnSearchTextChanged" Icon="{ui:SymbolIcon Search24}"/>
+                        <Button Content="从其他组复制" Command="{Binding ImportFromOtherGroupCommand}" Margin="0,0,4,0" Padding="12,6"/>
+                        <Button Content="导出" Command="{Binding ExportToExcelCommand}" Margin="0,0,4,0" Padding="12,6"/>
+                        <Button Content="导入" Command="{Binding ImportFromExcelCommand}" Padding="12,6"/>
+                    </StackPanel>
+                </Grid>
             </Border>
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,8,0">
-                <ui:TextBox x:Name="SearchBox" PlaceholderText="搜索收件人..." Width="140" Margin="0,0,4,0"
-                            TextChanged="OnSearchTextChanged" Icon="{ui:SymbolIcon Search24}"/>
-                <Button Content="从其他组复制" Command="{Binding ImportFromOtherGroupCommand}" Margin="0,0,4,0" Padding="12,6"/>
-                <Button Content="导出" Command="{Binding ExportToExcelCommand}" Margin="0,0,4,0" Padding="12,6"/>
-                <Button Content="导入" Command="{Binding ImportFromExcelCommand}" Padding="12,6"/>
-            </StackPanel>
         </Grid>
 
         <Grid Grid.Row="1">
@@ -51,7 +57,8 @@
                           VirtualizingPanel.IsVirtualizing="True"
                           VirtualizingPanel.VirtualizationMode="Recycling"
                           EnableRowVirtualization="True"
-                          EnableColumnVirtualization="True">
+                          EnableColumnVirtualization="True"
+                          RowStyle="{StaticResource HoverRowStyle}">
                     <DataGrid.ContextMenu>
                         <ContextMenu>
                             <MenuItem Header="上移" Click="OnMoveUp"/>
@@ -78,13 +85,9 @@
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>
-                        <DataGridTextColumn Header="名称" Binding="{Binding Name,UpdateSourceTrigger=LostFocus}" Width="*" MinWidth="80">
+                        <DataGridTextColumn Header="名称" Binding="{Binding Name,UpdateSourceTrigger=LostFocus}" Width="*" MinWidth="80" MaxWidth="300">
                             <DataGridTextColumn.ElementStyle>
-                                <Style TargetType="TextBlock">
-                                    <Setter Property="TextWrapping" Value="Wrap"/>
-                                    <Setter Property="MaxHeight" Value="52"/>
-                                    <Setter Property="VerticalAlignment" Value="Center"/>
-                                </Style>
+                                <Style TargetType="TextBlock" BasedOn="{StaticResource DataGridWrappingCellStyle}"/>
                             </DataGridTextColumn.ElementStyle>
                             <DataGridTextColumn.EditingElementStyle>
                                 <Style TargetType="TextBox">
@@ -93,49 +96,29 @@
                                 </Style>
                             </DataGridTextColumn.EditingElementStyle>
                         </DataGridTextColumn>
-                        <DataGridTextColumn Header="简称" Binding="{Binding ShortName,UpdateSourceTrigger=LostFocus}" Width="Auto" MinWidth="60">
+                        <DataGridTextColumn Header="简称" Binding="{Binding ShortName,UpdateSourceTrigger=LostFocus}" Width="Auto" MinWidth="60" MaxWidth="160">
                             <DataGridTextColumn.ElementStyle>
-                                <Style TargetType="TextBlock">
-                                    <Setter Property="TextWrapping" Value="Wrap"/>
-                                    <Setter Property="MaxHeight" Value="52"/>
-                                    <Setter Property="VerticalAlignment" Value="Center"/>
-                                </Style>
+                                <Style TargetType="TextBlock" BasedOn="{StaticResource DataGridWrappingCellStyle}"/>
                             </DataGridTextColumn.ElementStyle>
                         </DataGridTextColumn>
-                        <DataGridTextColumn Header="收件人(To)" Binding="{Binding ToEmails,UpdateSourceTrigger=LostFocus}" Width="*" MinWidth="100">
+                        <DataGridTextColumn Header="收件人(To)" Binding="{Binding ToEmails,UpdateSourceTrigger=LostFocus}" Width="*" MinWidth="100" MaxWidth="350">
                             <DataGridTextColumn.ElementStyle>
-                                <Style TargetType="TextBlock">
-                                    <Setter Property="TextWrapping" Value="Wrap"/>
-                                    <Setter Property="MaxHeight" Value="52"/>
-                                    <Setter Property="VerticalAlignment" Value="Center"/>
-                                </Style>
+                                <Style TargetType="TextBlock" BasedOn="{StaticResource DataGridWrappingCellStyle}"/>
                             </DataGridTextColumn.ElementStyle>
                         </DataGridTextColumn>
-                        <DataGridTextColumn Header="抄送(Cc)" Binding="{Binding CcEmails,UpdateSourceTrigger=LostFocus}" Width="*" MinWidth="80">
+                        <DataGridTextColumn Header="抄送(Cc)" Binding="{Binding CcEmails,UpdateSourceTrigger=LostFocus}" Width="*" MinWidth="80" MaxWidth="300">
                             <DataGridTextColumn.ElementStyle>
-                                <Style TargetType="TextBlock">
-                                    <Setter Property="TextWrapping" Value="Wrap"/>
-                                    <Setter Property="MaxHeight" Value="52"/>
-                                    <Setter Property="VerticalAlignment" Value="Center"/>
-                                </Style>
+                                <Style TargetType="TextBlock" BasedOn="{StaticResource DataGridWrappingCellStyle}"/>
                             </DataGridTextColumn.ElementStyle>
                         </DataGridTextColumn>
-                        <DataGridTextColumn Header="密送(Bcc)" Binding="{Binding BccEmails,UpdateSourceTrigger=LostFocus}" Width="*" MinWidth="80">
+                        <DataGridTextColumn Header="密送(Bcc)" Binding="{Binding BccEmails,UpdateSourceTrigger=LostFocus}" Width="*" MinWidth="80" MaxWidth="300">
                             <DataGridTextColumn.ElementStyle>
-                                <Style TargetType="TextBlock">
-                                    <Setter Property="TextWrapping" Value="Wrap"/>
-                                    <Setter Property="MaxHeight" Value="52"/>
-                                    <Setter Property="VerticalAlignment" Value="Center"/>
-                                </Style>
+                                <Style TargetType="TextBlock" BasedOn="{StaticResource DataGridWrappingCellStyle}"/>
                             </DataGridTextColumn.ElementStyle>
                         </DataGridTextColumn>
-                        <DataGridTextColumn Header="备注" Binding="{Binding Remark,UpdateSourceTrigger=LostFocus}" Width="*" MinWidth="60">
+                        <DataGridTextColumn Header="备注" Binding="{Binding Remark,UpdateSourceTrigger=LostFocus}" Width="*" MinWidth="60" MaxWidth="300">
                             <DataGridTextColumn.ElementStyle>
-                                <Style TargetType="TextBlock">
-                                    <Setter Property="TextWrapping" Value="Wrap"/>
-                                    <Setter Property="MaxHeight" Value="52"/>
-                                    <Setter Property="VerticalAlignment" Value="Center"/>
-                                </Style>
+                                <Style TargetType="TextBlock" BasedOn="{StaticResource DataGridWrappingCellStyle}"/>
                             </DataGridTextColumn.ElementStyle>
                         </DataGridTextColumn>
                         <DataGridTemplateColumn Width="40" IsReadOnly="True" CanUserSort="False" CanUserResize="False">
@@ -155,6 +138,13 @@
                     <ui:SymbolIcon Symbol="People24" Style="{StaticResource EmptyStateIconStyle}"/>
                     <TextBlock Text="暂无收件对象" Style="{StaticResource EmptyStateTextStyle}" Margin="0,0,0,4"/>
                     <TextBlock Text="双击表格区域或按 Enter 键添加" Style="{StaticResource CaptionTextStyle}" HorizontalAlignment="Center"/>
+                </StackPanel>
+            </Border>
+            <Border x:Name="ErrorState" Style="{StaticResource ErrorStateStyle}" Visibility="Collapsed">
+                <StackPanel>
+                    <ui:SymbolIcon Symbol="ErrorCircle24" Style="{StaticResource EmptyStateIconStyle}" Foreground="{StaticResource DangerBrush}"/>
+                    <TextBlock Text="数据加载失败" Style="{StaticResource EmptyStateTextStyle}" Foreground="{StaticResource DangerBrush}" Margin="0,0,0,4"/>
+                    <TextBlock Text="请检查数据库连接后重试" Style="{StaticResource CaptionTextStyle}" HorizontalAlignment="Center"/>
                 </StackPanel>
             </Border>
         </Grid>

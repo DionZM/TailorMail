@@ -1,3 +1,4 @@
+using System.Reflection;
 using System.Windows;
 using System.Windows.Navigation;
 
@@ -11,6 +12,8 @@ public partial class AboutWindow
     public AboutWindow()
     {
         InitializeComponent();
+        var version = Assembly.GetExecutingAssembly().GetName().Version;
+        TxtVersion.Text = $"v{version?.Major ?? 0}.{version?.Minor ?? 9}.{version?.Build ?? 0}";
     }
 
     private void BtnClose_Click(object sender, RoutedEventArgs e)

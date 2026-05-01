@@ -134,6 +134,74 @@ public class FileNameConverter : IValueConverter
 }
 
 /// <summary>
+/// 文件路径转文件大小字符串转换器。从完整路径获取文件大小并转换为人类可读格式。
+/// </summary>
+public class FilePathSizeConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        if (value is not string path || string.IsNullOrEmpty(path))
+            return "";
+        try
+        {
+            var info = new System.IO.FileInfo(path);
+            if (!info.Exists) return "";
+            string[] suffixes = { "B", "KB", "MB", "GB" };
+            var order = 0;
+            double size = info.Length;
+            while (size >= 1024 && order < suffixes.Length - 1)
+            {
+                order++;
+                size /= 1024;
+            }
+            return order == 0 ? $"{info.Length} {suffixes[order]}" : $"{size:0.#} {suffixes[order]}";
+        }
+        catch
+        {
+            return "";
+        }
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        throw new NotImplementedException();
+    }
+}
+
+/// <summary>
+/// 文件大小转人类可读字符串转换器。将字节数（long）转换为如 "2.5 MB" 的格式。
+/// </summary>
+public class FileSizeConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        if (value is long bytes)
+            return FormatSize(bytes);
+        if (value is int intBytes && intBytes >= 0)
+            return FormatSize(intBytes);
+        return "";
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        throw new NotImplementedException();
+    }
+
+    private static string FormatSize(long bytes)
+    {
+        string[] suffixes = { "B", "KB", "MB", "GB" };
+        var order = 0;
+        double size = bytes;
+        while (size >= 1024 && order < suffixes.Length - 1)
+        {
+            order++;
+            size /= 1024;
+        }
+        return order == 0 ? $"{bytes} {suffixes[order]}" : $"{size:0.#} {suffixes[order]}";
+    }
+}
+
+/// <summary>
 /// 发送失败状态转可见性转换器。当 <see cref="SendStatus"/> 为 Failed 时显示元素。
 /// </summary>
 public class FailedToVisibilityConverter : IValueConverter
