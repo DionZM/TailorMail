@@ -48,7 +48,7 @@ public partial class VariableSelectDialog : Wpf.Ui.Controls.FluentWindow
             {
                 Content = name,
                 Margin = new Thickness(0, 4, 0, 4),
-                FontFamily = (FontFamily)FindResource("AppFontFamily"),
+                FontFamily = (FontFamily)FindResource("UIFontFamily"),
                 Tag = name
             };
             checkBoxes.Add(cb);

@@ -46,7 +46,7 @@
                           MouseLeftButtonUp="OnGridMouseClick"
                           MouseDoubleClick="OnGridDoubleClick"
                           GridLinesVisibility="Horizontal" AlternatingRowBackground="{StaticResource SurfaceBrush}"
-                          FontSize="13" FontFamily="{StaticResource AppFontFamily}"
+                          FontSize="13" FontFamily="{StaticResource UIFontFamily}"
                           BorderThickness="0" Background="Transparent"
                           HeadersVisibility="Column"
                           Sorting="OnGridSorting"
@@ -68,9 +68,9 @@
                         </ContextMenu>
                     </DataGrid.ContextMenu>
                     <DataGrid.Columns>
-                        <DataGridTemplateColumn Width="60" IsReadOnly="True" CanUserSort="False" CanUserResize="False">
+                        <DataGridTemplateColumn Width="58" IsReadOnly="True" CanUserSort="False" CanUserResize="False">
                             <DataGridTemplateColumn.Header>
-                                <Grid HorizontalAlignment="Stretch">
+                                <Grid HorizontalAlignment="Stretch" Margin="-3,0,-3,0">
                                     <CheckBox x:Name="HeaderCheckBox" Click="OnHeaderCheckBoxClick"
                                               HorizontalAlignment="Center" VerticalAlignment="Center"
                                               ToolTip="全选/取消全选"/>

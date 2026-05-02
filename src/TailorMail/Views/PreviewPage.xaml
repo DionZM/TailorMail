@@ -32,7 +32,7 @@
                             TextChanged="OnSearchTextChanged" Icon="{ui:SymbolIcon Search24}"/>
                 <ListBox Grid.Row="1" x:Name="ListGroups" DisplayMemberPath="Name"
                          BorderThickness="0" Background="Transparent"
-                         FontFamily="{StaticResource AppFontFamily}"
+                         FontFamily="{StaticResource UIFontFamily}"
                          SelectionChanged="OnGroupSelected"/>
             </StackPanel>
         </Border>
@@ -74,10 +74,7 @@
                 </Border>
 
                 <StackPanel Grid.Row="4" Margin="0,8,0,0">
-                    <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
-                        <Border Style="{StaticResource SectionTitleAccentStyle}"/>
-                        <TextBlock Text="附件清单" Style="{StaticResource SectionTitleStyle}"/>
-                    </StackPanel>
+                    <TextBlock Text="附件：" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
                     <ItemsControl x:Name="PanelAttachments"/>
                 </StackPanel>
             </Grid>

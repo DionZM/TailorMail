@@ -5,7 +5,7 @@
         Title="发送配置" Height="580" Width="520"
         WindowStartupLocation="CenterOwner"
         ResizeMode="NoResize"
-        FontFamily="{StaticResource AppFontFamily}"
+        FontFamily="{StaticResource UIFontFamily}"
         Background="{StaticResource SurfaceBrush}">
     <Grid Margin="24">
         <Grid.RowDefinitions>
@@ -15,7 +15,8 @@
         </Grid.RowDefinitions>
 
         <StackPanel Grid.Row="0" Margin="0,0,0,16">
-            <TextBlock Text="发送配置" Style="{StaticResource PageTitleStyle}"/>
+            <TextBlock Text="发送配置" FontSize="{StaticResource FontSizeXL}" FontWeight="Bold"
+                       FontFamily="{StaticResource DisplayFontFamily}" Foreground="{StaticResource TextPrimaryBrush}"/>
             <Border Style="{StaticResource PageTitleAccentStyle}"/>
         </StackPanel>
 

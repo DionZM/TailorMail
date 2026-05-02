@@ -1,4 +1,4 @@
-namespace TailorMail.Models;
+﻿﻿namespace TailorMail.Models;
 
 /// <summary>
 /// 应用程序全局配置模型，包含邮件发送方式、SMTP 服务器设置
@@ -34,6 +34,8 @@ public class AppSettings
     /// 用于在 WPF 富文本编辑器中恢复格式化的邮件正文。
     /// </summary>
     public string LastBodyXaml { get; set; } = string.Empty;
+
+    public bool ReducedMotion { get; set; }
 }
 
 /// <summary>

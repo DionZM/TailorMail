@@ -10,15 +10,17 @@
                 <ui:ControlsDictionary />
             </ResourceDictionary.MergedDictionaries>
 
-            <FontFamily x:Key="AppFontFamily">Segoe UI Variable, Segoe UI, Microsoft YaHei UI</FontFamily>
-            <FontFamily x:Key="AppMonoFontFamily">Cascadia Code, Consolas</FontFamily>
+            <FontFamily x:Key="DisplayFontFamily">Georgia, Segoe UI Variable, Segoe UI, Microsoft YaHei UI</FontFamily>
+            <FontFamily x:Key="BodyFontFamily">Segoe UI Variable, Segoe UI, Microsoft YaHei UI</FontFamily>
+            <FontFamily x:Key="UIFontFamily">Segoe UI Variable, Segoe UI, Microsoft YaHei UI</FontFamily>
+            <FontFamily x:Key="MonoFontFamily">Cascadia Code, Consolas</FontFamily>
 
             <Color x:Key="AccentColor">#1D6FB5</Color>
             <Color x:Key="AccentHoverColor">#185A94</Color>
             <Color x:Key="AccentLightColor">#E0F0FF</Color>
-            <Color x:Key="SurfaceColor">#F5F7FA</Color>
+            <Color x:Key="SurfaceColor">#F2F5F9</Color>
             <Color x:Key="SurfaceElevatedColor">#FFFFFF</Color>
-            <Color x:Key="BorderSubtleColor">#E0E5EC</Color>
+            <Color x:Key="BorderSubtleColor">#DDE2E9</Color>
             <Color x:Key="TextPrimaryColor">#1A2332</Color>
             <Color x:Key="TextSecondaryColor">#5A6A7E</Color>
             <Color x:Key="TextTertiaryColor">#626F82</Color>
@@ -26,6 +28,7 @@
             <Color x:Key="WarningColor">#A16207</Color>
             <Color x:Key="DangerColor">#C42B1C</Color>
             <Color x:Key="RowHoverColor">#EDF2F8</Color>
+            <Color x:Key="RowSelectedColor">#D6E9FB</Color>
 
             <SolidColorBrush x:Key="AccentBrush" Color="{StaticResource AccentColor}"/>
             <SolidColorBrush x:Key="AccentHoverBrush" Color="{StaticResource AccentHoverColor}"/>
@@ -40,6 +43,7 @@
             <SolidColorBrush x:Key="WarningBrush" Color="{StaticResource WarningColor}"/>
             <SolidColorBrush x:Key="DangerBrush" Color="{StaticResource DangerColor}"/>
             <SolidColorBrush x:Key="RowHoverBrush" Color="{StaticResource RowHoverColor}"/>
+            <SolidColorBrush x:Key="RowSelectedBrush" Color="{StaticResource RowSelectedColor}"/>
 
             <sys:Double x:Key="SpacingXS" xmlns:sys="clr-namespace:System;assembly=mscorlib">4</sys:Double>
             <sys:Double x:Key="SpacingSM" xmlns:sys="clr-namespace:System;assembly=mscorlib">8</sys:Double>
@@ -47,14 +51,17 @@
             <sys:Double x:Key="SpacingLG" xmlns:sys="clr-namespace:System;assembly=mscorlib">24</sys:Double>
             <sys:Double x:Key="SpacingXL" xmlns:sys="clr-namespace:System;assembly=mscorlib">32</sys:Double>
             <sys:Double x:Key="Spacing2XL" xmlns:sys="clr-namespace:System;assembly=mscorlib">48</sys:Double>
+            <sys:Double x:Key="Spacing3XL" xmlns:sys="clr-namespace:System;assembly=mscorlib">64</sys:Double>
+            <sys:Double x:Key="Spacing4XL" xmlns:sys="clr-namespace:System;assembly=mscorlib">96</sys:Double>
 
-            <sys:Double x:Key="FontSizeXS" xmlns:sys="clr-namespace:System;assembly=mscorlib">11</sys:Double>
-            <sys:Double x:Key="FontSizeSM" xmlns:sys="clr-namespace:System;assembly=mscorlib">12</sys:Double>
-            <sys:Double x:Key="FontSizeBase" xmlns:sys="clr-namespace:System;assembly=mscorlib">14</sys:Double>
-            <sys:Double x:Key="FontSizeMD" xmlns:sys="clr-namespace:System;assembly=mscorlib">16</sys:Double>
-            <sys:Double x:Key="FontSizeLG" xmlns:sys="clr-namespace:System;assembly=mscorlib">20</sys:Double>
-            <sys:Double x:Key="FontSizeXL" xmlns:sys="clr-namespace:System;assembly=mscorlib">24</sys:Double>
-            <sys:Double x:Key="FontSize2XL" xmlns:sys="clr-namespace:System;assembly=mscorlib">30</sys:Double>
+            <sys:Double x:Key="FontSizeXS" xmlns:sys="clr-namespace:System;assembly=mscorlib">10</sys:Double>
+            <sys:Double x:Key="FontSizeSM" xmlns:sys="clr-namespace:System;assembly=mscorlib">13</sys:Double>
+            <sys:Double x:Key="FontSizeBase" xmlns:sys="clr-namespace:System;assembly=mscorlib">16</sys:Double>
+            <sys:Double x:Key="FontSizeMD" xmlns:sys="clr-namespace:System;assembly=mscorlib">20</sys:Double>
+            <sys:Double x:Key="FontSizeLG" xmlns:sys="clr-namespace:System;assembly=mscorlib">25</sys:Double>
+            <sys:Double x:Key="FontSizeXL" xmlns:sys="clr-namespace:System;assembly=mscorlib">31</sys:Double>
+            <sys:Double x:Key="FontSize2XL" xmlns:sys="clr-namespace:System;assembly=mscorlib">39</sys:Double>
+            <sys:Double x:Key="FontSize3XL" xmlns:sys="clr-namespace:System;assembly=mscorlib">49</sys:Double>
 
             <CornerRadius x:Key="CornerRadiusXS">2</CornerRadius>
             <CornerRadius x:Key="CornerRadiusSM">4</CornerRadius>
@@ -63,16 +70,20 @@
             <CornerRadius x:Key="CornerRadiusXL">16</CornerRadius>
 
             <DropShadowEffect x:Key="ShadowSM" x:Shared="False" BlurRadius="4" ShadowDepth="1" Opacity="0.06" Color="{StaticResource TextPrimaryColor}" Direction="270"/>
-            <DropShadowEffect x:Key="ShadowMD" x:Shared="False" BlurRadius="12" ShadowDepth="2" Opacity="0.08" Color="{StaticResource TextPrimaryColor}" Direction="270"/>
-            <DropShadowEffect x:Key="ShadowLG" x:Shared="False" BlurRadius="20" ShadowDepth="4" Opacity="0.12" Color="{StaticResource TextPrimaryColor}" Direction="270"/>
+            <DropShadowEffect x:Key="ShadowMD" x:Shared="False" BlurRadius="12" ShadowDepth="2" Opacity="0.10" Color="{StaticResource TextPrimaryColor}" Direction="270"/>
+            <DropShadowEffect x:Key="ShadowLG" x:Shared="False" BlurRadius="20" ShadowDepth="4" Opacity="0.14" Color="{StaticResource TextPrimaryColor}" Direction="270"/>
             <DropShadowEffect x:Key="ShadowAccent" x:Shared="False" BlurRadius="12" ShadowDepth="2" Opacity="0.25" Color="{StaticResource AccentColor}" Direction="270"/>
 
             <sys:Double x:Key="DurationFast" xmlns:sys="clr-namespace:System;assembly=mscorlib">150</sys:Double>
-            <sys:Double x:Key="DurationNormal" xmlns:sys="clr-namespace:System;assembly=mscorlib">250</sys:Double>
-            <sys:Double x:Key="DurationSlow" xmlns:sys="clr-namespace:System;assembly=mscorlib">350</sys:Double>
+            <sys:Double x:Key="DurationNormal" xmlns:sys="clr-namespace:System;assembly=mscorlib">300</sys:Double>
+            <sys:Double x:Key="DurationSlow" xmlns:sys="clr-namespace:System;assembly=mscorlib">500</sys:Double>
+
+            <CubicEase x:Key="EaseOutCubic" EasingMode="EaseOut"/>
+            <CubicEase x:Key="EaseInCubic" EasingMode="EaseIn"/>
+            <CubicEase x:Key="EaseInOutCubic" EasingMode="EaseInOut"/>
 
             <Style TargetType="TextBlock" x:Key="PageTitleStyle">
-                <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}"/>
+                <Setter Property="FontFamily" Value="{StaticResource DisplayFontFamily}"/>
                 <Setter Property="FontSize" Value="{StaticResource FontSize2XL}"/>
                 <Setter Property="FontWeight" Value="Bold"/>
                 <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
@@ -85,11 +96,11 @@
                 <Setter Property="CornerRadius" Value="1.5"/>
                 <Setter Property="Width" Value="40"/>
                 <Setter Property="HorizontalAlignment" Value="Left"/>
-                <Setter Property="Margin" Value="0,6,0,0"/>
+                <Setter Property="Margin" Value="0,8,0,0"/>
             </Style>
 
             <Style TargetType="TextBlock" x:Key="SectionTitleStyle">
-                <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}"/>
+                <Setter Property="FontFamily" Value="{StaticResource UIFontFamily}"/>
                 <Setter Property="FontSize" Value="{StaticResource FontSizeMD}"/>
                 <Setter Property="FontWeight" Value="SemiBold"/>
                 <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
@@ -103,22 +114,24 @@
             </Style>
 
             <Style TargetType="TextBlock" x:Key="BodyTextStyle">
-                <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}"/>
+                <Setter Property="FontFamily" Value="{StaticResource BodyFontFamily}"/>
                 <Setter Property="FontSize" Value="{StaticResource FontSizeBase}"/>
+                <Setter Property="FontWeight" Value="Regular"/>
                 <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
-                <Setter Property="LineHeight" Value="22"/>
+                <Setter Property="LineHeight" Value="24"/>
                 <Setter Property="TextWrapping" Value="Wrap"/>
                 <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
             </Style>
 
             <Style TargetType="TextBlock" x:Key="CaptionTextStyle">
-                <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}"/>
+                <Setter Property="FontFamily" Value="{StaticResource UIFontFamily}"/>
                 <Setter Property="FontSize" Value="{StaticResource FontSizeSM}"/>
+                <Setter Property="FontWeight" Value="Medium"/>
                 <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}"/>
             </Style>
 
             <Style TargetType="TextBlock" x:Key="LabelTextStyle">
-                <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}"/>
+                <Setter Property="FontFamily" Value="{StaticResource UIFontFamily}"/>
                 <Setter Property="FontSize" Value="{StaticResource FontSizeSM}"/>
                 <Setter Property="FontWeight" Value="Medium"/>
                 <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}"/>
@@ -126,7 +139,7 @@
             </Style>
 
             <Style TargetType="TextBlock" x:Key="TabularNumberStyle">
-                <Setter Property="FontFamily" Value="{StaticResource AppMonoFontFamily}"/>
+                <Setter Property="FontFamily" Value="{StaticResource MonoFontFamily}"/>
                 <Setter Property="Typography.NumeralAlignment" Value="Tabular"/>
             </Style>
 
@@ -134,7 +147,7 @@
                 <Setter Property="TextWrapping" Value="Wrap"/>
                 <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
                 <Setter Property="MaxHeight" Value="52"/>
-                <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}"/>
+                <Setter Property="FontFamily" Value="{StaticResource BodyFontFamily}"/>
                 <Setter Property="FontSize" Value="13"/>
                 <Setter Property="VerticalAlignment" Value="Center"/>
             </Style>
@@ -150,6 +163,8 @@
                 <Setter Property="CornerRadius" Value="{StaticResource CornerRadiusLG}"/>
                 <Setter Property="Padding" Value="20,16,20,24"/>
                 <Setter Property="Margin" Value="0,0,0,16"/>
+                <Setter Property="BorderBrush" Value="{StaticResource BorderSubtleBrush}"/>
+                <Setter Property="BorderThickness" Value="1"/>
                 <Setter Property="Effect" Value="{StaticResource ShadowMD}"/>
             </Style>
 
@@ -171,19 +186,20 @@
             </Style>
 
             <Style TargetType="DataGridRow" x:Key="HoverRowStyle">
+                <Setter Property="Background" Value="Transparent"/>
                 <Style.Triggers>
                     <Trigger Property="IsMouseOver" Value="True">
                         <Setter Property="Background" Value="{StaticResource RowHoverBrush}"/>
                     </Trigger>
                     <Trigger Property="IsSelected" Value="True">
-                        <Setter Property="Background" Value="{StaticResource AccentLightBrush}"/>
+                        <Setter Property="Background" Value="{StaticResource RowSelectedBrush}"/>
                     </Trigger>
                     <MultiTrigger>
                         <MultiTrigger.Conditions>
                             <Condition Property="IsSelected" Value="True"/>
                             <Condition Property="IsMouseOver" Value="True"/>
                         </MultiTrigger.Conditions>
-                        <Setter Property="Background" Value="#CCE0F0FF"/>
+                        <Setter Property="Background" Value="{StaticResource AccentLightBrush}"/>
                     </MultiTrigger>
                 </Style.Triggers>
             </Style>
@@ -202,22 +218,50 @@
                 <Setter Property="Height" Value="24"/>
                 <Setter Property="Margin" Value="2"/>
                 <Setter Property="Cursor" Value="Hand"/>
-                <Setter Property="RadiusX" Value="4"/>
-                <Setter Property="RadiusY" Value="4"/>
+                <Setter Property="RadiusX" Value="{StaticResource CornerRadiusSM}"/>
+                <Setter Property="RadiusY" Value="{StaticResource CornerRadiusSM}"/>
             </Style>
 
             <Style TargetType="Button" x:Key="ToolButtonStyle">
                 <Setter Property="Padding" Value="10,5"/>
                 <Setter Property="FontSize" Value="13"/>
-                <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}"/>
+                <Setter Property="FontFamily" Value="{StaticResource UIFontFamily}"/>
                 <Setter Property="Cursor" Value="Hand"/>
                 <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+                <Setter Property="Background" Value="Transparent"/>
+                <Setter Property="BorderThickness" Value="0"/>
+                <Setter Property="RenderTransformOrigin" Value="0.5,0.5"/>
+                <Setter Property="RenderTransform">
+                    <Setter.Value>
+                        <ScaleTransform ScaleX="1" ScaleY="1"/>
+                    </Setter.Value>
+                </Setter>
                 <Style.Triggers>
                     <Trigger Property="IsMouseOver" Value="True">
                         <Setter Property="Foreground" Value="{StaticResource AccentBrush}"/>
                     </Trigger>
                     <Trigger Property="IsPressed" Value="True">
                         <Setter Property="Foreground" Value="{StaticResource AccentHoverBrush}"/>
+                        <Trigger.EnterActions>
+                            <BeginStoryboard>
+                                <Storyboard>
+                                    <DoubleAnimation Storyboard.TargetProperty="RenderTransform.ScaleX"
+                                                     To="0.97" Duration="0:0:0.1"/>
+                                    <DoubleAnimation Storyboard.TargetProperty="RenderTransform.ScaleY"
+                                                     To="0.97" Duration="0:0:0.1"/>
+                                </Storyboard>
+                            </BeginStoryboard>
+                        </Trigger.EnterActions>
+                        <Trigger.ExitActions>
+                            <BeginStoryboard>
+                                <Storyboard>
+                                    <DoubleAnimation Storyboard.TargetProperty="RenderTransform.ScaleX"
+                                                     To="1" Duration="0:0:0.1"/>
+                                    <DoubleAnimation Storyboard.TargetProperty="RenderTransform.ScaleY"
+                                                     To="1" Duration="0:0:0.1"/>
+                                </Storyboard>
+                            </BeginStoryboard>
+                        </Trigger.ExitActions>
                     </Trigger>
                 </Style.Triggers>
             </Style>
@@ -230,6 +274,22 @@
                     </Trigger>
                     <Trigger Property="IsPressed" Value="True">
                         <Setter Property="Foreground" Value="#801010"/>
+                    </Trigger>
+                </Style.Triggers>
+            </Style>
+
+            <Style TargetType="Button" x:Key="GhostButtonStyle">
+                <Setter Property="Padding" Value="10,5"/>
+                <Setter Property="FontSize" Value="13"/>
+                <Setter Property="FontFamily" Value="{StaticResource UIFontFamily}"/>
+                <Setter Property="Cursor" Value="Hand"/>
+                <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}"/>
+                <Setter Property="Background" Value="Transparent"/>
+                <Setter Property="BorderThickness" Value="0"/>
+                <Style.Triggers>
+                    <Trigger Property="IsMouseOver" Value="True">
+                        <Setter Property="Background" Value="{StaticResource SurfaceBrush}"/>
+                        <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
                     </Trigger>
                 </Style.Triggers>
             </Style>
@@ -292,7 +352,7 @@
             </Style>
 
             <Style TargetType="TextBlock" x:Key="EmptyStateTextStyle">
-                <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}"/>
+                <Setter Property="FontFamily" Value="{StaticResource BodyFontFamily}"/>
                 <Setter Property="FontSize" Value="{StaticResource FontSizeBase}"/>
                 <Setter Property="Foreground" Value="{StaticResource TextTertiaryBrush}"/>
                 <Setter Property="HorizontalAlignment" Value="Center"/>

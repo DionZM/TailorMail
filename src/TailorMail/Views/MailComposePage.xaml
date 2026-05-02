@@ -18,7 +18,7 @@
                 </StackPanel>
                 <ui:TextBox Text="{Binding Subject,UpdateSourceTrigger=PropertyChanged}"
                             PlaceholderText="请输入邮件主题，支持 {变量名} 格式" FontSize="14"
-                            FontFamily="{StaticResource AppFontFamily}"/>
+                            FontFamily="{StaticResource UIFontFamily}"/>
             </StackPanel>
         </Border>
 
@@ -85,7 +85,7 @@
                                     <TextBlock Text="自定义颜色" VerticalAlignment="Center" FontSize="12"
                                                Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,8,0"/>
                                     <ui:TextBox x:Name="CustomColorInput" Width="80" PlaceholderText="#RRGGBB"
-                                                FontFamily="{StaticResource AppMonoFontFamily}" FontSize="12" Padding="6,4"/>
+                                                FontFamily="{StaticResource MonoFontFamily}" FontSize="12" Padding="6,4"/>
                                     <Button Content="应用" Click="OnApplyCustomColor" Margin="4,0,0,0" Padding="8,4" FontSize="12"/>
                                 </StackPanel>
                             </StackPanel>
@@ -97,7 +97,7 @@
 
         <Border Grid.Row="2" Style="{StaticResource CardStyle}" Margin="0">
             <RichTextBox x:Name="Editor" AcceptsReturn="True" VerticalScrollBarVisibility="Auto"
-                         FontFamily="{StaticResource AppFontFamily}" FontSize="16" Padding="12"
+                         FontFamily="{StaticResource UIFontFamily}" FontSize="16" Padding="12"
                          BorderThickness="0" TextChanged="OnEditorTextChanged"
                          SelectionChanged="OnEditorSelectionChanged"
                          SpellCheck.IsEnabled="False" AcceptsTab="False"

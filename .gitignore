@@ -16,6 +16,7 @@ _ReSharper*/
 
 ## 发布输出
 publish/
+*.zip
 
 ## 应用数据
 src/TailorMail/data/

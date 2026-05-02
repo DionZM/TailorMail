@@ -22,7 +22,7 @@
                         <Button Content="清空" Click="OnClearCommon" Margin="4,0,0,0" Padding="10,4"/>
                     </StackPanel>
                     <ListBox DockPanel.Dock="Bottom" x:Name="CommonList" BorderThickness="0" Background="Transparent"
-                             FontFamily="{StaticResource AppFontFamily}" MinHeight="60">
+                             FontFamily="{StaticResource UIFontFamily}" MinHeight="60">
                         <ListBox.ItemTemplate>
                             <DataTemplate>
                                 <Grid>
@@ -70,7 +70,7 @@
                     <DataGrid x:Name="RecipientGrid" DockPanel.Dock="Bottom"
                               AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False"
                               SelectionMode="Single" BorderThickness="0" Background="Transparent"
-                              FontFamily="{StaticResource AppFontFamily}" FontSize="13"
+                              FontFamily="{StaticResource UIFontFamily}" FontSize="13"
                               GridLinesVisibility="Horizontal" AlternatingRowBackground="{StaticResource SurfaceBrush}"
                               HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto"
                               VirtualizingPanel.IsVirtualizing="True"

@@ -8,7 +8,7 @@
     <UseWPF>true</UseWPF>
     <RootNamespace>TailorMail</RootNamespace>
     <AssemblyName>TailorMail</AssemblyName>
-    <Version>0.9.4</Version>
+    <Version>0.9.5</Version>
     <Description>千函 - 千人千面的个性化邮件群发工具</Description>
     <Product>TailorMail</Product>
     <Copyright>Copyright © 2026 TailorMail Contributors</Copyright>

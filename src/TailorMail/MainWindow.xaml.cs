@@ -91,12 +91,14 @@ public partial class MainWindow
     {
         if (_step1 is IDynamicStepDesc d1) d1.StepDescriptionChanged -= OnDynamicDescChanged;
         if (_step6 is IDynamicStepDesc d6) d6.StepDescriptionChanged -= OnDynamicDescChanged;
+        if (_step6 != null) _step6.SendStateChanged -= OnSendStateChanged;
     }
 
     private void SubscribeDynamicDesc()
     {
         if (_currentStep == 0 && _step1 is IDynamicStepDesc d1) d1.StepDescriptionChanged += OnDynamicDescChanged;
         if (_currentStep == 5 && _step6 is IDynamicStepDesc d6) d6.StepDescriptionChanged += OnDynamicDescChanged;
+        if (_step6 != null) _step6.SendStateChanged += OnSendStateChanged;
     }
 
     private void OnDynamicDescChanged()
@@ -109,25 +111,8 @@ public partial class MainWindow
         if (_currentStep == 5 && _step6 is IDynamicStepDesc d5)
         {
             var desc = d5.GetStepDescription();
-            var linkIndex = desc.IndexOf("设置");
-            if (linkIndex >= 0)
-            {
-                TxtStepDesc.Inlines.Clear();
-                TxtStepDesc.Inlines.Add(new Run(desc[..linkIndex]));
-                var hyperlink = new Hyperlink(new Run("设置"))
-                {
-                    NavigateUri = new Uri("tailormail://settings"),
-                    Foreground = (Brush)FindResource("AccentBrush"),
-                    TextDecorations = null
-                };
-                hyperlink.RequestNavigate += OnSettingsLinkClick;
-                TxtStepDesc.Inlines.Add(hyperlink);
-                TxtStepDesc.Inlines.Add(new Run(desc[(linkIndex + 2)..]));
-            }
-            else
-            {
-                TxtStepDesc.Text = desc;
-            }
+            TxtStepDesc.Inlines.Clear();
+            ParseAndRenderLinks(desc);
         }
         else if (_currentStep == 0 && _step1 is IDynamicStepDesc d0)
         {
@@ -136,6 +121,42 @@ public partial class MainWindow
         else
         {
             TxtStepDesc.Text = StepDescs[_currentStep];
+        }
+    }
+
+    private void ParseAndRenderLinks(string desc)
+    {
+        int pos = 0;
+        while (pos < desc.Length)
+        {
+            var linkStart = desc.IndexOf("[LINK:", pos, StringComparison.Ordinal);
+            if (linkStart < 0)
+            {
+                TxtStepDesc.Inlines.Add(new Run(desc[pos..]));
+                return;
+            }
+
+            if (linkStart > pos)
+                TxtStepDesc.Inlines.Add(new Run(desc[pos..linkStart]));
+
+            var linkEnd = desc.IndexOf(']', linkStart + 6);
+            if (linkEnd < 0)
+            {
+                TxtStepDesc.Inlines.Add(new Run(desc[linkStart..]));
+                return;
+            }
+
+            var linkText = desc[(linkStart + 6)..linkEnd];
+            var hyperlink = new Hyperlink(new Run(linkText))
+            {
+                NavigateUri = new Uri("tailormail://settings"),
+                Foreground = (Brush)FindResource("AccentBrush"),
+                TextDecorations = null
+            };
+            hyperlink.RequestNavigate += OnSettingsLinkClick;
+            TxtStepDesc.Inlines.Add(hyperlink);
+
+            pos = linkEnd + 1;
         }
     }
 
@@ -164,6 +185,7 @@ public partial class MainWindow
         {
             BtnNext.Content = "开始发送";
             BtnNext.Appearance = Wpf.Ui.Controls.ControlAppearance.Primary;
+            BtnNext.IsEnabled = true;
         }
         else
         {
@@ -171,6 +193,7 @@ public partial class MainWindow
             BtnNext.Appearance = _currentStep == 0
                 ? Wpf.Ui.Controls.ControlAppearance.Secondary
                 : Wpf.Ui.Controls.ControlAppearance.Primary;
+            BtnNext.IsEnabled = true;
         }
     }
 
@@ -214,6 +237,8 @@ public partial class MainWindow
             centerX = Math.Max(0.05, Math.Min(0.95, centerX));
 
             var halfSpread = 0.44;
+            var midLeft = Math.Max(0, centerX - halfSpread * 0.5);
+            var midRight = Math.Min(1, centerX + halfSpread * 0.5);
             AccentBar.Background = new LinearGradientBrush
             {
                 StartPoint = new Point(0, 0.5),
@@ -221,7 +246,9 @@ public partial class MainWindow
                 GradientStops = new GradientStopCollection
                 {
                     new GradientStop(Colors.Transparent, Math.Max(0, centerX - halfSpread)),
+                    new GradientStop((Color)FindResource("AccentLightColor"), midLeft),
                     new GradientStop((Color)FindResource("AccentColor"), centerX),
+                    new GradientStop((Color)FindResource("AccentLightColor"), midRight),
                     new GradientStop(Colors.Transparent, Math.Min(1, centerX + halfSpread))
                 }
             };
@@ -253,11 +280,47 @@ public partial class MainWindow
 
     private void BtnNext_Click(object sender, RoutedEventArgs e)
     {
+        if (_currentStep == 5 && _step6 != null)
+        {
+            if (_step6.IsSending)
+            {
+                _step6.StopSend();
+                return;
+            }
+            _step6.StartSend();
+            return;
+        }
+
         SaveCurrentStep();
         if (_currentStep < 5) NavigateToStep(_currentStep + 1);
+    }
+
+    private void OnSendStateChanged()
+    {
+        Dispatcher.BeginInvoke(() => UpdateSendButton());
+    }
+
+    private void UpdateSendButton()
+    {
+        if (_currentStep != 5 || _step6 == null) return;
+
+        if (_step6.IsSending)
+        {
+            BtnNext.Content = "停止发送";
+            BtnNext.Appearance = Wpf.Ui.Controls.ControlAppearance.Danger;
+            BtnNext.IsEnabled = true;
+        }
+        else if (_step6.HasPendingRecipients)
+        {
+            BtnNext.Content = _step6.HasAnyResults ? "继续发送" : "开始发送";
+            BtnNext.Appearance = Wpf.Ui.Controls.ControlAppearance.Primary;
+            BtnNext.IsEnabled = true;
+        }
         else
         {
-            if (_step6 != null) _step6.StartSend();
+            BtnNext.Content = "开始发送";
+            BtnNext.Appearance = Wpf.Ui.Controls.ControlAppearance.Primary;
+            BtnNext.IsEnabled = false;
         }
     }
 
@@ -330,6 +393,14 @@ public partial class MainWindow
 
     private void AnimateContentIn()
     {
+        var settings = App.DataService.LoadSettings();
+        if (settings.ReducedMotion)
+        {
+            MainContent.Opacity = 1;
+            MainContentTransform.Y = 0;
+            return;
+        }
+
         MainContent.Opacity = 0;
         MainContentTransform.Y = 12;
 

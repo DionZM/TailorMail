@@ -6,7 +6,7 @@
         MinWidth="960" MinHeight="640"
         WindowStartupLocation="CenterScreen"
         ExtendsContentIntoTitleBar="True"
-        FontFamily="{StaticResource AppFontFamily}"
+        FontFamily="{StaticResource UIFontFamily}"
         Background="{StaticResource SurfaceBrush}">
     <Grid>
         <Grid.Background>
@@ -26,7 +26,12 @@
                 <ui:ImageIcon Source="pack://application:,,,/logo_64.png" Width="16" Height="16"/>
             </ui:TitleBar.Icon>
             <ui:TitleBar.CenterContent>
-                <Border x:Name="PillStepper" Background="{StaticResource SurfaceBrush}"
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="千函 TaylorMail" VerticalAlignment="Center"
+                               FontWeight="SemiBold" FontSize="15"
+                               FontFamily="{StaticResource DisplayFontFamily}"
+                               Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,18,0"/>
+                    <Border x:Name="PillStepper" Background="{StaticResource SurfaceBrush}"
                         CornerRadius="20" Padding="4" Margin="0,2,0,0">
                     <ItemsControl x:Name="StepItems">
                         <ItemsControl.ItemsPanel>
@@ -98,6 +103,7 @@
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
                 </Border>
+                </StackPanel>
             </ui:TitleBar.CenterContent>
         </ui:TitleBar>
 
@@ -111,14 +117,14 @@
             </Border.Background>
         </Border>
 
-        <ContentControl Grid.Row="2" x:Name="MainContent" Margin="24,8,24,16"
+        <ContentControl Grid.Row="2" x:Name="MainContent" Margin="32,8,32,16"
                         RenderTransformOrigin="0.5,0.5">
             <ContentControl.RenderTransform>
                 <TranslateTransform x:Name="MainContentTransform" Y="0"/>
             </ContentControl.RenderTransform>
         </ContentControl>
 
-        <StackPanel Grid.Row="2" x:Name="SkeletonPanel" Margin="24,8,24,16" Visibility="Collapsed">
+        <StackPanel Grid.Row="2" x:Name="SkeletonPanel" Margin="32,8,32,16" Visibility="Collapsed">
             <Border Style="{StaticResource CardStyle}" Margin="0">
                 <StackPanel Margin="4">
                     <Border Style="{StaticResource SkeletonLineStyle}" Width="180" Margin="0,0,0,12"/>

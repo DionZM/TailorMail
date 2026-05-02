@@ -8,27 +8,31 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <Grid Grid.Row="0" Margin="0,0,0,16">
-            <Border Style="{StaticResource CardStyle}" Margin="0" Padding="16,8">
-                <WrapPanel Orientation="Horizontal">
+        <Border Grid.Row="0" Style="{StaticResource CardStyle}" Margin="0,0,0,16" Padding="16,8">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <WrapPanel Grid.Column="0" Orientation="Horizontal">
                     <ui:TextBox x:Name="NewVarTextBox" Text="{Binding NewVariableName,UpdateSourceTrigger=PropertyChanged}"
                                 PlaceholderText="新变量名" Width="120" Margin="0,0,8,0" KeyDown="OnNewVarKeyDown"/>
                     <Button Content="添加变量" Click="OnAddVariableClick" Margin="0,0,4,0" Padding="12,6"/>
                     <Button Content="删除变量" Click="OnDeleteVariable" Margin="0,0,4,0" Padding="12,6"/>
                 </WrapPanel>
-            </Border>
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,8,0">
-                <Button Content="导出" Command="{Binding ExportVariablesCommand}" Margin="0,0,4,0" Padding="12,6"/>
-                <Button Content="导入" Command="{Binding ImportVariablesCommand}" Padding="12,6"/>
-            </StackPanel>
-        </Grid>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button Content="导出" Command="{Binding ExportVariablesCommand}" Margin="0,0,4,0" Padding="12,6"/>
+                    <Button Content="导入" Command="{Binding ImportVariablesCommand}" Padding="12,6"/>
+                </StackPanel>
+            </Grid>
+        </Border>
 
         <Grid Grid.Row="1">
             <Border Style="{StaticResource CardStyle}" Margin="0">
                 <DataGrid x:Name="VariablesGrid" AutoGenerateColumns="False"
                           CanUserAddRows="False" CanUserDeleteRows="False"
                           GridLinesVisibility="Horizontal" AlternatingRowBackground="{StaticResource SurfaceBrush}"
-                          FontSize="13" FontFamily="{StaticResource AppFontFamily}"
+                          FontSize="13" FontFamily="{StaticResource UIFontFamily}"
                           CellEditEnding="OnCellEditEnding"
                           PreviewKeyDown="OnGridPreviewKeyDown"
                           BorderThickness="0" Background="Transparent"

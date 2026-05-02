@@ -101,6 +101,26 @@ public partial class PreviewPage : UserControl, IRefreshable
         };
         panel.Children.Add(prefixBlock);
         panel.Children.Add(linkBlock);
+
+        try
+        {
+            var info = new System.IO.FileInfo(filePath);
+            if (info.Exists)
+            {
+                var sizeText = FormatFileSize(info.Length);
+                var sizeBlock = new TextBlock
+                {
+                    Text = sizeText,
+                    FontSize = 11,
+                    Foreground = (System.Windows.Media.Brush)FindResource("TextTertiaryBrush"),
+                    VerticalAlignment = VerticalAlignment.Center,
+                    Margin = new Thickness(6, 0, 0, 0)
+                };
+                panel.Children.Add(sizeBlock);
+            }
+        }
+        catch { }
+
         return panel;
     }
 
@@ -157,5 +177,18 @@ public partial class PreviewPage : UserControl, IRefreshable
             }
             return false;
         };
+    }
+
+    private static string FormatFileSize(long bytes)
+    {
+        string[] suffixes = { "B", "KB", "MB", "GB" };
+        var order = 0;
+        double size = bytes;
+        while (size >= 1024 && order < suffixes.Length - 1)
+        {
+            order++;
+            size /= 1024;
+        }
+        return order == 0 ? $"{bytes} {suffixes[order]}" : $"{size:0.#} {suffixes[order]}";
     }
 }
