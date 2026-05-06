@@ -126,42 +126,95 @@ public partial class PreviewViewModel : ObservableObject
     }
 
     /// <summary>
-    /// 获取当前收件人的完整 HTML 预览内容。
-    /// 优先使用 XAML 转 HTML 方式生成格式化正文，失败时回退为纯文本转 HTML。
+    /// 获取当前收件人的预览 FlowDocument。
+    /// 优先使用保存的 XAML 直接加载（保留格式），失败时回退为纯文本。
+    /// 变量替换在文本元素上逐段执行。
     /// </summary>
-    /// <returns>完整的 HTML 文档字符串；若未选中收件人则返回空字符串。</returns>
-    public string GetPreviewHtml()
+    public System.Windows.Documents.FlowDocument? GetPreviewDocument()
     {
-        if (SelectedRecipient == null) return string.Empty;
+        if (SelectedRecipient == null) return null;
 
         var settings = _dataService.LoadSettings();
         var varVm = new VariablesViewModel(_dataService);
-        var processedBody = varVm.ProcessBody(settings.LastBody, SelectedRecipient);
 
-        string bodyContent;
+        System.Windows.Documents.FlowDocument doc;
 
         if (!string.IsNullOrEmpty(settings.LastBodyXaml))
         {
             try
             {
-                var doc = new System.Windows.Documents.FlowDocument();
+                doc = new System.Windows.Documents.FlowDocument();
                 Helpers.FlowDocumentHelper.LoadFromXaml(doc, settings.LastBodyXaml);
-                var html = Helpers.FlowDocumentHelper.ToHtml(doc);
-                bodyContent = varVm.ProcessBody(html, SelectedRecipient);
             }
             catch (Exception ex)
             {
-                AppLogger.Error("预览HTML生成失败", ex);
-                var plainHtml = Helpers.FlowDocumentHelper.PlainTextToHtml(processedBody);
-                bodyContent = varVm.ProcessBody(plainHtml, SelectedRecipient);
+                AppLogger.Error("预览文档加载失败", ex);
+                doc = CreatePlainTextDoc(varVm.ProcessBody(settings.LastBody, SelectedRecipient));
             }
         }
         else
         {
-            var plainHtml = Helpers.FlowDocumentHelper.PlainTextToHtml(processedBody);
-            bodyContent = varVm.ProcessBody(plainHtml, SelectedRecipient);
+            doc = CreatePlainTextDoc(varVm.ProcessBody(settings.LastBody, SelectedRecipient));
         }
 
-        return Helpers.FlowDocumentHelper.WrapAsPreviewHtml(bodyContent);
+        // 替换正文中的变量
+        foreach (var run in GetAllRuns(doc).ToList())
+        {
+            if (!string.IsNullOrEmpty(run.Text))
+                run.Text = varVm.ProcessBody(run.Text, SelectedRecipient);
+        }
+
+        return doc;
+    }
+
+    private static IEnumerable<System.Windows.Documents.Run> GetAllRuns(System.Windows.Documents.FlowDocument doc)
+    {
+        foreach (var block in doc.Blocks)
+        {
+            if (block is System.Windows.Documents.Paragraph para)
+            {
+                foreach (var inline in para.Inlines)
+                {
+                    if (inline is System.Windows.Documents.Run run)
+                        yield return run;
+                    else if (inline is System.Windows.Documents.Span span)
+                    {
+                        foreach (var child in span.Inlines)
+                        {
+                            if (child is System.Windows.Documents.Run childRun)
+                                yield return childRun;
+                        }
+                    }
+                }
+            }
+            else if (block is System.Windows.Documents.Table table)
+            {
+                foreach (var rowGroup in table.RowGroups)
+                    foreach (var row in rowGroup.Rows)
+                        foreach (var cell in row.Cells)
+                            foreach (var cellBlock in cell.Blocks)
+                                if (cellBlock is System.Windows.Documents.Paragraph cellPara)
+                                    foreach (var inline in cellPara.Inlines)
+                                        if (inline is System.Windows.Documents.Run run)
+                                            yield return run;
+            }
+        }
+    }
+
+    private static System.Windows.Documents.FlowDocument CreatePlainTextDoc(string text)
+    {
+        var doc = new System.Windows.Documents.FlowDocument();
+        doc.FontFamily = new System.Windows.Media.FontFamily("Segoe UI, Microsoft YaHei UI");
+        doc.FontSize = 15;
+        if (string.IsNullOrEmpty(text)) return doc;
+        foreach (var line in text.Split('\n'))
+        {
+            var para = new System.Windows.Documents.Paragraph(new System.Windows.Documents.Run(line.TrimEnd('\r')))
+            {
+                Margin = new System.Windows.Thickness(0, 0, 0, 8)
+            };
+            doc.Blocks.Add(para);
+        }
+        return doc;
     }
 }

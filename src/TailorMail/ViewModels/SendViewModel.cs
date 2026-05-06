@@ -115,6 +115,15 @@ public partial class SendViewModel : ObservableObject
             htmlBody = Helpers.FlowDocumentHelper.WrapAsEmailDocument(bodyContent);
         }
 
+        // Append signature
+        var signature = settings.Signature?.Trim();
+        if (!string.IsNullOrEmpty(signature))
+        {
+            var sigHtml = System.Net.WebUtility.HtmlEncode(signature).Replace("\n", "<br/>");
+            htmlBody = htmlBody.Replace("</body>",
+                $"<br/><br/><div style='border-top:1px solid #ccc;padding-top:8px;margin-top:8px;color:#666;font-size:13px;'>{sigHtml}</div></body>");
+        }
+
         for (int i = 0; i < selectedRecipients.Count; i++)
         {
             if (_cts.IsCancellationRequested) break;

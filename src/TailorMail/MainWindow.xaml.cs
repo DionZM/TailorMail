@@ -4,6 +4,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Documents;
+using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Threading;
@@ -27,13 +28,68 @@ public partial class MainWindow
 
     private static readonly string[] StepNames = ["收件选择", "变量配置", "模板撰写", "附件匹配", "效果预览", "批量发送"];
 
-    private static readonly string[] StepDescs = ["选择收件对象", "定义模板变量，发送时自动替换", "编辑邮件主题和正文", "配置公共附件和专有附件", "查看每个收件人的邮件效果", "确认后开始批量发送"];
+    private static readonly string[] StepDescs = [
+        "选择收件对象",
+        "定义模板变量，发送时自动替换",
+        "编辑邮件主题和正文",
+        "配置公共附件和专有附件",
+        "查看每个收件人的邮件效果",
+        "确认后开始批量发送"
+    ];
+
+    private readonly HashSet<int> _visitedSteps = [];
 
     public MainWindow()
     {
         InitializeComponent();
         Loaded += OnLoaded;
         Closed += OnMainWindowClosed;
+        KeyDown += OnWindowKeyDown;
+    }
+
+    private void OnWindowKeyDown(object sender, KeyEventArgs e)
+    {
+        if (Keyboard.Modifiers == ModifierKeys.Control)
+        {
+            switch (e.Key)
+            {
+                case Key.S:
+                    e.Handled = true;
+                    SaveCurrentStep();
+                    break;
+                case Key.N:
+                    e.Handled = true;
+                    NavigateToStep(2);
+                    break;
+                case Key.F:
+                    e.Handled = true;
+                    FocusCurrentSearch();
+                    break;
+            }
+        }
+        else if (e.Key == Key.F1)
+        {
+            e.Handled = true;
+            BtnAbout_Click(sender, e);
+        }
+        else if (e.Key == Key.Escape)
+        {
+            var owned = OwnedWindows.Cast<Window>().FirstOrDefault(w => w.IsVisible);
+            if (owned != null)
+            {
+                e.Handled = true;
+                owned.Close();
+            }
+        }
+    }
+
+    private void FocusCurrentSearch()
+    {
+        switch (_currentStep)
+        {
+            case 0: _step1?.FocusSearch(); break;
+            case 4: _step5?.FocusSearch(); break;
+        }
     }
 
     private void OnLoaded(object sender, RoutedEventArgs e)
@@ -57,6 +113,7 @@ public partial class MainWindow
     private void NavigateToStep(int step)
     {
         _currentStep = step;
+        _visitedSteps.Add(step);
         UpdateStepIndicator();
         UpdateButtons();
         TxtStepHint.Text = $"步骤 {step + 1}/6 · {StepNames[step]}";
@@ -151,7 +208,7 @@ public partial class MainWindow
             {
                 NavigateUri = new Uri("tailormail://settings"),
                 Foreground = (Brush)FindResource("AccentBrush"),
-                TextDecorations = null
+                TextDecorations = TextDecorations.Underline
             };
             hyperlink.RequestNavigate += OnSettingsLinkClick;
             TxtStepDesc.Inlines.Add(hyperlink);
@@ -201,12 +258,37 @@ public partial class MainWindow
     {
         for (int i = 0; i < _steps.Count; i++)
         {
-            _steps[i].State = i < _currentStep ? StepState.Completed
-                : i == _currentStep ? StepState.Current
-                : StepState.Upcoming;
+            if (i == _currentStep)
+                _steps[i].State = StepState.Current;
+            else if (IsStepCompleted(i))
+                _steps[i].State = StepState.Completed;
+            else if (_visitedSteps.Contains(i))
+                _steps[i].State = StepState.Visited;
+            else
+                _steps[i].State = StepState.Upcoming;
         }
 
         Dispatcher.BeginInvoke(DispatcherPriority.Loaded, UpdateAccentBar);
+    }
+
+    private bool IsStepCompleted(int step)
+    {
+        var settings = App.DataService.LoadSettings();
+        var groups = App.DataService.LoadRecipientGroups();
+        var allRecipients = groups.SelectMany(g => g.Recipients).ToList();
+        var selectedRecipients = allRecipients.Where(r => r.IsSelected).ToList();
+        var attachConfig = App.DataService.LoadAttachmentConfig();
+
+        return step switch
+        {
+            0 => selectedRecipients.Count > 0,
+            1 => selectedRecipients.Count > 0 && selectedRecipients.Any(r => r.Variables.Count > 0),
+            2 => !string.IsNullOrEmpty(settings.LastSubject) || !string.IsNullOrEmpty(settings.LastBody),
+            3 => attachConfig.CommonAttachments.Count > 0 || attachConfig.RecipientAttachments.Any(ua => ua.Files.Count > 0),
+            4 => selectedRecipients.Count > 0,
+            5 => false,
+            _ => false
+        };
     }
 
     private void UpdateAccentBar()
@@ -370,8 +452,7 @@ public partial class MainWindow
             var detail = ex.ToString();
             if (ex.InnerException != null)
                 detail += "\n\n--- InnerException ---\n" + ex.InnerException.ToString();
-            MessageBox.Show($"打开设置窗口失败：\n\n{detail}", "错误",
-                MessageBoxButton.OK, MessageBoxImage.Error);
+            App.ShowError("打开设置窗口失败，请查看日志");
         }
     }
 
@@ -423,7 +504,7 @@ public partial class MainWindow
     }
 }
 
-public enum StepState { Upcoming, Current, Completed }
+public enum StepState { Upcoming, Current, Completed, Visited }
 
 public class StepItem : ObservableObject
 {

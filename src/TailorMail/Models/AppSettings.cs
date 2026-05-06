@@ -36,6 +36,8 @@ public class AppSettings
     public string LastBodyXaml { get; set; } = string.Empty;
 
     public bool ReducedMotion { get; set; }
+
+    public string Signature { get; set; } = string.Empty;
 }
 
 /// <summary>

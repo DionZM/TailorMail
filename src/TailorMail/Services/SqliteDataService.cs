@@ -75,6 +75,37 @@ public class SqliteDataService : IDataService
             );
             """;
         cmd.ExecuteNonQuery();
+
+        DeduplicateDefaultGroups(conn);
+    }
+
+    private void DeduplicateDefaultGroups(SqliteConnection conn)
+    {
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = """
+            SELECT Id FROM RecipientGroups WHERE Name = '默认分组' ORDER BY rowid
+            """;
+        var ids = new List<string>();
+        using (var reader = cmd.ExecuteReader())
+        {
+            while (reader.Read())
+                ids.Add(reader.GetString(0));
+        }
+
+        if (ids.Count <= 1) return;
+
+        var keepId = ids[0];
+        for (int i = 1; i < ids.Count; i++)
+        {
+            using var mergeCmd = conn.CreateCommand();
+            mergeCmd.CommandText = """
+                UPDATE Recipients SET GroupId = @keepId WHERE GroupId = @removeId;
+                DELETE FROM RecipientGroups WHERE Id = @removeId
+                """;
+            mergeCmd.Parameters.AddWithValue("@keepId", keepId);
+            mergeCmd.Parameters.AddWithValue("@removeId", ids[i]);
+            mergeCmd.ExecuteNonQuery();
+        }
     }
 
     private void MigrateFromJsonIfNeeded()
@@ -157,7 +188,15 @@ public class SqliteDataService : IDataService
 
         if (groups.Count == 0)
         {
-            groups.Add(new RecipientGroup { Name = "默认分组" });
+            var defaultGroup = new RecipientGroup { Name = "默认分组" };
+            using (var cmd = conn.CreateCommand())
+            {
+                cmd.CommandText = "INSERT INTO RecipientGroups (Id, Name) VALUES (@id, @name)";
+                cmd.Parameters.AddWithValue("@id", defaultGroup.Id);
+                cmd.Parameters.AddWithValue("@name", defaultGroup.Name);
+                cmd.ExecuteNonQuery();
+            }
+            groups.Add(defaultGroup);
         }
 
         return groups;

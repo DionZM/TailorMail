@@ -5,9 +5,6 @@ using TailorMail.ViewModels;
 
 namespace TailorMail.Views;
 
-/// <summary>
-/// 附件管理页面，提供公共附件和收件人专属附件的添加/移除、自动匹配等功能。
-/// </summary>
 public partial class AttachmentPage : UserControl, IRefreshable
 {
     private readonly AttachmentViewModel _vm;
@@ -32,6 +29,7 @@ public partial class AttachmentPage : UserControl, IRefreshable
         CommonList.ItemsSource = _vm.CommonAttachments;
         RecipientGrid.ItemsSource = _vm.RecipientAttachments;
         TxtFolder.Text = string.IsNullOrEmpty(_vm.MatchDirectory) ? "" : _vm.MatchDirectory;
+        TxtFolder.ToolTip = string.IsNullOrEmpty(_vm.MatchDirectory) ? null : _vm.MatchDirectory;
         UpdateEmptyStates();
     }
 
@@ -55,6 +53,7 @@ public partial class AttachmentPage : UserControl, IRefreshable
             {
                 _vm.MatchDirectory = dir;
                 TxtFolder.Text = dir;
+                TxtFolder.ToolTip = dir;
             }
         }
 
@@ -92,6 +91,7 @@ public partial class AttachmentPage : UserControl, IRefreshable
         {
             _vm.MatchDirectory = path;
             TxtFolder.Text = path;
+            TxtFolder.ToolTip = path;
             _vm.AutoMatchCommand.Execute(null);
             RefreshGrid();
         }
@@ -99,9 +99,26 @@ public partial class AttachmentPage : UserControl, IRefreshable
 
     private void OnAutoMatch(object sender, RoutedEventArgs e)
     {
+        var beforeCount = _vm.RecipientAttachments.Sum(ra => ra.Files.Count);
         _vm.AutoMatchCommand.Execute(null);
+        var afterCount = _vm.RecipientAttachments.Sum(ra => ra.Files.Count);
+        var matched = afterCount - beforeCount;
+
         RefreshGrid();
         UpdateEmptyStates();
+
+        TxtMatchResult.Text = matched >= 0
+            ? $"自动匹配完成，新增 {matched} 个附件"
+            : "自动匹配完成";
+        TxtMatchResult.Visibility = Visibility.Visible;
+
+        var timer = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromSeconds(3) };
+        timer.Tick += (_, _) =>
+        {
+            timer.Stop();
+            TxtMatchResult.Visibility = Visibility.Collapsed;
+        };
+        timer.Start();
     }
 
     private void OnAddRecipientAttachmentFromGrid(object sender, RoutedEventArgs e)
@@ -150,4 +167,87 @@ public partial class AttachmentPage : UserControl, IRefreshable
         RecipientGrid.ItemsSource = null;
         RecipientGrid.ItemsSource = _vm.RecipientAttachments;
     }
+
+    #region Drag & Drop
+
+    private void OnDragOver(object sender, DragEventArgs e)
+    {
+        if (e.Data.GetDataPresent(DataFormats.FileDrop))
+        {
+            e.Effects = DragDropEffects.Copy;
+            e.Handled = true;
+        }
+    }
+
+    private void OnDrop(object sender, DragEventArgs e)
+    {
+        OnCommonDrop(sender, e);
+    }
+
+    private void OnCommonDrop(object sender, DragEventArgs e)
+    {
+        if (!e.Data.GetDataPresent(DataFormats.FileDrop)) return;
+
+        var files = (string[]?)e.Data.GetData(DataFormats.FileDrop);
+        if (files == null) return;
+
+        foreach (var file in files)
+        {
+            if (System.IO.File.Exists(file) && !_vm.CommonAttachments.Contains(file))
+                _vm.CommonAttachments.Add(file);
+        }
+        _vm.SaveConfig();
+        CommonList.ItemsSource = null;
+        CommonList.ItemsSource = _vm.CommonAttachments;
+        UpdateEmptyStates();
+    }
+
+    #endregion
+
+    #region Recipient Grid Drag & Drop
+
+    private void OnRecipientDragOver(object sender, DragEventArgs e)
+    {
+        if (e.Data.GetDataPresent(DataFormats.FileDrop))
+        {
+            e.Effects = DragDropEffects.Copy;
+            e.Handled = true;
+        }
+    }
+
+    private void OnRecipientDrop(object sender, DragEventArgs e)
+    {
+        if (!e.Data.GetDataPresent(DataFormats.FileDrop)) return;
+
+        var files = (string[]?)e.Data.GetData(DataFormats.FileDrop);
+        if (files == null || files.Length == 0) return;
+
+        // Find the row under the drop position
+        var hit = System.Windows.Media.VisualTreeHelper.HitTest(RecipientGrid, e.GetPosition(RecipientGrid));
+        if (hit == null) return;
+        var row = FindVisualParent<DataGridRow>(hit.VisualHit);
+        if (row?.DataContext is RecipientAttachment ua)
+        {
+            foreach (var file in files)
+            {
+                if (System.IO.File.Exists(file) && !ua.Files.Contains(file))
+                    ua.Files.Add(file);
+            }
+            _vm.SaveConfig();
+            RefreshGrid();
+        }
+    }
+
+    private static T? FindVisualParent<T>(System.Windows.DependencyObject child) where T : System.Windows.DependencyObject
+    {
+        var parent = System.Windows.Media.VisualTreeHelper.GetParent(child);
+        while (parent != null)
+        {
+            if (parent is T result) return result;
+            parent = System.Windows.Media.VisualTreeHelper.GetParent(parent);
+        }
+        return null;
+    }
+
+    #endregion
 }

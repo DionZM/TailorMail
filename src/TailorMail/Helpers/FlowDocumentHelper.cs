@@ -594,8 +594,9 @@ public static class FlowDocumentHelper
     {
         var sb = new StringBuilder();
         sb.Append("<!DOCTYPE html>");
-        sb.Append("<html>");
+        sb.Append("<html lang=\"zh-CN\">");
         sb.Append("<head>");
+        sb.Append("<meta charset=\"utf-8\">");
         sb.Append("<meta http-equiv=\"X-UA-Compatible\" content=\"IE=edge\">");
         sb.Append("<style>");
         sb.Append("html,body{margin:0;padding:0;width:100%;overflow-x:hidden;}");

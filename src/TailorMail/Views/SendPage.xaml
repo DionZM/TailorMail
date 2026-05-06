@@ -10,37 +10,62 @@
         </Grid.RowDefinitions>
 
         <Border Grid.Row="0" Style="{StaticResource CardStyle}" Margin="0,0,0,16" Padding="16,12">
+            <StackPanel>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="发送进度" VerticalAlignment="Center"
+                               Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,12,0"/>
+                    <ProgressBar Grid.Column="1" x:Name="ProgressBar" Height="8" Maximum="100"
+                                 Value="{Binding ProgressValue}"
+                                 Foreground="{StaticResource AccentBrush}"/>
+                    <TextBlock Grid.Column="2" x:Name="TxtPercent" Text="0%" VerticalAlignment="Center"
+                               FontWeight="SemiBold" Margin="12,0,0,0" Foreground="{StaticResource AccentBrush}"
+                               Style="{StaticResource TabularNumberStyle}"/>
+                    <TextBlock Grid.Column="3" x:Name="TxtProgress" Text="0/0" VerticalAlignment="Center"
+                               FontWeight="SemiBold" Margin="8,0,0,0" Foreground="{StaticResource TextPrimaryBrush}"
+                               Style="{StaticResource TabularNumberStyle}"/>
+                </Grid>
+                <TextBlock x:Name="TxtCurrentRecipient" Text=""
+                           Style="{StaticResource CaptionTextStyle}" Margin="0,6,0,0"
+                           Foreground="{StaticResource TextTertiaryBrush}"
+                           Visibility="Collapsed"/>
+            </StackPanel>
+        </Border>
+
+        <Border Grid.Row="1" Style="{StaticResource CardStyle}" Margin="0,0,0,8" Padding="12,8">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
-                <TextBlock Grid.Column="0" Text="发送进度" VerticalAlignment="Center"
-                           Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,12,0"/>
-                <ProgressBar Grid.Column="1" x:Name="ProgressBar" Height="8" Maximum="100"
-                             Value="{Binding ProgressValue}"
-                             Foreground="{StaticResource AccentBrush}"/>
-                <TextBlock Grid.Column="2" x:Name="TxtProgress" Text="0/0" VerticalAlignment="Center"
-                           FontWeight="SemiBold" Margin="12,0,0,0" Foreground="{StaticResource TextPrimaryBrush}"
-                           Style="{StaticResource TabularNumberStyle}"/>
+                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="筛选：" VerticalAlignment="Center" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,8,0" FontSize="13"/>
+                    <RadioButton x:Name="FilterAll" Content="全部" IsChecked="True" Click="OnFilterChanged" Margin="0,0,8,0"
+                                 FontSize="13" FontFamily="{StaticResource UIFontFamily}"/>
+                    <RadioButton x:Name="FilterSuccess" Content="成功" Click="OnFilterChanged" Margin="0,0,8,0"
+                                 Foreground="{StaticResource SuccessBrush}" FontSize="13" FontFamily="{StaticResource UIFontFamily}"/>
+                    <RadioButton x:Name="FilterFailed" Content="失败" Click="OnFilterChanged" Margin="0,0,8,0"
+                                 Foreground="{StaticResource DangerBrush}" FontSize="13" FontFamily="{StaticResource UIFontFamily}"/>
+                    <RadioButton x:Name="FilterPending" Content="等待" Click="OnFilterChanged"
+                                 Foreground="{StaticResource TextTertiaryBrush}" FontSize="13" FontFamily="{StaticResource UIFontFamily}"/>
+                </StackPanel>
+                <TextBlock Grid.Column="1" x:Name="TxtEta" Text="" VerticalAlignment="Center" HorizontalAlignment="Center"
+                           Style="{StaticResource CaptionTextStyle}" Foreground="{StaticResource TextTertiaryBrush}"/>
+                <StackPanel Grid.Column="3" Orientation="Horizontal">
+                    <Button x:Name="BtnRetryAll" Content="全部重试" Click="OnRetryAll" Margin="0,0,4,0" Padding="8,4" FontSize="12"
+                            Visibility="Collapsed"/>
+                    <Button x:Name="BtnExport" Content="导出结果" Click="OnExportResults" Margin="0,0,0,0" Padding="8,4" FontSize="12"
+                            Visibility="Collapsed"/>
+                </StackPanel>
             </Grid>
         </Border>
-
-        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,8">
-            <TextBlock Text="筛选：" VerticalAlignment="Center" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,8,0" FontSize="13"/>
-            <RadioButton x:Name="FilterAll" Content="全部" IsChecked="True" Click="OnFilterChanged" Margin="0,0,8,0"
-                         FontSize="13" FontFamily="{StaticResource UIFontFamily}"/>
-            <RadioButton x:Name="FilterSuccess" Content="成功" Click="OnFilterChanged" Margin="0,0,8,0"
-                         Foreground="{StaticResource SuccessBrush}" FontSize="13" FontFamily="{StaticResource UIFontFamily}"/>
-            <RadioButton x:Name="FilterFailed" Content="失败" Click="OnFilterChanged" Margin="0,0,8,0"
-                         Foreground="{StaticResource DangerBrush}" FontSize="13" FontFamily="{StaticResource UIFontFamily}"/>
-            <RadioButton x:Name="FilterPending" Content="等待" Click="OnFilterChanged"
-                         Foreground="{StaticResource TextTertiaryBrush}" FontSize="13" FontFamily="{StaticResource UIFontFamily}"/>
-            <Border Background="{StaticResource BorderSubtleBrush}" Width="1" Margin="8,2"/>
-            <Button x:Name="BtnRetryAll" Content="全部重试" Click="OnRetryAll" Margin="8,0,0,0" Padding="8,4" FontSize="12"
-                    Visibility="Collapsed"/>
-        </StackPanel>
 
         <Grid Grid.Row="2">
             <Border Style="{StaticResource CardStyle}" Margin="0">
@@ -54,7 +79,7 @@
                           EnableColumnVirtualization="True"
                           RowStyle="{StaticResource HoverRowStyle}">
                     <DataGrid.Columns>
-                        <DataGridTextColumn Header="发送对象" Binding="{Binding RecipientName}" Width="200">
+                        <DataGridTextColumn Header="收件人" Binding="{Binding RecipientName}" Width="200">
                             <DataGridTextColumn.ElementStyle>
                                 <Style TargetType="TextBlock">
                                     <Setter Property="FontWeight" Value="Medium"/>

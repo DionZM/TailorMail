@@ -1,8 +1,7 @@
 <UserControl x:Class="TailorMail.Views.PreviewPage"
       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-      xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
-      xmlns:wv2="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf">
+      xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml">
     <Grid Margin="0">
         <Grid.RowDefinitions>
             <RowDefinition Height="*"/>
@@ -16,19 +15,7 @@
         <Border Grid.Row="0" Grid.Column="0" Style="{StaticResource CardStyle}" Margin="0,0,0,0"
                 Effect="{StaticResource ShadowSM}">
             <StackPanel>
-                <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
-                    <Border Style="{StaticResource SectionTitleAccentStyle}"/>
-                    <TextBlock Text="发送对象" Style="{StaticResource SectionTitleStyle}"/>
-                    <Button x:Name="BtnPrevGroup" Click="OnPrevGroup" Margin="12,0,0,0" Width="28" Padding="0"
-                            ToolTip="上一个">
-                        <ui:SymbolIcon Symbol="ChevronUp24" FontSize="10"/>
-                    </Button>
-                    <Button x:Name="BtnNextGroup" Click="OnNextGroup" Margin="4,0,0,0" Width="28" Padding="0"
-                            ToolTip="下一个">
-                        <ui:SymbolIcon Symbol="ChevronDown24" FontSize="10"/>
-                    </Button>
-                </StackPanel>
-                <ui:TextBox x:Name="SearchBox" PlaceholderText="搜索..." Margin="0,0,0,8"
+                <ui:TextBox x:Name="SearchBox" PlaceholderText="搜索名称或邮箱..." Margin="0,0,0,8"
                             TextChanged="OnSearchTextChanged" Icon="{ui:SymbolIcon Search24}"/>
                 <ListBox Grid.Row="1" x:Name="ListGroups" DisplayMemberPath="Name"
                          BorderThickness="0" Background="Transparent"
@@ -41,6 +28,7 @@
                 Effect="{StaticResource ShadowLG}">
             <Grid>
                 <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
@@ -58,23 +46,31 @@
                     <TextBlock Text="{Binding PreviewTo}" TextWrapping="Wrap" Foreground="{StaticResource AccentBrush}"/>
                 </StackPanel>
 
-                <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,0,0,12"
+                <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,0,0,8"
                             Visibility="{Binding PreviewCc, Converter={StaticResource NullToCollapsedConverter}}">
                     <TextBlock Text="抄送：" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}"/>
                     <TextBlock Text="{Binding PreviewCc}" TextWrapping="Wrap" Foreground="{StaticResource SuccessBrush}"/>
-                    <TextBlock Text="密送：" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" Margin="20,0,0,0"
-                               Visibility="{Binding PreviewBcc, Converter={StaticResource NullToCollapsedConverter}}"/>
-                    <TextBlock Text="{Binding PreviewBcc}" TextWrapping="Wrap" Foreground="{StaticResource WarningBrush}"
-                               Visibility="{Binding PreviewBcc, Converter={StaticResource NullToCollapsedConverter}}"/>
                 </StackPanel>
 
-                <Border Grid.Row="3" BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="1"
+                <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="0,0,0,12"
+                            Visibility="{Binding PreviewBcc, Converter={StaticResource NullToCollapsedConverter}}">
+                    <TextBlock Text="密送：" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}"/>
+                    <TextBlock Text="{Binding PreviewBcc}" TextWrapping="Wrap" Foreground="{StaticResource WarningBrush}"/>
+                </StackPanel>
+
+                <Border Grid.Row="4" BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="1"
                         CornerRadius="{StaticResource CornerRadiusMD}" ClipToBounds="True">
-                    <wv2:WebView2 x:Name="PreviewBrowser" DefaultBackgroundColor="Transparent"/>
+                    <FlowDocumentScrollViewer x:Name="PreviewViewer" Background="Transparent"
+                                               VerticalScrollBarVisibility="Auto"
+                                               IsToolBarVisible="False"/>
                 </Border>
 
-                <StackPanel Grid.Row="4" Margin="0,8,0,0">
-                    <TextBlock Text="附件：" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
+                <StackPanel Grid.Row="5" Margin="0,8,0,0">
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                        <TextBlock Text="附件：" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}"/>
+                        <TextBlock x:Name="TxtAttachmentTotal" Text="" FontSize="12"
+                                   Foreground="{StaticResource TextTertiaryBrush}" VerticalAlignment="Center"/>
+                    </StackPanel>
                     <ItemsControl x:Name="PanelAttachments"/>
                 </StackPanel>
             </Grid>

@@ -10,7 +10,7 @@ namespace TailorMail.Views;
 public partial class PreviewPage : UserControl, IRefreshable
 {
     private readonly PreviewViewModel _viewModel;
-    private bool _webViewReady;
+    private string? _lastSelectedRecipientId;
 
     public PreviewPage()
     {
@@ -18,20 +18,6 @@ public partial class PreviewPage : UserControl, IRefreshable
         _viewModel = new PreviewViewModel(App.DataService);
         DataContext = _viewModel;
         _viewModel.SelectedRecipientChanged += UpdateBrowser;
-        InitializeWebView();
-    }
-
-    private async void InitializeWebView()
-    {
-        try
-        {
-            await PreviewBrowser.EnsureCoreWebView2Async();
-            _webViewReady = true;
-        }
-        catch
-        {
-            _webViewReady = false;
-        }
     }
 
     public void RefreshData()
@@ -40,10 +26,24 @@ public partial class PreviewPage : UserControl, IRefreshable
         ListGroups.ItemsSource = _viewModel.SelectedRecipients;
         if (_viewModel.SelectedRecipients.Count > 0)
         {
+            // Try to restore previous selection
+            var restoreIndex = -1;
+            if (_lastSelectedRecipientId != null)
+            {
+                for (int i = 0; i < _viewModel.SelectedRecipients.Count; i++)
+                {
+                    if (_viewModel.SelectedRecipients[i].Id == _lastSelectedRecipientId)
+                    {
+                        restoreIndex = i;
+                        break;
+                    }
+                }
+            }
+
             ListGroups.SelectedIndex = -1;
             Dispatcher.BeginInvoke(() =>
             {
-                ListGroups.SelectedIndex = 0;
+                ListGroups.SelectedIndex = restoreIndex >= 0 ? restoreIndex : 0;
             });
         }
     }
@@ -52,6 +52,7 @@ public partial class PreviewPage : UserControl, IRefreshable
     {
         if (ListGroups.SelectedItem is Recipient r)
         {
+            _lastSelectedRecipientId = r.Id;
             _viewModel.SelectRecipient(r);
             UpdateAttachmentList();
             UpdateBrowser();
@@ -67,14 +68,32 @@ public partial class PreviewPage : UserControl, IRefreshable
             _viewModel.SelectedRecipient != null && ua.RecipientId == _viewModel.SelectedRecipient.Id);
         var specialFiles = unitAtt?.Files ?? [];
 
+        long totalSize = 0;
+        var allFiles = new HashSet<string>();
         foreach (var file in commonFiles)
         {
             PanelAttachments.Items.Add(CreateAttachmentItem("【公共】", file));
+            allFiles.Add(file);
         }
         foreach (var file in specialFiles)
         {
             PanelAttachments.Items.Add(CreateAttachmentItem("【专有】", file));
+            allFiles.Add(file);
         }
+
+        foreach (var file in allFiles)
+        {
+            try
+            {
+                if (System.IO.File.Exists(file))
+                    totalSize += new System.IO.FileInfo(file).Length;
+            }
+            catch { }
+        }
+
+        TxtAttachmentTotal.Text = allFiles.Count > 0
+            ? $"共 {allFiles.Count} 个文件，合计 {FormatFileSize(totalSize)}"
+            : "无附件";
     }
 
     private StackPanel CreateAttachmentItem(string prefix, string filePath)
@@ -87,6 +106,23 @@ public partial class PreviewPage : UserControl, IRefreshable
             FontSize = 12,
             VerticalAlignment = VerticalAlignment.Center
         };
+
+        if (!System.IO.File.Exists(filePath))
+        {
+            var notFoundBlock = new TextBlock
+            {
+                Text = System.IO.Path.GetFileName(filePath) + " (文件不存在)",
+                FontSize = 12,
+                Foreground = (System.Windows.Media.Brush)FindResource("DangerBrush"),
+                VerticalAlignment = VerticalAlignment.Center,
+                TextTrimming = TextTrimming.CharacterEllipsis,
+                ToolTip = filePath
+            };
+            panel.Children.Add(prefixBlock);
+            panel.Children.Add(notFoundBlock);
+            return panel;
+        }
+
         var link = new Hyperlink(new Run(System.IO.Path.GetFileName(filePath)))
         {
             NavigateUri = new Uri(filePath),
@@ -128,39 +164,21 @@ public partial class PreviewPage : UserControl, IRefreshable
     {
         try
         {
-            var filePath = Uri.UnescapeDataString(e.Uri.AbsolutePath);
-            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(filePath)
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(e.Uri.OriginalString)
             {
                 UseShellExecute = true
             });
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"无法打开文件: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+            App.ShowError($"无法打开文件: {ex.Message}");
         }
     }
 
     private void UpdateBrowser()
     {
-        var html = _viewModel.GetPreviewHtml();
-        if (string.IsNullOrEmpty(html)) return;
-
-        if (_webViewReady && PreviewBrowser.CoreWebView2 != null)
-        {
-            PreviewBrowser.CoreWebView2.NavigateToString(html);
-        }
-    }
-
-    private void OnPrevGroup(object sender, RoutedEventArgs e)
-    {
-        var idx = ListGroups.SelectedIndex;
-        if (idx > 0) ListGroups.SelectedIndex = idx - 1;
-    }
-
-    private void OnNextGroup(object sender, RoutedEventArgs e)
-    {
-        var idx = ListGroups.SelectedIndex;
-        if (idx < ListGroups.Items.Count - 1) ListGroups.SelectedIndex = idx + 1;
+        var doc = _viewModel.GetPreviewDocument();
+        PreviewViewer.Document = doc;
     }
 
     private void OnSearchTextChanged(object sender, TextChangedEventArgs e)
@@ -173,7 +191,8 @@ public partial class PreviewPage : UserControl, IRefreshable
             if (string.IsNullOrEmpty(searchText)) return true;
             if (item is Recipient r)
             {
-                return r.Name?.ToLower().Contains(searchText) == true;
+                return (r.Name?.ToLower().Contains(searchText) == true) ||
+                       (r.ToEmails?.ToLower().Contains(searchText) == true);
             }
             return false;
         };
@@ -190,5 +209,10 @@ public partial class PreviewPage : UserControl, IRefreshable
             size /= 1024;
         }
         return order == 0 ? $"{bytes} {suffixes[order]}" : $"{size:0.#} {suffixes[order]}";
+    }
+
+    public void FocusSearch()
+    {
+        SearchBox?.Focus();
     }
 }

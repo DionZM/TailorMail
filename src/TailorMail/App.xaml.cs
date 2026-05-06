@@ -33,12 +33,11 @@ public partial class App : System.Windows.Application
     }
 
     /// <summary>
-    /// 在主窗口底部显示 Snackbar 通知（如保存成功、导出完成等）。
+    /// 在主窗口底部显示 Snackbar 通知。
     /// </summary>
-    /// <param name="title">通知标题。</param>
-    /// <param name="message">通知内容。</param>
-    /// <param name="durationMs">显示时长（毫秒），默认 2500ms。</param>
-    public static void ShowNotification(string title, string message, int durationMs = 2500)
+    public static void ShowNotification(string message,
+        Wpf.Ui.Controls.ControlAppearance appearance = Wpf.Ui.Controls.ControlAppearance.Info,
+        int durationMs = 2500)
     {
         if (Current.MainWindow is MainWindow mainWindow && mainWindow.SnackbarHost != null)
         {
@@ -46,12 +45,21 @@ public partial class App : System.Windows.Application
             {
                 var snackbar = new Wpf.Ui.Controls.Snackbar(mainWindow.SnackbarHost);
                 snackbar.Timeout = TimeSpan.FromMilliseconds(durationMs);
-                snackbar.Appearance = Wpf.Ui.Controls.ControlAppearance.Info;
+                snackbar.Appearance = appearance;
                 snackbar.Content = message;
                 snackbar.Show();
             });
         }
     }
+
+    public static void ShowSuccess(string message, int durationMs = 2500)
+        => ShowNotification(message, Wpf.Ui.Controls.ControlAppearance.Success, durationMs);
+
+    public static void ShowWarning(string message, int durationMs = 3000)
+        => ShowNotification(message, Wpf.Ui.Controls.ControlAppearance.Caution, durationMs);
+
+    public static void ShowError(string message, int durationMs = 4000)
+        => ShowNotification(message, Wpf.Ui.Controls.ControlAppearance.Danger, durationMs);
 
     /// <summary>
     /// 应用程序启动时的初始化逻辑：

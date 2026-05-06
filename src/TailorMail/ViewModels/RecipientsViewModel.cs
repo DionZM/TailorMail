@@ -83,15 +83,23 @@ public partial class RecipientsViewModel : ObservableObject
     [RelayCommand]
     private void AddGroup()
     {
-        if (string.IsNullOrWhiteSpace(NewGroupName)) return;
-        if (Groups.Any(g => g.Name == NewGroupName))
+        var inputDlg = new Views.InputDialog
         {
-            System.Windows.MessageBox.Show("分组名已存在", "提示", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
-            return;
+            Title = "添加分组",
+            Prompt = "请输入分组名称："
+        };
+        
+        if (inputDlg.ShowDialog() == true && !string.IsNullOrWhiteSpace(inputDlg.InputText))
+        {
+            var newName = inputDlg.InputText.Trim();
+            if (Groups.Any(g => g.Name == newName))
+            {
+                App.ShowWarning("分组名已存在");
+                return;
+            }
+            Groups.Add(new RecipientGroup { Name = newName });
+            SaveAll();
         }
-        Groups.Add(new RecipientGroup { Name = NewGroupName });
-        NewGroupName = string.Empty;
-        SaveAll();
     }
 
     [RelayCommand]
@@ -112,6 +120,47 @@ public partial class RecipientsViewModel : ObservableObject
         if (SelectedGroup == null) return;
         SelectedGroup.Recipients.Remove(r);
         CurrentRecipients.Remove(r);
+        ScheduleSave();
+        UpdateCounts();
+    }
+
+    private bool HasEmptyNameRow()
+    {
+        return CurrentRecipients.Any(r => string.IsNullOrEmpty(r.Name));
+    }
+
+    [RelayCommand]
+    private void AddRecipient()
+    {
+        if (SelectedGroup == null) return;
+        if (HasEmptyNameRow()) return;
+        
+        var newRecipient = new Recipient { Name = "", IsSelected = false };
+        CurrentRecipients.Add(newRecipient);
+        SelectedGroup.Recipients.Add(newRecipient);
+        ScheduleSave();
+    }
+
+    [RelayCommand]
+    private void DeleteSelectedRecipients()
+    {
+        if (SelectedGroup == null) return;
+        
+        var selected = CurrentRecipients.Where(r => r.IsSelected).ToList();
+        if (selected.Count == 0)
+        {
+            App.ShowWarning("请先选择要删除的收件人");
+            return;
+        }
+        
+        if (System.Windows.MessageBox.Show($"确定删除选中的 {selected.Count} 个收件人？", "确认删除",
+            System.Windows.MessageBoxButton.YesNo, System.Windows.MessageBoxImage.Question) != System.Windows.MessageBoxResult.Yes) return;
+        
+        foreach (var r in selected)
+        {
+            CurrentRecipients.Remove(r);
+            SelectedGroup.Recipients.Remove(r);
+        }
         ScheduleSave();
         UpdateCounts();
     }
@@ -200,7 +249,7 @@ public partial class RecipientsViewModel : ObservableObject
         }
         SaveAll();
         UpdateCounts();
-        System.Windows.MessageBox.Show($"导入完成：新增 {added} 项，更新 {updated} 项", "导入完成");
+        App.ShowSuccess($"导入完成：新增 {added} 项，更新 {updated} 项");
     }
 
     [RelayCommand]
@@ -220,15 +269,18 @@ public partial class RecipientsViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            System.Windows.MessageBox.Show($"导入失败: {ex.Message}", "错误",
-                System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+            App.ShowError($"导入失败: {ex.Message}");
         }
     }
 
     [RelayCommand]
     private void ExportToExcel()
     {
-        if (SelectedGroup == null || CurrentRecipients.Count == 0) return;
+        if (SelectedGroup == null)
+        {
+            App.ShowWarning("请先选择一个分组");
+            return;
+        }
         var dialog = new Microsoft.Win32.SaveFileDialog
         {
             Filter = "Excel文件|*.xlsx",
@@ -264,12 +316,14 @@ public partial class RecipientsViewModel : ObservableObject
             }
             ws.Cells[ws.Dimension.Address].AutoFitColumns();
             package.SaveAs(new System.IO.FileInfo(dialog.FileName));
-            System.Windows.MessageBox.Show($"成功导出 {CurrentRecipients.Count} 个发送对象", "导出完成");
+            if (CurrentRecipients.Count == 0)
+                App.ShowSuccess("已导出空白模板（仅含标题行），可填写后导入使用");
+            else
+                App.ShowSuccess($"成功导出 {CurrentRecipients.Count} 个发送对象");
         }
         catch (Exception ex)
         {
-            System.Windows.MessageBox.Show($"导出失败: {ex.Message}", "错误",
-                System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+            App.ShowError($"导出失败: {ex.Message}");
         }
     }
 
@@ -280,7 +334,7 @@ public partial class RecipientsViewModel : ObservableObject
         var others = Groups.Where(g => g.Id != SelectedGroup.Id).ToList();
         if (others.Count == 0)
         {
-            System.Windows.MessageBox.Show("没有其他分组可复制", "提示");
+            App.ShowNotification("没有其他分组可复制");
             return;
         }
         var dlg = new Views.GroupSelectDialog(others)
@@ -307,14 +361,11 @@ public partial class RecipientsViewModel : ObservableObject
 
     public void UpdateCounts()
     {
-        int selected = 0, total = 0;
-        foreach (var g in Groups)
+        int selected = 0;
+        int total = CurrentRecipients.Count;
+        for (int i = 0; i < CurrentRecipients.Count; i++)
         {
-            total += g.Recipients.Count;
-            for (int i = 0; i < g.Recipients.Count; i++)
-            {
-                if (g.Recipients[i].IsSelected) selected++;
-            }
+            if (CurrentRecipients[i].IsSelected) selected++;
         }
         SelectedCount = selected;
         TotalCount = total;

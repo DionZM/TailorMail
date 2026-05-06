@@ -95,6 +95,49 @@ public partial class VariablesViewModel : ObservableObject
     }
 
     /// <summary>
+    /// 重命名变量。会更新所有收件人中该变量的键名，同时更新邮件模板中的引用。
+    /// </summary>
+    public void RenameVariableAndSave(string oldName, string newName)
+    {
+        if (!VariableNames.Contains(oldName) || VariableNames.Contains(newName)) return;
+
+        VariableNames.Remove(oldName);
+        VariableNames.Add(newName);
+
+        var groups = _dataService.LoadRecipientGroups();
+        foreach (var r in groups.SelectMany(g => g.Recipients))
+        {
+            if (r.Variables.TryGetValue(oldName, out var value))
+            {
+                r.Variables.Remove(oldName);
+                r.Variables[newName] = value;
+            }
+        }
+        _dataService.SaveRecipientGroups(groups);
+
+        foreach (var r in SelectedRecipients)
+        {
+            if (r.Variables.TryGetValue(oldName, out var value))
+            {
+                r.Variables.Remove(oldName);
+                r.Variables[newName] = value;
+            }
+        }
+
+        // Update template references
+        var settings = _dataService.LoadSettings();
+        var oldPlaceholder = $"{{{oldName}}}";
+        var newPlaceholder = $"{{{newName}}}";
+        if (settings.LastSubject?.Contains(oldPlaceholder) == true)
+            settings.LastSubject = settings.LastSubject.Replace(oldPlaceholder, newPlaceholder);
+        if (settings.LastBody?.Contains(oldPlaceholder) == true)
+            settings.LastBody = settings.LastBody.Replace(oldPlaceholder, newPlaceholder);
+        if (settings.LastBodyXaml?.Contains(oldPlaceholder) == true)
+            settings.LastBodyXaml = settings.LastBodyXaml.Replace(oldPlaceholder, newPlaceholder);
+        _dataService.SaveSettings(settings);
+    }
+
+    /// <summary>
     /// 删除指定的自定义变量。会从所有收件人中移除该变量。
     /// </summary>
     /// <param name="name">要删除的变量名称。</param>
@@ -160,12 +203,11 @@ public partial class VariablesViewModel : ObservableObject
                 }
             }
             SaveAll();
-            System.Windows.MessageBox.Show("导入完成", "提示");
+            App.ShowSuccess("导入完成");
         }
         catch (Exception ex)
         {
-            System.Windows.MessageBox.Show($"导入失败: {ex.Message}", "错误",
-                System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+            App.ShowError($"导入失败: {ex.Message}");
         }
     }
 
@@ -206,12 +248,11 @@ public partial class VariablesViewModel : ObservableObject
             }
             ws.Cells[ws.Dimension.Address].AutoFitColumns();
             package.SaveAs(new System.IO.FileInfo(dialog.FileName));
-            System.Windows.MessageBox.Show("导出完成", "提示");
+            App.ShowSuccess("导出完成");
         }
         catch (Exception ex)
         {
-            System.Windows.MessageBox.Show($"导出失败: {ex.Message}", "错误",
-                System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+            App.ShowError($"导出失败: {ex.Message}");
         }
     }
 

@@ -61,6 +61,9 @@ public partial class SettingsViewModel : ObservableObject
     [ObservableProperty]
     private bool _isOutlookAvailable;
 
+    [ObservableProperty]
+    private string _signature = string.Empty;
+
     public SettingsViewModel(IDataService dataService)
     {
         _dataService = dataService;
@@ -81,6 +84,7 @@ public partial class SettingsViewModel : ObservableObject
         SmtpUserName = settings.Smtp.UserName;
         SmtpDisplayName = settings.Smtp.DisplayName;
         SmtpSenderEmail = settings.Smtp.SenderEmail;
+        Signature = settings.Signature;
     }
 
     /// <summary>
@@ -119,6 +123,7 @@ public partial class SettingsViewModel : ObservableObject
         settings.Smtp.UserName = SmtpUserName;
         settings.Smtp.DisplayName = SmtpDisplayName;
         settings.Smtp.SenderEmail = SmtpSenderEmail;
+        settings.Signature = Signature;
         _dataService.SaveSettings(settings);
     }
 }

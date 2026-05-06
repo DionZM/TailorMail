@@ -14,6 +14,7 @@
     <Copyright>Copyright © 2026 TailorMail Contributors</Copyright>
     <ApplicationIcon>tailormail.ico</ApplicationIcon>
     <PublishTrimmed>true</PublishTrimmed>
+    <SelfContained>true</SelfContained>
     <_SuppressWpfTrimError>true</_SuppressWpfTrimError>
     <TrimMode>partial</TrimMode>
     <PublishSingleFile>true</PublishSingleFile>
@@ -21,6 +22,7 @@
     <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
     <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
     <JsonSerializerIsReflectionEnabledByDefault>true</JsonSerializerIsReflectionEnabledByDefault>
+    <AllowedReferenceRelatedFileExtensions>.none</AllowedReferenceRelatedFileExtensions>
   </PropertyGroup>
 
   <ItemGroup>
@@ -41,8 +43,6 @@
     <PackageReference Include="MailKit" Version="4.16.0" />
     <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.1" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.7" />
-    <PackageReference Include="Microsoft.Identity.Client" Version="4.83.3" />
-    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.3179.45" />
     <PackageReference Include="WPF-UI" Version="4.2.1" />
   </ItemGroup>
 

@@ -4,7 +4,7 @@
         xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
         Title="发送配置" Height="580" Width="520"
         WindowStartupLocation="CenterOwner"
-        ResizeMode="NoResize"
+        ResizeMode="CanResizeWithGrip" MinWidth="480" MinHeight="520"
         FontFamily="{StaticResource UIFontFamily}"
         Background="{StaticResource SurfaceBrush}">
     <Grid Margin="24">
@@ -17,7 +17,7 @@
         <StackPanel Grid.Row="0" Margin="0,0,0,16">
             <TextBlock Text="发送配置" FontSize="{StaticResource FontSizeXL}" FontWeight="Bold"
                        FontFamily="{StaticResource DisplayFontFamily}" Foreground="{StaticResource TextPrimaryBrush}"/>
-            <Border Style="{StaticResource PageTitleAccentStyle}"/>
+            <Border Style="{StaticResource SectionTitleAccentStyle}"/>
         </StackPanel>
 
         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
@@ -74,7 +74,8 @@
                             <ui:NumberBox Grid.Row="1" Grid.Column="1" x:Name="TxtPort" Value="587" Minimum="1" Maximum="65535" Margin="0,0,0,8"/>
 
                             <TextBlock Grid.Row="2" Text="启用SSL" Style="{StaticResource LabelTextStyle}" VerticalAlignment="Center" Margin="0,0,0,8"/>
-                            <ui:ToggleSwitch Grid.Row="2" Grid.Column="1" x:Name="ChkSsl" IsChecked="True" Margin="0,0,0,8"/>
+                            <ui:ToggleSwitch Grid.Row="2" Grid.Column="1" x:Name="ChkSsl" IsChecked="True" Margin="0,0,0,8"
+                                             Click="OnSslToggleChanged"/>
 
                             <TextBlock Grid.Row="3" Text="用户名" Style="{StaticResource LabelTextStyle}" VerticalAlignment="Center" Margin="0,0,0,8"/>
                             <ui:TextBox Grid.Row="3" Grid.Column="1" x:Name="TxtUsername" Margin="0,0,0,8"
@@ -90,11 +91,29 @@
 
                             <Border Grid.Row="6" Grid.ColumnSpan="2" Background="{StaticResource AccentLightBrush}"
                                     CornerRadius="{StaticResource CornerRadiusSM}" Padding="12,8" Margin="0,4,0,0">
-                                <TextBlock Text="💡 发件人邮箱可与登录用户名不同，部分SMTP服务器要求两者一致"
+                                <TextBlock Text="发件人邮箱可与登录用户名不同，部分SMTP服务器要求两者一致"
                                            Style="{StaticResource CaptionTextStyle}" TextWrapping="Wrap"
                                            Foreground="{StaticResource AccentBrush}"/>
                             </Border>
                         </Grid>
+
+                        <Button x:Name="BtnTestConnection" Content="测试连接" Click="OnTestConnection"
+                                Margin="0,12,0,0" Padding="12,6" HorizontalAlignment="Left"/>
+                        <ui:InfoBar x:Name="TestResultBar" Margin="0,8,0,0"
+                                    IsOpen="False" IsClosable="False" Title="" Message=""/>
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource CardStyle}" Margin="0">
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                            <Border Style="{StaticResource SectionTitleAccentStyle}"/>
+                            <TextBlock Text="邮件签名" Style="{StaticResource SectionTitleStyle}"/>
+                        </StackPanel>
+                        <TextBlock Text="签名将自动追加到每封邮件正文末尾"
+                                   Style="{StaticResource CaptionTextStyle}" Margin="0,0,0,8"/>
+                        <ui:TextBox x:Name="TxtSignature" PlaceholderText="输入邮件签名（可留空）"
+                                    AcceptsReturn="True" MinHeight="80" TextWrapping="Wrap"/>
                     </StackPanel>
                 </Border>
             </StackPanel>

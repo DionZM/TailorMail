@@ -17,6 +17,8 @@ public partial class RecipientsPage : UserControl, IRefreshable, IDynamicStepDes
     private readonly RecipientsViewModel _vm;
     private ListSortDirection _sortDirection;
     private bool _skipNextSort;
+    private string? _lastSortProperty;
+    private ListSortDirection _lastSortDirection;
 
     public event Action? StepDescriptionChanged;
 
@@ -38,12 +40,41 @@ public partial class RecipientsPage : UserControl, IRefreshable, IDynamicStepDes
 
     public string GetStepDescription() => $"已选 {_vm.SelectedCount} / 共 {_vm.TotalCount}";
 
-    public void RefreshData() => _vm.LoadGroups();
+    public void RefreshData()
+    {
+        _vm.LoadGroups();
+        RestoreSortState();
+    }
 
     private void OnSelectedGroupChanged()
     {
         UpdateHeaderCheckBox();
         UpdateEmptyState();
+        RestoreSortState();
+    }
+
+    private void RestoreSortState()
+    {
+        if (string.IsNullOrEmpty(_lastSortProperty)) return;
+        var view = CollectionViewSource.GetDefaultView(_vm.CurrentRecipients);
+        view.SortDescriptions.Clear();
+        view.SortDescriptions.Add(new SortDescription(_lastSortProperty, _lastSortDirection));
+
+        var col = RecipientsGrid.Columns.FirstOrDefault(c =>
+        {
+            var header = c.Header as string ?? "";
+            return header switch
+            {
+                "名称" => _lastSortProperty == "Name",
+                "简称" => _lastSortProperty == "ShortName",
+                "收件人(To)" => _lastSortProperty == "ToEmails",
+                "抄送(Cc)" => _lastSortProperty == "CcEmails",
+                "密送(Bcc)" => _lastSortProperty == "BccEmails",
+                "备注" => _lastSortProperty == "Remark",
+                _ => false
+            };
+        });
+        if (col != null) col.SortDirection = _lastSortDirection;
     }
 
     private void OnSearchTextChanged(object sender, TextChangedEventArgs e)
@@ -61,6 +92,11 @@ public partial class RecipientsPage : UserControl, IRefreshable, IDynamicStepDes
             }
             return false;
         };
+    }
+
+    private void OnAddRecipientClick(object sender, RoutedEventArgs e)
+    {
+        AddNewRowAndFocus();
     }
 
     private void OnDeleteGroup(object sender, RoutedEventArgs e)
@@ -84,6 +120,7 @@ public partial class RecipientsPage : UserControl, IRefreshable, IDynamicStepDes
             if (cb.IsChecked == true) _vm.SelectAll();
             else _vm.DeselectAll();
             UpdateHeaderCheckBox();
+            UpdateDeleteButton();
         }
     }
 
@@ -91,6 +128,13 @@ public partial class RecipientsPage : UserControl, IRefreshable, IDynamicStepDes
     {
         _vm.UpdateCounts();
         UpdateHeaderCheckBox();
+        UpdateDeleteButton();
+    }
+
+    private void UpdateDeleteButton()
+    {
+        var count = _vm.CurrentRecipients.Count(r => r.IsSelected);
+        BtnDeleteSelected.Content = count > 0 ? $"删除已选 ({count})" : "删除已选";
     }
 
     private void UpdateHeaderCheckBox()
@@ -134,8 +178,7 @@ public partial class RecipientsPage : UserControl, IRefreshable, IDynamicStepDes
                     r.Id != current.Id && r.Name == newName);
                 if (duplicate != null)
                 {
-                    System.Windows.MessageBox.Show($"名称「{newName}」已存在，请使用不同的名称", "名称重复",
-                        MessageBoxButton.OK, MessageBoxImage.Warning);
+                    App.ShowWarning($"名称「{newName}」已存在，请使用不同的名称");
                     if (textBox != null) textBox.Text = "";
                     e.Cancel = true;
                     Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Loaded, () =>
@@ -189,6 +232,7 @@ public partial class RecipientsPage : UserControl, IRefreshable, IDynamicStepDes
                 var firstCol = RecipientsGrid.Columns[FirstEditableColIndex];
                 RecipientsGrid.CurrentCell = new DataGridCellInfo(RecipientsGrid.Items[lastIdx], firstCol);
                 RecipientsGrid.Focus();
+                UpdateEmptyState();
                 RecipientsGrid.BeginEdit();
             }
         });
@@ -335,28 +379,31 @@ public partial class RecipientsPage : UserControl, IRefreshable, IDynamicStepDes
         else if (e.Key == Key.Enter)
         {
             e.Handled = true;
-            var isNameColumn = colIndex == FirstEditableColIndex;
-            if (rowIndex + 1 < grid.Items.Count)
-            {
-                var sameCol = grid.CurrentColumn ?? RecipientsGrid.Columns[FirstEditableColIndex];
-                MoveToCell(grid, rowIndex + 1, sameCol, true);
-            }
-            else
+            grid.CommitEdit(DataGridEditingUnit.Cell, true);
+            
+            Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Loaded, () =>
             {
                 var current = grid.Items[rowIndex] as Recipient;
-                if (current != null && !string.IsNullOrEmpty(current.Name))
+                var isNameColumn = colIndex == FirstEditableColIndex;
+                
+                if (isNameColumn && current != null && !string.IsNullOrEmpty(current.Name))
                 {
-                    if (isNameColumn)
+                    var duplicate = _vm.CurrentRecipients.FirstOrDefault(r =>
+                        r.Id != current.Id && r.Name == current.Name);
+                    if (duplicate != null)
                     {
-                        _vm.SaveAll();
-                        AddNewRowAndFocus();
+                        App.ShowWarning($"名称「{current.Name}」已存在，请使用不同的名称");
+                        return;
                     }
-                    else
-                    {
-                        AddNewRowAndFocus();
-                    }
+                    
+                    AddNewRowAndFocus();
                 }
-            }
+                else if (rowIndex + 1 < grid.Items.Count)
+                {
+                    var sameCol = grid.CurrentColumn ?? RecipientsGrid.Columns[FirstEditableColIndex];
+                    MoveToCell(grid, rowIndex + 1, sameCol, true);
+                }
+            });
         }
         else if (e.Key == Key.Down && Keyboard.Modifiers == ModifierKeys.None)
         {
@@ -441,6 +488,8 @@ public partial class RecipientsPage : UserControl, IRefreshable, IDynamicStepDes
 
         if (!string.IsNullOrEmpty(propName))
         {
+            _lastSortProperty = propName;
+            _lastSortDirection = _sortDirection;
             var view = CollectionViewSource.GetDefaultView(_vm.CurrentRecipients);
             view.SortDescriptions.Clear();
             view.SortDescriptions.Add(new SortDescription(propName, _sortDirection));
@@ -480,4 +529,9 @@ public partial class RecipientsPage : UserControl, IRefreshable, IDynamicStepDes
     }
 
     public void SaveAll() => _vm.SaveAll();
+
+    public void FocusSearch()
+    {
+        SearchBox?.Focus();
+    }
 }

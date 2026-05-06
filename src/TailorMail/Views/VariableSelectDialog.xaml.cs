@@ -1,46 +1,23 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
-using TailorMail.ViewModels;
+using Wpf.Ui.Controls;
 
 namespace TailorMail.Views;
 
-public partial class VariableSelectDialog : Wpf.Ui.Controls.FluentWindow
+public partial class VariableSelectDialog : FluentWindow
 {
     public List<string> SelectedVariables { get; private set; } = [];
+    public bool AllowSingle { get; set; }
+    public string ConfirmText { get; set; } = "删除";
+    public string HeaderText { get => TitleText.Text; set => TitleText.Text = value; }
+
+    private readonly List<CheckBox> _checkBoxes = [];
 
     public VariableSelectDialog(List<string> variableNames)
     {
         InitializeComponent();
-        Title = "选择要删除的变量";
-        Width = 320;
-        Height = 400;
-        WindowStartupLocation = WindowStartupLocation.CenterOwner;
-        ResizeMode = ResizeMode.NoResize;
-
-        var panel = new StackPanel { Margin = new Thickness(20) };
-
-        var titleRow = new StackPanel
-        {
-            Orientation = Orientation.Horizontal,
-            Margin = new Thickness(0, 0, 0, 12)
-        };
-        var accent = new Border
-        {
-            Style = (Style)FindResource("SectionTitleAccentStyle")
-        };
-        var hint = new TextBlock
-        {
-            Text = "请勾选要删除的变量：",
-            Style = (Style)FindResource("SectionTitleStyle")
-        };
-        titleRow.Children.Add(accent);
-        titleRow.Children.Add(hint);
-        panel.Children.Add(titleRow);
-
-        var scrollViewer = new ScrollViewer { VerticalScrollBarVisibility = ScrollBarVisibility.Auto, MaxHeight = 250 };
-        var itemsPanel = new StackPanel();
-        var checkBoxes = new List<CheckBox>();
+        Owner = Application.Current.MainWindow;
 
         foreach (var name in variableNames)
         {
@@ -51,44 +28,39 @@ public partial class VariableSelectDialog : Wpf.Ui.Controls.FluentWindow
                 FontFamily = (FontFamily)FindResource("UIFontFamily"),
                 Tag = name
             };
-            checkBoxes.Add(cb);
-            itemsPanel.Children.Add(cb);
+            _checkBoxes.Add(cb);
+            ItemsPanel.Children.Add(cb);
         }
-        scrollViewer.Content = itemsPanel;
-        panel.Children.Add(scrollViewer);
 
-        var btnPanel = new StackPanel
+        BtnOk.Content = ConfirmText;
+    }
+
+    private void OnOk(object sender, RoutedEventArgs e)
+    {
+        var checkedItems = _checkBoxes.Where(cb => cb.IsChecked == true).Select(cb => (string)cb.Tag!).ToList();
+
+        if (AllowSingle)
         {
-            Orientation = Orientation.Horizontal,
-            HorizontalAlignment = HorizontalAlignment.Right,
-            Margin = new Thickness(0, 16, 0, 0)
-        };
-
-        var btnOk = new Wpf.Ui.Controls.Button
+            if (checkedItems.Count != 1)
+            {
+                System.Windows.MessageBox.Show("请选择一个变量", "提示",
+                    System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+                return;
+            }
+        }
+        else if (checkedItems.Count == 0)
         {
-            Content = "删除",
-            Padding = new Thickness(20, 6, 20, 6),
-            Margin = new Thickness(0, 0, 8, 0),
-            FontWeight = FontWeights.SemiBold
-        };
-        btnOk.Click += (_, _) =>
-        {
-            SelectedVariables = checkBoxes.Where(cb => cb.IsChecked == true).Select(cb => (string)cb.Tag!).ToList();
-            DialogResult = true;
-        };
+            System.Windows.MessageBox.Show("请至少选择一个变量", "提示",
+                System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+            return;
+        }
 
-        var btnCancel = new Wpf.Ui.Controls.Button
-        {
-            Content = "取消",
-            Padding = new Thickness(20, 6, 20, 6),
-            Appearance = Wpf.Ui.Controls.ControlAppearance.Secondary
-        };
-        btnCancel.Click += (_, _) => { DialogResult = false; };
+        SelectedVariables = checkedItems;
+        DialogResult = true;
+    }
 
-        btnPanel.Children.Add(btnOk);
-        btnPanel.Children.Add(btnCancel);
-        panel.Children.Add(btnPanel);
-
-        Content = panel;
+    private void OnCancel(object sender, RoutedEventArgs e)
+    {
+        DialogResult = false;
     }
 }

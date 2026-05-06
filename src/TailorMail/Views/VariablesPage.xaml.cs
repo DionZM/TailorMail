@@ -12,6 +12,7 @@ namespace TailorMail.Views;
 public partial class VariablesPage : UserControl, IRefreshable
 {
     private readonly VariablesViewModel _vm;
+    private int? _restoredScrollIndex;
 
     public VariablesPage()
     {
@@ -29,6 +30,12 @@ public partial class VariablesPage : UserControl, IRefreshable
 
     private void BuildGrid()
     {
+        // Preserve scroll position
+        var scrollViewer = FindVisualChild<System.Windows.Controls.ScrollViewer>(VariablesGrid);
+        _restoredScrollIndex = scrollViewer?.VerticalOffset > 0
+            ? VariablesGrid.Items.IndexOf(VariablesGrid.SelectedItem)
+            : null;
+
         VariablesGrid.Columns.Clear();
         VariablesGrid.ItemsSource = null;
 
@@ -49,46 +56,94 @@ public partial class VariablesPage : UserControl, IRefreshable
             {
                 Header = varName,
                 Width = new DataGridLength(1, DataGridLengthUnitType.Star),
+                MinWidth = 100,
             };
             col.Binding = new Binding($"Variables[{varName}]") { UpdateSourceTrigger = UpdateSourceTrigger.LostFocus };
             VariablesGrid.Columns.Add(col);
         }
 
         VariablesGrid.ItemsSource = _vm.SelectedRecipients;
+
+        // Restore scroll position
+        if (_restoredScrollIndex.HasValue && _restoredScrollIndex.Value >= 0)
+        {
+            Dispatcher.BeginInvoke(() =>
+            {
+                if (_restoredScrollIndex.Value < VariablesGrid.Items.Count)
+                {
+                    VariablesGrid.ScrollIntoView(VariablesGrid.Items[_restoredScrollIndex.Value]);
+                }
+            });
+        }
+
+        UpdateUsageHint();
     }
 
-    private void OnNewVarKeyDown(object sender, KeyEventArgs e)
+    private void UpdateUsageHint()
     {
-        if (e.Key == Key.Enter)
+        var settings = App.DataService.LoadSettings();
+        var subject = settings.LastSubject ?? "";
+        var body = settings.LastBody ?? "";
+        var bodyXaml = settings.LastBodyXaml ?? "";
+
+        var unusedVars = new List<string>();
+        foreach (var name in _vm.VariableNames)
         {
-            e.Handled = true;
-            DoAddVariable();
+            var placeholder = $"{{{name}}}";
+            if (!subject.Contains(placeholder) && !body.Contains(placeholder) && !bodyXaml.Contains(placeholder))
+                unusedVars.Add(name);
         }
+
+        if (unusedVars.Count > 0 && _vm.VariableNames.Count > 0)
+        {
+            VarUsageHint.Text = $"提示：以下变量尚未在邮件模板中使用：{string.Join("、", unusedVars)}";
+            VarUsageHint.Visibility = Visibility.Visible;
+        }
+        else
+        {
+            VarUsageHint.Visibility = Visibility.Collapsed;
+        }
+    }
+
+    private static T? FindVisualChild<T>(DependencyObject parent) where T : DependencyObject
+    {
+        for (int i = 0; i < System.Windows.Media.VisualTreeHelper.GetChildrenCount(parent); i++)
+        {
+            var child = System.Windows.Media.VisualTreeHelper.GetChild(parent, i);
+            if (child is T result) return result;
+            var descendant = FindVisualChild<T>(child);
+            if (descendant != null) return descendant;
+        }
+        return null;
     }
 
     private void OnAddVariableClick(object sender, RoutedEventArgs e)
     {
-        DoAddVariable();
-    }
-
-    private void DoAddVariable()
-    {
-        if (string.IsNullOrWhiteSpace(_vm.NewVariableName)) return;
-        if (_vm.VariableNames.Contains(_vm.NewVariableName))
+        var inputDlg = new InputDialog
         {
-            MessageBox.Show("变量名已存在", "提示", MessageBoxButton.OK, MessageBoxImage.Warning);
-            return;
+            Title = "添加变量",
+            Prompt = "请输入变量名称："
+        };
+        
+        if (inputDlg.ShowDialog() == true && !string.IsNullOrWhiteSpace(inputDlg.InputText))
+        {
+            var newName = inputDlg.InputText.Trim();
+            if (_vm.VariableNames.Contains(newName))
+            {
+                App.ShowWarning("变量名已存在");
+                return;
+            }
+            _vm.NewVariableName = newName;
+            _vm.AddVariableAndSave();
+            BuildGrid();
         }
-        _vm.AddVariableAndSave();
-        BuildGrid();
-        NewVarTextBox.Focus();
     }
 
     private void OnDeleteVariable(object sender, RoutedEventArgs e)
     {
         if (_vm.VariableNames.Count == 0)
         {
-            MessageBox.Show("当前没有可删除的变量", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+            App.ShowNotification("当前没有可删除的变量");
             return;
         }
 
@@ -112,6 +167,35 @@ public partial class VariablesPage : UserControl, IRefreshable
                 _vm.DeleteVariableAndSave(name);
             BuildGrid();
         }
+    }
+
+    private void OnRenameVariable(object sender, RoutedEventArgs e)
+    {
+        if (_vm.VariableNames.Count == 0)
+        {
+            App.ShowNotification("当前没有可重命名的变量");
+            return;
+        }
+
+        var selectDlg = new VariableSelectDialog(_vm.VariableNames.ToList()) { AllowSingle = true, ConfirmText = "选择", HeaderText = "请选择要重命名的变量：" };
+        selectDlg.Title = "选择要重命名的变量";
+        selectDlg.Owner = Window.GetWindow(this);
+        if (selectDlg.ShowDialog() != true || selectDlg.SelectedVariables.Count == 0) return;
+
+        var oldName = selectDlg.SelectedVariables[0];
+        var inputDlg = new InputDialog { Title = "重命名变量", Prompt = $"将「{oldName}」重命名为：" };
+        if (inputDlg.ShowDialog() != true || string.IsNullOrWhiteSpace(inputDlg.InputText)) return;
+
+        var newName = inputDlg.InputText.Trim();
+        if (newName == oldName) return;
+        if (_vm.VariableNames.Contains(newName))
+        {
+            App.ShowWarning($"变量名「{newName}」已存在");
+            return;
+        }
+
+        _vm.RenameVariableAndSave(oldName, newName);
+        BuildGrid();
     }
 
     private void OnCellEditEnding(object sender, DataGridCellEditEndingEventArgs e) => _vm.SaveAll();
