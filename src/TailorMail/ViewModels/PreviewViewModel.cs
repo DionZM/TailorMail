@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
+using TailorMail.Helpers;
 using TailorMail.Models;
 using TailorMail.Services;
 
@@ -14,51 +15,31 @@ public partial class PreviewViewModel : ObservableObject
 {
     private readonly IDataService _dataService;
 
-    /// <summary>
-    /// 获取或设置选中的收件人列表（仅包含 IsSelected 为 true 的收件人）。
-    /// </summary>
+    private AppSettings? _cachedSettings;
+    private VariablesViewModel? _cachedVarVm;
+    private AttachmentConfig? _cachedAttachConfig;
+
     [ObservableProperty]
     private ObservableCollection<Recipient> _selectedRecipients = [];
 
-    /// <summary>
-    /// 获取或设置当前预览的收件人。
-    /// </summary>
     [ObservableProperty]
     private Recipient? _selectedRecipient;
 
-    /// <summary>
-    /// 获取或设置变量替换后的邮件主题预览文本。
-    /// </summary>
     [ObservableProperty]
     private string _previewSubject = string.Empty;
 
-    /// <summary>
-    /// 获取或设置收件人邮箱地址预览文本。
-    /// </summary>
     [ObservableProperty]
     private string _previewTo = string.Empty;
 
-    /// <summary>
-    /// 获取或设置抄送邮箱地址预览文本。
-    /// </summary>
     [ObservableProperty]
     private string _previewCc = string.Empty;
 
-    /// <summary>
-    /// 获取或设置密送邮箱地址预览文本。
-    /// </summary>
     [ObservableProperty]
     private string _previewBcc = string.Empty;
 
-    /// <summary>
-    /// 获取或设置附件文件路径预览列表（公共附件 + 收件人专属附件）。
-    /// </summary>
     [ObservableProperty]
     private ObservableCollection<string> _previewAttachments = [];
 
-    /// <summary>
-    /// 当预览的收件人发生变化时触发，用于通知界面刷新 HTML 预览。
-    /// </summary>
     public event Action? SelectedRecipientChanged;
 
     public PreviewViewModel(IDataService dataService)
@@ -66,11 +47,22 @@ public partial class PreviewViewModel : ObservableObject
         _dataService = dataService;
     }
 
-    /// <summary>
-    /// 加载选中的收件人列表，默认选中第一个收件人并更新预览。
-    /// </summary>
+    private AppSettings CachedSettings => _cachedSettings ??= _dataService.LoadSettings();
+    private VariablesViewModel CachedVarVm => _cachedVarVm ??= new VariablesViewModel(_dataService);
+    private AttachmentConfig CachedAttachConfig => _cachedAttachConfig ??= _dataService.LoadAttachmentConfig();
+
+    public void InvalidateCache()
+    {
+        _cachedSettings = null;
+        _cachedVarVm = null;
+        _cachedAttachConfig = null;
+    }
+
+    public AttachmentConfig GetCachedAttachmentConfig() => CachedAttachConfig;
+
     public void LoadData()
     {
+        InvalidateCache();
         var groups = _dataService.LoadRecipientGroups();
         SelectedRecipients = new ObservableCollection<Recipient>(
             groups.SelectMany(g => g.Recipients).Where(r => r.IsSelected));
@@ -100,16 +92,15 @@ public partial class PreviewViewModel : ObservableObject
             return;
         }
 
-        var settings = _dataService.LoadSettings();
-        var varVm = new VariablesViewModel(_dataService);
+        var settings = CachedSettings;
+        var varVm = CachedVarVm;
         PreviewSubject = varVm.ProcessBody(settings.LastSubject, SelectedRecipient);
         PreviewTo = SelectedRecipient.ToEmails;
         PreviewCc = SelectedRecipient.CcEmails;
         PreviewBcc = SelectedRecipient.BccEmails;
 
-        // 合并公共附件和收件人专属附件
         var attachments = new List<string>();
-        var config = _dataService.LoadAttachmentConfig();
+        var config = CachedAttachConfig;
         attachments.AddRange(config.CommonAttachments);
         var unitAtt = config.RecipientAttachments.FirstOrDefault(ua => ua.RecipientId == SelectedRecipient.Id);
         if (unitAtt != null) attachments.AddRange(unitAtt.Files);
@@ -134,8 +125,8 @@ public partial class PreviewViewModel : ObservableObject
     {
         if (SelectedRecipient == null) return null;
 
-        var settings = _dataService.LoadSettings();
-        var varVm = new VariablesViewModel(_dataService);
+        var settings = CachedSettings;
+        var varVm = CachedVarVm;
 
         System.Windows.Documents.FlowDocument doc;
 
@@ -157,7 +148,6 @@ public partial class PreviewViewModel : ObservableObject
             doc = CreatePlainTextDoc(varVm.ProcessBody(settings.LastBody, SelectedRecipient));
         }
 
-        // 替换正文中的变量
         foreach (var run in GetAllRuns(doc).ToList())
         {
             if (!string.IsNullOrEmpty(run.Text))
@@ -216,5 +206,73 @@ public partial class PreviewViewModel : ObservableObject
             doc.Blocks.Add(para);
         }
         return doc;
+    }
+
+    public (bool success, string error) SendTestEmail(AppSettings settings, string senderEmail)
+    {
+        if (SelectedRecipient == null)
+            return (false, "未选择收件人");
+
+        try
+        {
+            var varVm = CachedVarVm;
+            var subject = varVm.ProcessBody(settings.LastSubject, SelectedRecipient);
+
+            string bodyHtml;
+            if (!string.IsNullOrEmpty(settings.LastBodyXaml))
+            {
+                try
+                {
+                    var doc = new System.Windows.Documents.FlowDocument();
+                    Helpers.FlowDocumentHelper.LoadFromXaml(doc, settings.LastBodyXaml);
+                    // Replace variables
+                    foreach (var run in GetAllRuns(doc).ToList())
+                    {
+                        if (!string.IsNullOrEmpty(run.Text))
+                            run.Text = varVm.ProcessBody(run.Text, SelectedRecipient);
+                    }
+                    bodyHtml = Helpers.FlowDocumentHelper.ToHtml(doc);
+                    bodyHtml = Helpers.FlowDocumentHelper.WrapAsEmailDocument(bodyHtml);
+                }
+                catch
+                {
+                    bodyHtml = $"<pre>{System.Net.WebUtility.HtmlEncode(varVm.ProcessBody(settings.LastBody, SelectedRecipient))}</pre>";
+                }
+            }
+            else
+            {
+                bodyHtml = $"<pre>{System.Net.WebUtility.HtmlEncode(varVm.ProcessBody(settings.LastBody, SelectedRecipient))}</pre>";
+            }
+
+            if (!string.IsNullOrEmpty(settings.Signature))
+                bodyHtml += $"<br/><br/><span style='color:#666;'>{System.Net.WebUtility.HtmlEncode(varVm.ProcessBody(settings.Signature, SelectedRecipient))}</span>";
+
+            var attachments = PreviewAttachments?.ToArray() ?? [];
+
+            if (settings.SendMethod == Models.SendMethod.Outlook)
+            {
+                var outlookSender = new OutlookEmailSender();
+                var result = outlookSender.SendTest(senderEmail, senderEmail, subject, bodyHtml, attachments, out string error);
+                return (result, error);
+            }
+            else
+            {
+                var smtpSettings = settings.Smtp;
+                var password = CredentialHelper.Unprotect(smtpSettings.EncryptedPassword);
+                if (string.IsNullOrEmpty(password))
+                    return (false, "未配置 SMTP 密码，请在设置中保存密码");
+
+                var displayName = !string.IsNullOrWhiteSpace(smtpSettings.DisplayName) ? smtpSettings.DisplayName : smtpSettings.UserName;
+                var from = !string.IsNullOrWhiteSpace(smtpSettings.SenderEmail) ? smtpSettings.SenderEmail : smtpSettings.UserName;
+
+                var smtpSender = new SmtpEmailSender();
+                var result = smtpSender.SendTest(from, displayName, password, senderEmail, subject, bodyHtml, attachments, out string error);
+                return (result, error);
+            }
+        }
+        catch (Exception ex)
+        {
+            return (false, ex.Message);
+        }
     }
 }

@@ -15,6 +15,7 @@ public partial class MailComposePage : UserControl, IRefreshable
     private readonly MailComposeViewModel _vm;
     private bool _isUpdating;
     private List<string> _allVariablePlaceholders = [];
+    private HashSet<string> _validVariableNames = [];
     private static readonly List<string> _recentColors = [];
     private const int MaxRecentColors = 7;
 
@@ -22,6 +23,9 @@ public partial class MailComposePage : UserControl, IRefreshable
     private const double DefaultFontSize = 16;
     private const double MinFontSize = 8;
     private const double MaxFontSize = 72;
+
+    private readonly System.Windows.Threading.DispatcherTimer _xamlSaveTimer;
+    private bool _hasPendingXamlSave;
 
     private bool _acActive;
     private int _acStartIndex;
@@ -33,6 +37,13 @@ public partial class MailComposePage : UserControl, IRefreshable
         InitializeComponent();
         _vm = new MailComposeViewModel(App.DataService);
         DataContext = _vm;
+        Editor.UndoLimit = 100;
+        _xamlSaveTimer = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromMilliseconds(800) };
+        _xamlSaveTimer.Tick += (_, _) =>
+        {
+            _xamlSaveTimer.Stop();
+            FlushXamlSave();
+        };
         LoadContentToEditor();
         LoadVariables();
         InitFontSizeCombo();
@@ -63,6 +74,7 @@ public partial class MailComposePage : UserControl, IRefreshable
         var varVm = new VariablesViewModel(App.DataService);
         var placeholders = varVm.GetAllVariablePlaceholders();
         _allVariablePlaceholders = placeholders;
+        _validVariableNames = new HashSet<string>(placeholders);
         VariableCombo.ItemsSource = placeholders;
         if (placeholders.Count > 0) VariableCombo.SelectedIndex = 0;
         UpdateVariableHint();
@@ -70,15 +82,13 @@ public partial class MailComposePage : UserControl, IRefreshable
 
     private void UpdateVariableHint()
     {
-        var varVm = new VariablesViewModel(App.DataService);
-        var vars = varVm.GetAllVariablePlaceholders();
-        if (vars.Count == 0)
+        if (_allVariablePlaceholders.Count == 0)
         {
             VarHintText.Text = "提示：请先在「变量配置」步骤中创建变量";
         }
         else
         {
-            VarHintText.Text = $"提示：使用 {{变量名}} 格式插入变量，如 {string.Join("、", vars.Take(3))}，系统将自动替换为对应值";
+            VarHintText.Text = $"提示：使用 {{变量名}} 格式插入变量，如 {string.Join("、", _allVariablePlaceholders.Take(3))}，系统将自动替换为对应值";
         }
     }
 
@@ -190,10 +200,22 @@ public partial class MailComposePage : UserControl, IRefreshable
             try
             {
                 var caretRect = rtb.CaretPosition.GetCharacterRect(LogicalDirection.Forward);
-                AutoCompletePopup.HorizontalOffset = caretRect.Left;
-                AutoCompletePopup.VerticalOffset = caretRect.Bottom + 2;
+                if (!caretRect.IsEmpty)
+                {
+                    AutoCompletePopup.HorizontalOffset = caretRect.Left;
+                    AutoCompletePopup.VerticalOffset = caretRect.Bottom + 2;
+                }
+                else
+                {
+                    AutoCompletePopup.HorizontalOffset = 0;
+                    AutoCompletePopup.VerticalOffset = 30;
+                }
             }
-            catch { }
+            catch
+            {
+                AutoCompletePopup.HorizontalOffset = 0;
+                AutoCompletePopup.VerticalOffset = 30;
+            }
         }
         else if (source is UiTextBox tb)
         {
@@ -288,18 +310,25 @@ public partial class MailComposePage : UserControl, IRefreshable
     private void OnEditorTextChanged(object sender, TextChangedEventArgs e)
     {
         if (_isUpdating) return;
-        _vm.BodyXaml = FlowDocumentHelper.SaveToXaml(Editor.Document);
         _vm.Body = new TextRange(Editor.Document.ContentStart, Editor.Document.ContentEnd).Text.TrimEnd('\r', '\n');
+        _hasPendingXamlSave = true;
+        _xamlSaveTimer.Stop();
+        _xamlSaveTimer.Start();
         ValidateVariablesInEditor();
+    }
+
+    private void FlushXamlSave()
+    {
+        _xamlSaveTimer.Stop();
+        if (!_hasPendingXamlSave) return;
+        _hasPendingXamlSave = false;
+        _vm.BodyXaml = FlowDocumentHelper.SaveToXaml(Editor.Document);
     }
 
     private void ValidateVariablesInEditor()
     {
         var text = new TextRange(Editor.Document.ContentStart, Editor.Document.ContentEnd).Text;
-        var varVm = new VariablesViewModel(App.DataService);
-        var validNames = new HashSet<string>(varVm.GetAllVariablePlaceholders());
 
-        // Check for {xxx} patterns that aren't valid variables
         var openIdx = 0;
         var unknownVars = new List<string>();
         while ((openIdx = text.IndexOf('{', openIdx)) >= 0)
@@ -307,7 +336,7 @@ public partial class MailComposePage : UserControl, IRefreshable
             var closeIdx = text.IndexOf('}', openIdx);
             if (closeIdx < 0) break;
             var candidate = text.Substring(openIdx, closeIdx - openIdx + 1);
-            if (!string.IsNullOrWhiteSpace(candidate.Trim('{', '}')) && !validNames.Contains(candidate))
+            if (!string.IsNullOrWhiteSpace(candidate.Trim('{', '}')) && !_validVariableNames.Contains(candidate))
                 unknownVars.Add(candidate);
             openIdx = closeIdx + 1;
         }
@@ -328,6 +357,16 @@ public partial class MailComposePage : UserControl, IRefreshable
     private void OnEditorSelectionChanged(object sender, RoutedEventArgs e)
     {
         UpdateToolbarState();
+        UpdateUndoRedoState();
+    }
+
+    private void UpdateUndoRedoState()
+    {
+        if (Editor == null) return;
+        UndoBtn.IsEnabled = Editor.CanUndo;
+        UndoBtn.Opacity = Editor.CanUndo ? 1.0 : 0.35;
+        RedoBtn.IsEnabled = Editor.CanRedo;
+        RedoBtn.Opacity = Editor.CanRedo ? 1.0 : 0.35;
     }
 
     private void UpdateToolbarState()
@@ -336,6 +375,7 @@ public partial class MailComposePage : UserControl, IRefreshable
 
         var sel = Editor.Selection;
         double fontSize;
+        Brush? foreground;
         if (sel.IsEmpty)
         {
             var parent = Editor.CaretPosition.Parent as FrameworkContentElement;
@@ -343,6 +383,7 @@ public partial class MailComposePage : UserControl, IRefreshable
             ItalicBtn.IsChecked = ReadProperty<bool>(parent, TextElement.FontStyleProperty, v => v is FontStyle fs && fs == FontStyles.Italic);
             UnderlineBtn.IsChecked = ReadProperty<bool>(parent, Inline.TextDecorationsProperty, v => v is TextDecorationCollection tdc && tdc == TextDecorations.Underline);
             fontSize = ReadProperty<double>(parent, TextElement.FontSizeProperty, v => v is double d ? d : DefaultFontSize);
+            foreground = ReadProperty<Brush?>(parent, TextElement.ForegroundProperty, v => v as Brush);
         }
         else
         {
@@ -350,7 +391,11 @@ public partial class MailComposePage : UserControl, IRefreshable
             ItalicBtn.IsChecked = sel.GetPropertyValue(TextElement.FontStyleProperty) as FontStyle? == FontStyles.Italic;
             UnderlineBtn.IsChecked = sel.GetPropertyValue(Inline.TextDecorationsProperty) == TextDecorations.Underline;
             fontSize = sel.GetPropertyValue(TextElement.FontSizeProperty) as double? ?? DefaultFontSize;
+            foreground = sel.GetPropertyValue(TextElement.ForegroundProperty) as Brush;
         }
+
+        if (foreground is SolidColorBrush scb)
+            ColorPreview.Background = scb;
 
         var intSize = (int)fontSize;
         if (FontSizeCombo.Items.Contains(intSize))
@@ -421,6 +466,97 @@ public partial class MailComposePage : UserControl, IRefreshable
         Editor.Focus();
     }
 
+    private void OnAlignLeft(object sender, RoutedEventArgs e)
+    {
+        ApplyAlignment(TextAlignment.Left);
+        Editor.Focus();
+    }
+
+    private void OnAlignCenter(object sender, RoutedEventArgs e)
+    {
+        ApplyAlignment(TextAlignment.Center);
+        Editor.Focus();
+    }
+
+    private void OnAlignRight(object sender, RoutedEventArgs e)
+    {
+        ApplyAlignment(TextAlignment.Right);
+        Editor.Focus();
+    }
+
+    private void ApplyAlignment(TextAlignment alignment)
+    {
+        if (Editor.Selection != null && !Editor.Selection.IsEmpty)
+        {
+            Editor.Selection.ApplyPropertyValue(Block.TextAlignmentProperty, alignment);
+        }
+        else
+        {
+            var paragraph = Editor.CaretPosition.Paragraph;
+            if (paragraph != null)
+                paragraph.TextAlignment = alignment;
+        }
+    }
+
+    private void OnUndo(object sender, RoutedEventArgs e)
+    {
+        if (Editor.CanUndo) Editor.Undo();
+        Editor.Focus();
+    }
+
+    private void OnRedo(object sender, RoutedEventArgs e)
+    {
+        if (Editor.CanRedo) Editor.Redo();
+        Editor.Focus();
+    }
+
+    private void OnFontSizeKeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.Enter)
+        {
+            if (FontSizeCombo.SelectedItem is int size)
+            {
+                ApplyFontSize(size);
+                FontSizeError.Visibility = Visibility.Collapsed;
+            }
+            else if (int.TryParse(FontSizeCombo.Text, out var customSize) && customSize >= MinFontSize && customSize <= MaxFontSize)
+            {
+                ApplyFontSize(customSize);
+                FontSizeError.Visibility = Visibility.Collapsed;
+            }
+            else
+            {
+                FontSizeError.Text = "无效字号";
+                FontSizeError.Visibility = Visibility.Visible;
+            }
+            e.Handled = true;
+            Editor.Focus();
+        }
+    }
+
+    private void OnFontSizePreviewTextInput(object sender, TextCompositionEventArgs e)
+    {
+        Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Loaded, () =>
+        {
+            if (FontSizeCombo == null) return;
+            var text = FontSizeCombo.Text?.Trim();
+            if (string.IsNullOrEmpty(text))
+            {
+                FontSizeError.Visibility = Visibility.Collapsed;
+                return;
+            }
+            if (!int.TryParse(text, out var size) || size < MinFontSize || size > MaxFontSize)
+            {
+                FontSizeError.Text = $"字号需{MinFontSize}-{MaxFontSize}";
+                FontSizeError.Visibility = Visibility.Visible;
+            }
+            else
+            {
+                FontSizeError.Visibility = Visibility.Collapsed;
+            }
+        });
+    }
+
     private void OnColorPickerClick(object sender, RoutedEventArgs e)
     {
         ColorPopup.IsOpen = !ColorPopup.IsOpen;
@@ -435,18 +571,59 @@ public partial class MailComposePage : UserControl, IRefreshable
     private void OnApplyCustomColor(object sender, RoutedEventArgs e)
     {
         var input = CustomColorInput?.Text?.Trim();
-        if (string.IsNullOrEmpty(input)) return;
+        if (string.IsNullOrEmpty(input))
+        {
+            ShowColorInputError("请输入颜色值");
+            return;
+        }
         if (!input.StartsWith("#")) input = "#" + input;
+        if (input.Length != 7)
+        {
+            ShowColorInputError("格式应为 #RRGGBB");
+            return;
+        }
         try
         {
             var color = (Color)ColorConverter.ConvertFromString(input);
             ApplyColor(input);
-            if (CustomColorInput != null) CustomColorInput.Text = "";
+            if (CustomColorInput != null)
+            {
+                CustomColorInput.Text = "";
+                CustomColorInput.BorderBrush = null;
+            }
+            HideColorInputError();
         }
         catch
         {
-            if (CustomColorInput != null) CustomColorInput.Text = "";
+            ShowColorInputError("无效的颜色值");
         }
+    }
+
+    private void ShowColorInputError(string message)
+    {
+        if (CustomColorInput != null)
+        {
+            CustomColorInput.BorderBrush = (System.Windows.Media.Brush)FindResource("DangerBrush");
+            CustomColorInput.BorderThickness = new Thickness(2);
+        }
+        var errorText = FindName("CustomColorError") as TextBlock;
+        if (errorText != null)
+        {
+            errorText.Text = message;
+            errorText.Visibility = Visibility.Visible;
+        }
+    }
+
+    private void HideColorInputError()
+    {
+        if (CustomColorInput != null)
+        {
+            CustomColorInput.BorderBrush = null;
+            CustomColorInput.BorderThickness = new Thickness(1);
+        }
+        var errorText = FindName("CustomColorError") as TextBlock;
+        if (errorText != null)
+            errorText.Visibility = Visibility.Collapsed;
     }
 
     private void ApplyColor(string colorStr)
@@ -517,28 +694,49 @@ public partial class MailComposePage : UserControl, IRefreshable
 
     private void OnInsertLink(object sender, RoutedEventArgs e)
     {
-        var dialog = new InputDialog
+        var sel = Editor.Selection;
+        var hasSelection = sel != null && !sel.IsEmpty;
+        var selectedText = hasSelection
+            ? new TextRange(sel!.Start, sel.End).Text
+            : "";
+
+        var dlg = new LinkDialog(!string.IsNullOrEmpty(selectedText) ? selectedText : null);
+        if (dlg.ShowDialog() != true) return;
+        var linkText = dlg.LinkText;
+        var url = dlg.LinkUrl;
+
+        try
         {
-            Title = "插入链接",
-            Prompt = "请输入链接地址："
-        };
-        if (dialog.ShowDialog() == true && !string.IsNullOrWhiteSpace(dialog.InputText))
-        {
-            var url = dialog.InputText.Trim();
-            try
+            var uri = new Uri(url);
+            if (hasSelection && sel != null)
             {
-                var hyperlink = new Hyperlink(Editor.Selection.Start, Editor.Selection.End)
+                var hyperlink = new Hyperlink(sel.Start, sel.End)
                 {
-                    NavigateUri = new Uri(url)
+                    NavigateUri = uri
                 };
             }
-            catch (UriFormatException)
+            else
             {
-                App.ShowWarning("请输入有效的链接地址");
+                var paragraph = Editor.CaretPosition.Paragraph;
+                if (paragraph != null)
+                {
+                    var hyperlink = new Hyperlink();
+                    hyperlink.NavigateUri = uri;
+                    hyperlink.Inlines.Add(linkText);
+                    paragraph.Inlines.Add(hyperlink);
+                }
             }
-            Editor.Focus();
         }
+        catch (UriFormatException)
+        {
+            App.ShowWarning("请输入有效的链接地址");
+        }
+        Editor.Focus();
     }
 
-    public void SaveCurrent() => _vm.SaveCurrent();
+    public void SaveCurrent()
+    {
+        FlushXamlSave();
+        _vm.SaveCurrent();
+    }
 }

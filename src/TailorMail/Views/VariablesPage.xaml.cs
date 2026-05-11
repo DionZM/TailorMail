@@ -2,23 +2,31 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Input;
+using TailorMail.Models;
 using TailorMail.ViewModels;
 
 namespace TailorMail.Views;
 
-/// <summary>
-/// 变量管理页面，提供自定义变量的增删、Excel 导入导出、变量值编辑等功能。
-/// </summary>
 public partial class VariablesPage : UserControl, IRefreshable
 {
     private readonly VariablesViewModel _vm;
+    private readonly System.Windows.Threading.DispatcherTimer _saveTimer;
+    private bool _hasPendingSave;
     private int? _restoredScrollIndex;
+    private int? _editingRowIndex;
+    private int? _editingColIndex;
 
     public VariablesPage()
     {
         InitializeComponent();
         _vm = new VariablesViewModel(App.DataService);
         DataContext = _vm;
+        _saveTimer = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromMilliseconds(700) };
+        _saveTimer.Tick += (_, _) =>
+        {
+            _saveTimer.Stop();
+            FlushSave();
+        };
         Loaded += (_, _) => BuildGrid();
     }
 
@@ -30,14 +38,18 @@ public partial class VariablesPage : UserControl, IRefreshable
 
     private void BuildGrid()
     {
-        // Preserve scroll position
         var scrollViewer = FindVisualChild<System.Windows.Controls.ScrollViewer>(VariablesGrid);
         _restoredScrollIndex = scrollViewer?.VerticalOffset > 0
-            ? VariablesGrid.Items.IndexOf(VariablesGrid.SelectedItem)
+            ? VariablesGrid.Items.IndexOf(VariablesGrid.CurrentItem)
             : null;
 
+        if (VariablesGrid.CurrentItem != null)
+        {
+            _editingRowIndex = VariablesGrid.Items.IndexOf(VariablesGrid.CurrentItem);
+            _editingColIndex = VariablesGrid.CurrentColumn?.DisplayIndex;
+        }
+
         VariablesGrid.Columns.Clear();
-        VariablesGrid.ItemsSource = null;
 
         VarEmptyState.Visibility = _vm.VariableNames.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
 
@@ -64,18 +76,37 @@ public partial class VariablesPage : UserControl, IRefreshable
 
         VariablesGrid.ItemsSource = _vm.SelectedRecipients;
 
-        // Restore scroll position
-        if (_restoredScrollIndex.HasValue && _restoredScrollIndex.Value >= 0)
+        if (_editingRowIndex.HasValue && _editingColIndex.HasValue
+            && _editingRowIndex.Value < VariablesGrid.Items.Count
+            && _editingColIndex.Value < VariablesGrid.Columns.Count)
+        {
+            var rowIdx = _editingRowIndex.Value;
+            var colIdx = _editingColIndex.Value;
+            Dispatcher.BeginInvoke(() =>
+            {
+                try
+                {
+                    VariablesGrid.UpdateLayout();
+                    var col = VariablesGrid.Columns[colIdx];
+                    VariablesGrid.CurrentCell = new DataGridCellInfo(VariablesGrid.Items[rowIdx], col);
+                    VariablesGrid.ScrollIntoView(VariablesGrid.Items[rowIdx]);
+                    VariablesGrid.Focus();
+                    VariablesGrid.BeginEdit();
+                }
+                catch { }
+            });
+        }
+        else if (_restoredScrollIndex.HasValue && _restoredScrollIndex.Value >= 0)
         {
             Dispatcher.BeginInvoke(() =>
             {
                 if (_restoredScrollIndex.Value < VariablesGrid.Items.Count)
-                {
                     VariablesGrid.ScrollIntoView(VariablesGrid.Items[_restoredScrollIndex.Value]);
-                }
             });
         }
 
+        _editingRowIndex = null;
+        _editingColIndex = null;
         UpdateUsageHint();
     }
 
@@ -96,12 +127,12 @@ public partial class VariablesPage : UserControl, IRefreshable
 
         if (unusedVars.Count > 0 && _vm.VariableNames.Count > 0)
         {
-            VarUsageHint.Text = $"提示：以下变量尚未在邮件模板中使用：{string.Join("、", unusedVars)}";
-            VarUsageHint.Visibility = Visibility.Visible;
+            VarUsageHint.Message = $"以下变量尚未在邮件模板中使用：{string.Join("、", unusedVars)}";
+            VarUsageHint.IsOpen = true;
         }
         else
         {
-            VarUsageHint.Visibility = Visibility.Collapsed;
+            VarUsageHint.IsOpen = false;
         }
     }
 
@@ -150,23 +181,46 @@ public partial class VariablesPage : UserControl, IRefreshable
         if (_vm.VariableNames.Count == 1)
         {
             var name = _vm.VariableNames[0];
-            if (MessageBox.Show($"确定删除变量「{name}」及其所有数据？", "确认删除",
-                MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) return;
+            var msg = GetDeleteConfirmMessage(name);
+            var dlg = new ConfirmDialog { Title = "确认删除", Message = msg };
+            if (dlg.ShowDialog() != true) return;
             _vm.DeleteVariableAndSave(name);
             BuildGrid();
             return;
         }
 
-        var dlg = new VariableSelectDialog(_vm.VariableNames.ToList())
+        var selectDlg = new VariableSelectDialog(_vm.VariableNames.ToList())
         {
             Owner = Window.GetWindow(this)
         };
-        if (dlg.ShowDialog() == true && dlg.SelectedVariables.Count > 0)
+        if (selectDlg.ShowDialog() == true && selectDlg.SelectedVariables.Count > 0)
         {
-            foreach (var name in dlg.SelectedVariables)
+            var namesUsed = selectDlg.SelectedVariables.Where(IsVariableUsedInTemplate).ToList();
+            var msg = namesUsed.Count > 0
+                ? $"以下变量正在邮件模板中使用：{string.Join("、", namesUsed)}\n\n确定删除选中的 {selectDlg.SelectedVariables.Count} 个变量？"
+                : $"确定删除选中的 {selectDlg.SelectedVariables.Count} 个变量？";
+            var confirmDlg = new ConfirmDialog { Title = "确认删除", Message = msg };
+            if (confirmDlg.ShowDialog() != true) return;
+            foreach (var name in selectDlg.SelectedVariables)
                 _vm.DeleteVariableAndSave(name);
             BuildGrid();
         }
+    }
+
+    private static bool IsVariableUsedInTemplate(string variableName)
+    {
+        var settings = App.DataService.LoadSettings();
+        var placeholder = $"{{{variableName}}}";
+        return settings.LastSubject?.Contains(placeholder) == true
+            || settings.LastBody?.Contains(placeholder) == true
+            || settings.LastBodyXaml?.Contains(placeholder) == true;
+    }
+
+    private static string GetDeleteConfirmMessage(string name)
+    {
+        if (IsVariableUsedInTemplate(name))
+            return $"变量「{name}」正在邮件模板中使用，删除后模板中的占位符将失效。\n\n确定删除该变量及其所有数据？";
+        return $"确定删除变量「{name}」及其所有数据？";
     }
 
     private void OnRenameVariable(object sender, RoutedEventArgs e)
@@ -198,7 +252,22 @@ public partial class VariablesPage : UserControl, IRefreshable
         BuildGrid();
     }
 
-    private void OnCellEditEnding(object sender, DataGridCellEditEndingEventArgs e) => _vm.SaveAll();
+    private void OnCellEditEnding(object sender, DataGridCellEditEndingEventArgs e) => ScheduleSave();
+
+    private void ScheduleSave()
+    {
+        _hasPendingSave = true;
+        _saveTimer.Stop();
+        _saveTimer.Start();
+    }
+
+    private void FlushSave()
+    {
+        _saveTimer.Stop();
+        if (!_hasPendingSave) return;
+        _hasPendingSave = false;
+        _vm.SaveAll();
+    }
 
     private void OnGridPreviewKeyDown(object sender, KeyEventArgs e)
     {
@@ -257,7 +326,45 @@ public partial class VariablesPage : UserControl, IRefreshable
                 });
             }
         }
+        else if (e.Key == Key.V && Keyboard.Modifiers == ModifierKeys.Control)
+        {
+            PasteFromClipboard(grid);
+            e.Handled = true;
+        }
     }
 
-    public void SaveAll() => _vm.SaveAll();
+    private void PasteFromClipboard(DataGrid grid)
+    {
+        try
+        {
+            var text = Clipboard.GetText();
+            if (string.IsNullOrEmpty(text)) return;
+            var lines = text.Split(new[] { "\r\n", "\n" }, StringSplitOptions.None);
+            if (lines.Length == 0) return;
+
+            var startRowIndex = grid.Items.IndexOf(grid.CurrentItem);
+            if (startRowIndex < 0) startRowIndex = 0;
+
+            for (int i = 0; i < lines.Length && startRowIndex + i < grid.Items.Count; i++)
+            {
+                var columns = lines[i].Split('\t');
+                if (columns.Length < 2) continue;
+
+                if (grid.Items.Count > 1 && columns.Length - 1 == _vm.VariableNames.Count)
+                {
+                    if (grid.Items[startRowIndex + i] is Recipient record)
+                    for (int j = 0; j < _vm.VariableNames.Count && j + 1 < columns.Length; j++)
+                    {
+                        record.Variables[_vm.VariableNames[j]] = columns[j + 1].Trim();
+                    }
+                }
+            }
+
+            grid.Items.Refresh();
+            ScheduleSave();
+        }
+        catch { }
+    }
+
+    public void SaveAll() => FlushSave();
 }

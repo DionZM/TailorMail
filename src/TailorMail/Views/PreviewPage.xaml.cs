@@ -1,8 +1,12 @@
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Documents;
+using System.Windows.Input;
+using TailorMail.Helpers;
 using TailorMail.Models;
+using TailorMail.Services;
 using TailorMail.ViewModels;
 
 namespace TailorMail.Views;
@@ -18,6 +22,66 @@ public partial class PreviewPage : UserControl, IRefreshable
         _viewModel = new PreviewViewModel(App.DataService);
         DataContext = _viewModel;
         _viewModel.SelectedRecipientChanged += UpdateBrowser;
+        PreviewKeyDown += OnPreviewKeyDown;
+        IsVisibleChanged += OnVisibilityChanged;
+    }
+
+    private void OnVisibilityChanged(object sender, DependencyPropertyChangedEventArgs e)
+    {
+        if ((bool)e.NewValue)
+            UpdateRecipientCounter();
+    }
+
+    private void OnPreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+    {
+        if (e.Key == System.Windows.Input.Key.Left && Keyboard.Modifiers == ModifierKeys.None)
+        {
+            NavigateToPreviousRecipient();
+            e.Handled = true;
+        }
+        else if (e.Key == System.Windows.Input.Key.Right && Keyboard.Modifiers == ModifierKeys.None)
+        {
+            NavigateToNextRecipient();
+            e.Handled = true;
+        }
+    }
+
+    private void NavigateToPreviousRecipient()
+    {
+        if (ListGroups.Items.Count == 0) return;
+        var currentIdx = ListGroups.SelectedIndex;
+        if (currentIdx > 0)
+        {
+            ListGroups.SelectedIndex = currentIdx - 1;
+        }
+        else if (currentIdx < 0 && ListGroups.Items.Count > 0)
+        {
+            ListGroups.SelectedIndex = ListGroups.Items.Count - 1;
+        }
+    }
+
+    private void NavigateToNextRecipient()
+    {
+        if (ListGroups.Items.Count == 0) return;
+        var currentIdx = ListGroups.SelectedIndex;
+        if (currentIdx < ListGroups.Items.Count - 1)
+        {
+            ListGroups.SelectedIndex = currentIdx + 1;
+        }
+        else if (currentIdx < 0 && ListGroups.Items.Count > 0)
+        {
+            ListGroups.SelectedIndex = 0;
+        }
+    }
+
+    private void BtnPrevRecipient_Click(object sender, RoutedEventArgs e) => NavigateToPreviousRecipient();
+    private void BtnNextRecipient_Click(object sender, RoutedEventArgs e) => NavigateToNextRecipient();
+
+    private void UpdateRecipientCounter()
+    {
+        var total = ListGroups.Items.Count;
+        var current = ListGroups.SelectedIndex + 1;
+        TxtRecipientCounter.Text = total > 0 ? $"{current}/{total}" : "";
     }
 
     public void RefreshData()
@@ -56,13 +120,14 @@ public partial class PreviewPage : UserControl, IRefreshable
             _viewModel.SelectRecipient(r);
             UpdateAttachmentList();
             UpdateBrowser();
+            UpdateRecipientCounter();
         }
     }
 
     private void UpdateAttachmentList()
     {
         PanelAttachments.Items.Clear();
-        var config = App.DataService.LoadAttachmentConfig();
+        var config = _viewModel.GetCachedAttachmentConfig();
         var commonFiles = config.CommonAttachments;
         var unitAtt = config.RecipientAttachments.FirstOrDefault(ua =>
             _viewModel.SelectedRecipient != null && ua.RecipientId == _viewModel.SelectedRecipient.Id);
@@ -214,5 +279,48 @@ public partial class PreviewPage : UserControl, IRefreshable
     public void FocusSearch()
     {
         SearchBox?.Focus();
+    }
+
+    private async void BtnSendTest_Click(object sender, RoutedEventArgs e)
+    {
+        if (_viewModel.SelectedRecipient == null)
+        {
+            App.ShowNotification("请先选择一个收件人");
+            return;
+        }
+
+        var settings = App.DataService.LoadSettings();
+        if (settings.SendMethod == SendMethod.Smtp)
+        {
+            var smtp = settings.Smtp;
+            if (string.IsNullOrWhiteSpace(smtp.SenderEmail) && string.IsNullOrWhiteSpace(smtp.UserName))
+            {
+                App.ShowWarning("请先在设置中配置 SMTP 发件人邮箱");
+                return;
+            }
+        }
+
+        BtnSendTest.IsEnabled = false;
+        BtnSendTest.Content = "发送中...";
+
+        try
+        {
+            var senderEmail = settings.SendMethod == SendMethod.Smtp
+                ? (string.IsNullOrWhiteSpace(settings.Smtp.SenderEmail) ? settings.Smtp.UserName : settings.Smtp.SenderEmail)
+                : "";
+
+            var result = await System.Threading.Tasks.Task.Run(() =>
+                _viewModel.SendTestEmail(settings, senderEmail));
+
+            if (result.success)
+                App.ShowNotification($"测试邮件已发送至 {senderEmail}");
+            else
+                App.ShowError($"发送失败：{result.error}");
+        }
+        finally
+        {
+            BtnSendTest.IsEnabled = true;
+            BtnSendTest.Content = "发送测试邮件给自己";
+        }
     }
 }

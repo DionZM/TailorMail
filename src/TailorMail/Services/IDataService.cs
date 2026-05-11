@@ -20,6 +20,8 @@ public interface IDataService
     /// <param name="groups">要保存的收件人分组列表。</param>
     void SaveRecipientGroups(List<RecipientGroup> groups);
 
+    void SaveRecipientVariables(IEnumerable<Recipient> recipients);
+
     /// <summary>
     /// 加载应用程序设置。
     /// </summary>

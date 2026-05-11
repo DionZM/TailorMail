@@ -56,6 +56,18 @@ public class JsonDataService : IDataService
         File.WriteAllText(path, json);
     }
 
+    public void SaveRecipientVariables(IEnumerable<Recipient> recipients)
+    {
+        var groups = LoadRecipientGroups();
+        var byId = recipients.ToDictionary(r => r.Id);
+        foreach (var existing in groups.SelectMany(g => g.Recipients))
+        {
+            if (byId.TryGetValue(existing.Id, out var edited))
+                existing.Variables = new Dictionary<string, string>(edited.Variables);
+        }
+        SaveRecipientGroups(groups);
+    }
+
     /// <inheritdoc/>
     /// <remarks>
     /// 从 data/settings.json 文件加载。若文件不存在或反序列化失败，返回默认的 <see cref="AppSettings"/> 实例。

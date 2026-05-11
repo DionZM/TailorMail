@@ -15,6 +15,7 @@ namespace TailorMail.ViewModels;
 public partial class VariablesViewModel : ObservableObject
 {
     private readonly IDataService _dataService;
+    private List<RecipientGroup> _groups = [];
 
     /// <summary>
     /// 获取或设置当前选中的收件人列表（仅包含 IsSelected 为 true 的收件人）。
@@ -45,9 +46,9 @@ public partial class VariablesViewModel : ObservableObject
     /// </summary>
     public void LoadData()
     {
-        var groups = _dataService.LoadRecipientGroups();
+        _groups = _dataService.LoadRecipientGroups();
         SelectedRecipients = new ObservableCollection<Recipient>(
-            groups.SelectMany(g => g.Recipients).Where(r => r.IsSelected));
+            _groups.SelectMany(g => g.Recipients).Where(r => r.IsSelected));
         RefreshVariableNames();
     }
 
@@ -56,9 +57,8 @@ public partial class VariablesViewModel : ObservableObject
     /// </summary>
     private void RefreshVariableNames()
     {
-        var groups = _dataService.LoadRecipientGroups();
         var names = new HashSet<string>();
-        foreach (var r in groups.SelectMany(g => g.Recipients))
+        foreach (var r in _groups.SelectMany(g => g.Recipients))
             foreach (var key in r.Variables.Keys)
                 names.Add(key);
         VariableNames = new ObservableCollection<string>(names.OrderBy(n => n));
@@ -289,17 +289,6 @@ public partial class VariablesViewModel : ObservableObject
     /// </summary>
     public void SaveAll()
     {
-        var groups = _dataService.LoadRecipientGroups();
-        foreach (var recipient in SelectedRecipients)
-        {
-            var group = groups.FirstOrDefault(g => g.Recipients.Any(r => r.Id == recipient.Id));
-            if (group == null) continue;
-            var existing = group.Recipients.FirstOrDefault(r => r.Id == recipient.Id);
-            if (existing != null)
-            {
-                existing.Variables = new Dictionary<string, string>(recipient.Variables);
-            }
-        }
-        _dataService.SaveRecipientGroups(groups);
+        _dataService.SaveRecipientVariables(SelectedRecipients);
     }
 }

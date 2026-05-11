@@ -303,6 +303,36 @@ public class SqliteDataService : IDataService
         }
     }
 
+    public void SaveRecipientVariables(IEnumerable<Recipient> recipients)
+    {
+        using var conn = CreateConnection();
+        conn.Open();
+        using var tx = conn.BeginTransaction();
+
+        try
+        {
+            using var cmd = conn.CreateCommand();
+            cmd.Transaction = tx;
+            cmd.CommandText = "UPDATE Recipients SET VariablesJson = @variablesJson WHERE Id = @id";
+            var idParam = cmd.Parameters.Add("@id", SqliteType.Text);
+            var variablesParam = cmd.Parameters.Add("@variablesJson", SqliteType.Text);
+
+            foreach (var recipient in recipients)
+            {
+                idParam.Value = recipient.Id;
+                variablesParam.Value = JsonSerializer.Serialize(recipient.Variables, _jsonOptions);
+                cmd.ExecuteNonQuery();
+            }
+
+            tx.Commit();
+        }
+        catch
+        {
+            tx.Rollback();
+            throw;
+        }
+    }
+
     public AppSettings LoadSettings()
     {
         using var conn = CreateConnection();
