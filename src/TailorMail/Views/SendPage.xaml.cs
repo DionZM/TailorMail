@@ -173,6 +173,8 @@ public partial class SendPage : UserControl, IRefreshable, IDynamicStepDesc
             UpdateProgressDisplay();
             NotifyStateChanged();
             _sendStartTime = null;
+            // UI-46: Play completion sound
+            System.Media.SystemSounds.Beep.Play();
         }
     }
 
@@ -185,9 +187,11 @@ public partial class SendPage : UserControl, IRefreshable, IDynamicStepDesc
     {
         if (sender is FrameworkElement fe && fe.Tag is string id)
         {
+            EnsureSmtpPassword();
+            if (_viewModel.SendMethod == SendMethod.Smtp && _smtpPassword == null) return;
             try
             {
-                await _viewModel.RetryOne(id);
+                await _viewModel.RetryOne(id, _smtpPassword);
             }
             finally
             {
@@ -199,14 +203,33 @@ public partial class SendPage : UserControl, IRefreshable, IDynamicStepDesc
 
     private async void OnRetryAll(object sender, RoutedEventArgs e)
     {
+        EnsureSmtpPassword();
+        if (_viewModel.SendMethod == SendMethod.Smtp && _smtpPassword == null) return;
         try
         {
-            await _viewModel.RetryAllFailed();
+            await _viewModel.RetryAllFailed(_smtpPassword);
         }
         finally
         {
             UpdateProgressDisplay();
             NotifyStateChanged();
+        }
+    }
+
+    private void EnsureSmtpPassword()
+    {
+        if (_viewModel.SendMethod != SendMethod.Smtp || _smtpPassword != null) return;
+        var settings = App.DataService.LoadSettings();
+        var storedPassword = CredentialHelper.Unprotect(settings.Smtp.EncryptedPassword);
+        if (!string.IsNullOrEmpty(storedPassword))
+        {
+            _smtpPassword = storedPassword;
+        }
+        else
+        {
+            var dialog = new SmtpPasswordDialog { Owner = Window.GetWindow(this) };
+            if (dialog.ShowDialog() == true)
+                _smtpPassword = dialog.Password;
         }
     }
 
@@ -223,7 +246,7 @@ public partial class SendPage : UserControl, IRefreshable, IDynamicStepDesc
 
         try
         {
-            OfficeOpenXml.ExcelPackage.License.SetNonCommercialPersonal("TailorMail");
+            // EPPlus license already set in App.xaml.cs (PERF-27)
             using var package = new OfficeOpenXml.ExcelPackage();
             var ws = package.Workbook.Worksheets.Add("发送结果");
             ws.Cells[1, 1].Value = "收件人";

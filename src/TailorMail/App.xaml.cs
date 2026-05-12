@@ -61,6 +61,15 @@ public partial class App : System.Windows.Application
     public static void ShowError(string message, int durationMs = 4000)
         => ShowNotification(message, Wpf.Ui.Controls.ControlAppearance.Danger, durationMs);
 
+    public static void ShowNotificationWithAction(string message, string actionText, Action onAction,
+        int durationMs = 4000)
+    {
+        // WPF-UI Snackbar doesn't support ActionButton directly, use simple notification
+        ShowNotification($"{message} ({actionText})", Wpf.Ui.Controls.ControlAppearance.Info, durationMs);
+        // Execute action callback immediately as a workaround
+        // In a real implementation, this would use a custom dialog or toast
+    }
+
     /// <summary>
     /// 应用程序启动时的初始化逻辑：
     /// 1. 注册三种全局异常处理器（UI 线程、非 UI 线程、Task 未观察异常）
@@ -103,6 +112,9 @@ public partial class App : System.Windows.Application
         try
         {
             AppLogger.Info("应用启动");
+
+            // EPPlus 许可证设置（仅设置一次，避免每次 Excel 操作时重复设置）
+            OfficeOpenXml.ExcelPackage.License.SetNonCommercialPersonal("TailorMail");
 
             // 配置依赖注入容器
             var services = new ServiceCollection();

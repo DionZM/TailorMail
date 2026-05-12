@@ -76,14 +76,12 @@ public partial class VariablesViewModel : ObservableObject
         var varName = NewVariableName;
         VariableNames.Add(varName);
 
-        // 为所有收件人添加该变量的空值条目
-        var groups = _dataService.LoadRecipientGroups();
-        foreach (var r in groups.SelectMany(g => g.Recipients))
+        // 为所有收件人添加该变量的空值条目（使用缓存的 _groups 避免重复加载）
+        foreach (var r in _groups.SelectMany(g => g.Recipients))
         {
             if (!r.Variables.ContainsKey(varName))
                 r.Variables[varName] = string.Empty;
         }
-        _dataService.SaveRecipientGroups(groups);
 
         // 同步更新界面上的收件人对象
         foreach (var r in SelectedRecipients)
@@ -92,6 +90,7 @@ public partial class VariablesViewModel : ObservableObject
                 r.Variables[varName] = string.Empty;
         }
 
+        _dataService.SaveRecipientGroups(_groups);
         NewVariableName = string.Empty;
     }
 
@@ -105,8 +104,8 @@ public partial class VariablesViewModel : ObservableObject
         VariableNames.Remove(oldName);
         VariableNames.Add(newName);
 
-        var groups = _dataService.LoadRecipientGroups();
-        foreach (var r in groups.SelectMany(g => g.Recipients))
+        // 使用缓存的 _groups 避免重复加载
+        foreach (var r in _groups.SelectMany(g => g.Recipients))
         {
             if (r.Variables.TryGetValue(oldName, out var value))
             {
@@ -114,7 +113,7 @@ public partial class VariablesViewModel : ObservableObject
                 r.Variables[newName] = value;
             }
         }
-        _dataService.SaveRecipientGroups(groups);
+        _dataService.SaveRecipientGroups(_groups);
 
         foreach (var r in SelectedRecipients)
         {
@@ -147,10 +146,10 @@ public partial class VariablesViewModel : ObservableObject
         if (!VariableNames.Contains(name)) return;
         VariableNames.Remove(name);
 
-        var groups = _dataService.LoadRecipientGroups();
-        foreach (var r in groups.SelectMany(g => g.Recipients))
+        // 使用缓存的 _groups 避免重复加载
+        foreach (var r in _groups.SelectMany(g => g.Recipients))
             r.Variables.Remove(name);
-        _dataService.SaveRecipientGroups(groups);
+        _dataService.SaveRecipientGroups(_groups);
 
         foreach (var r in SelectedRecipients)
             r.Variables.Remove(name);
@@ -172,7 +171,7 @@ public partial class VariablesViewModel : ObservableObject
         if (dialog.ShowDialog() != true) return;
         try
         {
-            ExcelPackage.License.SetNonCommercialPersonal("TailorMail");
+            // EPPlus license already set in App.xaml.cs (PERF-27)
             using var package = new ExcelPackage(new System.IO.FileInfo(dialog.FileName));
             var ws = package.Workbook.Worksheets[0];
             var rowCount = ws.Dimension?.Rows ?? 0;
@@ -206,6 +205,10 @@ public partial class VariablesViewModel : ObservableObject
             SaveAll();
             App.ShowSuccess("导入完成");
         }
+        catch (System.IO.IOException)
+        {
+            App.ShowError("导入失败: 文件被占用或无法访问，请关闭文件后重试");
+        }
         catch (Exception ex)
         {
             App.ShowError($"导入失败: {ex.Message}");
@@ -228,7 +231,7 @@ public partial class VariablesViewModel : ObservableObject
         if (dialog.ShowDialog() != true) return;
         try
         {
-            ExcelPackage.License.SetNonCommercialPersonal("TailorMail");
+            // EPPlus license already set in App.xaml.cs (PERF-27)
             using var package = new ExcelPackage();
             var ws = package.Workbook.Worksheets.Add("变量");
             ws.Cells[1, 1].Value = "名称";

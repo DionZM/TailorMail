@@ -10,6 +10,7 @@ public partial class SendViewModel : ObservableObject
 {
     private readonly IDataService _dataService;
     private CancellationTokenSource? _cts;
+    private List<Recipient>? _cachedSelectedRecipients;
 
     [ObservableProperty]
     private ObservableCollection<SendResult> _sendResults = [];
@@ -50,12 +51,17 @@ public partial class SendViewModel : ObservableObject
 
     public List<Recipient> GetSelectedRecipients()
     {
+        if (_cachedSelectedRecipients != null) return _cachedSelectedRecipients;
         var groups = _dataService.LoadRecipientGroups();
-        return groups.SelectMany(g => g.Recipients).Where(r => r.IsSelected).ToList();
+        _cachedSelectedRecipients = groups.SelectMany(g => g.Recipients).Where(r => r.IsSelected).ToList();
+        return _cachedSelectedRecipients;
     }
 
     public Recipient? FindRecipient(string id)
     {
+        // Use cached list if available, otherwise query DB
+        if (_cachedSelectedRecipients != null)
+            return _cachedSelectedRecipients.FirstOrDefault(r => r.Id == id);
         var groups = _dataService.LoadRecipientGroups();
         return groups.SelectMany(g => g.Recipients).FirstOrDefault(r => r.Id == id);
     }
@@ -75,27 +81,18 @@ public partial class SendViewModel : ObservableObject
             ProgressValue = 0;
             SendResults.Clear();
         }
+        else
+        {
+            // PERF-20: Pre-build resultMap from existing SendResults to avoid FirstOrDefault in loop
+            foreach (var sr in SendResults)
+                resultMap[sr.RecipientId] = sr;
+        }
 
         // Populate SendResults + resultMap
         foreach (var r in selectedRecipients)
         {
-            if (append)
-            {
-                // In append mode, find existing or create new
-                if (!resultMap.ContainsKey(r.Id))
-                {
-                    var existing = SendResults.FirstOrDefault(sr => sr.RecipientId == r.Id);
-                    if (existing != null)
-                    {
-                        resultMap[r.Id] = existing;
-                        continue;
-                    }
-                }
-                else
-                {
-                    continue;
-                }
-            }
+            if (append && resultMap.ContainsKey(r.Id))
+                continue;
 
             var sr = new SendResult { RecipientId = r.Id, RecipientName = r.Name };
             SendResults.Add(sr);
@@ -184,6 +181,7 @@ public partial class SendViewModel : ObservableObject
             : $"发送完成: 成功 {SuccessCount} 封, 失败 {FailedCount} 封";
         IsSending = false;
         _cts = null;
+        _cachedSelectedRecipients = null; // Invalidate cache after send
 
         if (sender is IDisposable disposable)
             disposable.Dispose();
@@ -251,11 +249,18 @@ public partial class SendViewModel : ObservableObject
         var lockObj = new object();
 
         // Pre-create sender pool, each with its own SMTP connection
+        // PERF-12: First sender reads common attachments, others reuse via SetCachedCommonAttachments
         var senders = new SmtpEmailSender[concurrency];
-        for (int s = 0; s < concurrency; s++)
+        senders[0] = new SmtpEmailSender();
+        await senders[0].PrepareForBulkSend(settings.Smtp, smtpPassword ?? "", commonAttachments);
+        var sharedAttachments = senders[0].GetCachedCommonAttachments();
+
+        for (int s = 1; s < concurrency; s++)
         {
             senders[s] = new SmtpEmailSender();
-            await senders[s].PrepareForBulkSend(settings.Smtp, smtpPassword ?? "", commonAttachments);
+            await senders[s].PrepareForBulkSend(settings.Smtp, smtpPassword ?? "", new List<string>());
+            if (sharedAttachments != null)
+                senders[s].SetCachedCommonAttachments(sharedAttachments);
         }
 
         try
@@ -317,20 +322,21 @@ public partial class SendViewModel : ObservableObject
         return [];
     }
 
-    public async Task RetryAllFailed()
+    public async Task RetryAllFailed(string? smtpPassword = null)
     {
-        var failedIds = SendResults.Where(r => r.Status == SendStatus.Failed).Select(r => r.RecipientId).ToList();
+        var failedIds = SendResults.Where(r => r.Status == SendStatus.Failed)
+            .Select(r => r.RecipientId).ToHashSet();
         if (failedIds.Count == 0) return;
         var groups = _dataService.LoadRecipientGroups();
         var failedRecipients = groups.SelectMany(g => g.Recipients).Where(r => failedIds.Contains(r.Id)).ToList();
-        await ExecuteSend(failedRecipients, append: true);
+        await ExecuteSend(failedRecipients, smtpPassword, append: true);
     }
 
-    public async Task RetryOne(string recipientId)
+    public async Task RetryOne(string recipientId, string? smtpPassword = null)
     {
         var recipient = FindRecipient(recipientId);
         if (recipient == null) return;
-        await ExecuteSend(new List<Recipient> { recipient }, append: true);
+        await ExecuteSend(new List<Recipient> { recipient }, smtpPassword, append: true);
     }
 
     public void CancelSend()

@@ -11,7 +11,6 @@ namespace TailorMail.ViewModels;
 public partial class RecipientsViewModel : ObservableObject
 {
     private readonly IDataService _dataService;
-    private bool _wasAllSelected;
     private DispatcherTimer? _saveTimer;
     private bool _hasUnsavedChanges;
 
@@ -51,10 +50,6 @@ public partial class RecipientsViewModel : ObservableObject
 
     partial void OnSelectedGroupChanging(RecipientGroup? value)
     {
-        if (SelectedGroup != null)
-        {
-            _wasAllSelected = CurrentRecipients.Count > 0 && CurrentRecipients.All(r => r.IsSelected);
-        }
         FlushSave();
     }
 
@@ -63,14 +58,6 @@ public partial class RecipientsViewModel : ObservableObject
         if (value != null)
         {
             CurrentRecipients = new ObservableCollection<Recipient>(value.Recipients);
-            if (_wasAllSelected)
-            {
-                foreach (var r in CurrentRecipients) r.IsSelected = true;
-            }
-            else
-            {
-                foreach (var r in CurrentRecipients) r.IsSelected = false;
-            }
         }
         else
         {
@@ -185,7 +172,7 @@ public partial class RecipientsViewModel : ObservableObject
         ScheduleSave();
     }
 
-    private void SyncRecipientsToGroup()
+    public void SyncRecipientsToGroup()
     {
         if (SelectedGroup == null) return;
         SelectedGroup.Recipients = CurrentRecipients
@@ -289,7 +276,7 @@ public partial class RecipientsViewModel : ObservableObject
         if (dialog.ShowDialog() != true) return;
         try
         {
-            ExcelPackage.License.SetNonCommercialPersonal("TailorMail");
+            // EPPlus license already set in App.xaml.cs (PERF-27)
             using var package = new ExcelPackage();
             var ws = package.Workbook.Worksheets.Add("发送对象");
             ws.Cells[1, 1].Value = "名称";
@@ -431,47 +418,6 @@ public partial class RecipientsViewModel : ObservableObject
     public void SaveAll()
     {
         SyncRecipientsToGroup();
-
-        var latestGroups = _dataService.LoadRecipientGroups();
-
-        foreach (var group in Groups)
-        {
-            var latestGroup = latestGroups.FirstOrDefault(g => g.Id == group.Id);
-            if (latestGroup != null)
-            {
-                latestGroup.Name = group.Name;
-
-                var idIndex = new Dictionary<string, Recipient>();
-                foreach (var lr in latestGroup.Recipients)
-                    idIndex[lr.Id] = lr;
-
-                var updatedRecipients = new List<Recipient>();
-                foreach (var r in group.Recipients)
-                {
-                    if (idIndex.TryGetValue(r.Id, out var existingInFile))
-                    {
-                        existingInFile.Name = r.Name;
-                        existingInFile.ShortName = r.ShortName;
-                        existingInFile.ToEmails = r.ToEmails;
-                        existingInFile.CcEmails = r.CcEmails;
-                        existingInFile.BccEmails = r.BccEmails;
-                        existingInFile.Remark = r.Remark;
-                        existingInFile.IsSelected = r.IsSelected;
-                        updatedRecipients.Add(existingInFile);
-                    }
-                    else
-                    {
-                        updatedRecipients.Add(r);
-                    }
-                }
-                latestGroup.Recipients = updatedRecipients;
-            }
-            else
-            {
-                latestGroups.Add(group);
-            }
-        }
-
-        _dataService.SaveRecipientGroups(latestGroups);
+        _dataService.SaveRecipientGroups(Groups.ToList());
     }
 }

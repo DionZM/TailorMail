@@ -105,7 +105,7 @@ public static class FlowDocumentHelper
     /// </summary>
     public static string ToHtml(FlowDocument doc)
     {
-        var sb = new StringBuilder();
+        var sb = new StringBuilder(doc.Blocks.Count * 200);
         sb.Append($"<div style=\"{EmailBaseStyle}\">");
 
         WriteBlocks(sb, doc.Blocks, isTopLevel: true);
@@ -651,10 +651,6 @@ public static class FlowDocumentHelper
     /// </summary>
     private static string HtmlEncode(string text)
     {
-        return text.Replace("&", "&amp;")
-                   .Replace("<", "&lt;")
-                   .Replace(">", "&gt;")
-                   .Replace("\"", "&quot;")
-                   .Replace("\n", "<br/>");
+        return System.Net.WebUtility.HtmlEncode(text).Replace("\n", "<br/>");
     }
 }

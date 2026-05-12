@@ -240,6 +240,15 @@ public partial class PreviewPage : UserControl, IRefreshable
         }
     }
 
+    // UI-39: Zoom handler
+    private void OnZoomChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+    {
+        if (PreviewViewer == null || TxtZoom == null) return; // Fires during InitializeComponent
+        var scale = e.NewValue / 100.0;
+        TxtZoom.Text = $"{(int)e.NewValue}%";
+        PreviewViewer.LayoutTransform = new System.Windows.Media.ScaleTransform(scale, scale);
+    }
+
     private void UpdateBrowser()
     {
         var doc = _viewModel.GetPreviewDocument();

@@ -1,4 +1,4 @@
-## 构建输出
+﻿## 构建输出
 bin/
 obj/
 
@@ -16,7 +16,11 @@ _ReSharper*/
 
 ## 发布输出
 publish/
+publish2/
 *.zip
+
+## 审计报告
+audit-report-*.html
 
 ## 应用数据
 src/TailorMail/data/

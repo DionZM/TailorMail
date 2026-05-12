@@ -43,6 +43,20 @@ public class SmtpEmailSender : IEmailSender, IDisposable
     }
 
     /// <summary>
+    /// Set pre-read common attachments for bulk sending.
+    /// Allows the caller to pre-read attachments once and share across senders.
+    /// </summary>
+    public void SetCachedCommonAttachments(MimePart[] attachments)
+    {
+        _cachedCommonAttachments = attachments;
+    }
+
+    public MimePart[]? GetCachedCommonAttachments()
+    {
+        return _cachedCommonAttachments;
+    }
+
+    /// <summary>
     /// Release cached bulk-send resources.
     /// </summary>
     public void CleanupBulkSend()
@@ -130,25 +144,25 @@ public class SmtpEmailSender : IEmailSender, IDisposable
         return result;
     }
 
-    private static async Task<MimePart?> CreateMimePartAsync(string filePath)
+    private static Task<MimePart?> CreateMimePartAsync(string filePath)
     {
         try
         {
             var fileName = System.IO.Path.GetFileName(filePath);
-            var contentType = MimeTypes.GetMimeType(filePath);
-            var mediaType = contentType.Split('/');
-            var bytes = await System.IO.File.ReadAllBytesAsync(filePath);
-            return new MimePart(mediaType[0], mediaType[1])
+            var stream = new System.IO.FileStream(filePath, System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.Read, 4096, true);
+            var contentType = MimeTypes.GetMimeType(fileName);
+            var contentTypeParsed = ContentType.Parse(contentType);
+            return Task.FromResult<MimePart?>(new MimePart(contentTypeParsed)
             {
-                Content = new MimeContent(new System.IO.MemoryStream(bytes)),
+                Content = new MimeContent(stream),
                 ContentDisposition = new ContentDisposition(ContentDisposition.Attachment),
                 ContentTransferEncoding = ContentEncoding.Base64,
                 FileName = fileName
-            };
+            });
         }
         catch
         {
-            return null;
+            return Task.FromResult<MimePart?>(null);
         }
     }
 

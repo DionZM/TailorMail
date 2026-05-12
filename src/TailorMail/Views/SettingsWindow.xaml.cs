@@ -1,3 +1,4 @@
+using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
 using TailorMail.Models;
@@ -9,6 +10,8 @@ namespace TailorMail.Views;
 public partial class SettingsWindow
 {
     private readonly SettingsViewModel _vm;
+    private bool _isLoading;
+    private CancellationTokenSource? _portHintCts;
 
     public SettingsWindow()
     {
@@ -46,19 +49,27 @@ public partial class SettingsWindow
 
     private void LoadSettings()
     {
-        CmbChannel.SelectedIndex = _vm.SendMethod == SendMethod.Smtp ? 1 : 0;
-        UpdateSmtpExpander();
-        TxtServer.Text = _vm.SmtpHost;
-        TxtPort.Value = _vm.SmtpPort;
-        TxtUsername.Text = _vm.SmtpUserName;
-        ChkSsl.IsChecked = _vm.SmtpUseSsl;
-        TxtSenderName.Text = _vm.SmtpDisplayName;
-        TxtSenderEmail.Text = !string.IsNullOrEmpty(_vm.SmtpSenderEmail)
-            ? _vm.SmtpSenderEmail
-            : _vm.SmtpUserName;
-        TxtPassword.Password = _vm.StoredPassword;
-        TxtSendInterval.Value = _vm.SendIntervalMs / 1000.0;
-        TxtSignature.Text = _vm.Signature;
+        _isLoading = true;
+        try
+        {
+            CmbChannel.SelectedIndex = _vm.SendMethod == SendMethod.Smtp ? 1 : 0;
+            UpdateSmtpExpander();
+            TxtServer.Text = _vm.SmtpHost;
+            TxtPort.Value = _vm.SmtpPort;
+            TxtUsername.Text = _vm.SmtpUserName;
+            ChkSsl.IsChecked = _vm.SmtpUseSsl;
+            TxtSenderName.Text = _vm.SmtpDisplayName;
+            TxtSenderEmail.Text = !string.IsNullOrEmpty(_vm.SmtpSenderEmail)
+                ? _vm.SmtpSenderEmail
+                : _vm.SmtpUserName;
+            TxtPassword.Password = _vm.StoredPassword;
+            TxtSendInterval.Value = _vm.SendIntervalMs / 1000.0;
+            TxtSignature.Text = _vm.Signature;
+        }
+        finally
+        {
+            _isLoading = false;
+        }
     }
 
     private void UpdateOutlookStatus()
@@ -108,13 +119,12 @@ public partial class SettingsWindow
             TxtServer.Text = server;
             TxtPort.Value = port;
             ChkSsl.IsChecked = ssl;
-            TxtUsername.Text = "";
-            TxtPassword.Password = "";
         }
     }
 
     private void OnSslToggleChanged(object sender, RoutedEventArgs e)
     {
+        if (_isLoading) return;
         var oldPort = (int)(TxtPort.Value ?? 587);
         if (ChkSsl.IsChecked == true)
         {
@@ -136,9 +146,22 @@ public partial class SettingsWindow
 
     private async void ShowPortHint(string message)
     {
+        _portHintCts?.Cancel();
+        var cts = new CancellationTokenSource();
+        _portHintCts = cts;
         PortHintText.Text = message;
-        await System.Threading.Tasks.Task.Delay(3000);
-        PortHintText.Text = "";
+        try
+        {
+            await Task.Delay(5000, cts.Token);
+        }
+        catch (TaskCanceledException)
+        {
+            return;
+        }
+        if (!cts.IsCancellationRequested)
+        {
+            PortHintText.Text = "";
+        }
     }
 
     private async void OnTestConnection(object sender, RoutedEventArgs e)

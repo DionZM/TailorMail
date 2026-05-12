@@ -34,6 +34,12 @@
                          SelectionMode="Single" Background="Transparent" BorderThickness="0"
                          ScrollViewer.VerticalScrollBarVisibility="Auto"
                          HorizontalContentAlignment="Stretch">
+                    <ListBox.ContextMenu>
+                        <ContextMenu>
+                            <MenuItem Header="重命名" Click="OnRenameGroup"/>
+                            <MenuItem Header="删除" Click="OnDeleteGroup"/>
+                        </ContextMenu>
+                    </ListBox.ContextMenu>
                     <ListBox.ItemContainerStyle>
                         <Style TargetType="ListBoxItem">
                             <Setter Property="Padding" Value="8,6"/>
@@ -144,6 +150,11 @@
                           LostFocus="OnGridLostFocus"
                           MouseLeftButtonUp="OnGridMouseClick"
                           MouseDoubleClick="OnGridDoubleClick"
+                          AllowDrop="True"
+                          PreviewMouseMove="OnGridPreviewMouseMove"
+                          PreviewMouseLeftButtonDown="OnGridPreviewMouseLeftButtonDown"
+                          DragOver="OnGridDragOver"
+                          Drop="OnGridDrop"
                           GridLinesVisibility="Horizontal" AlternatingRowBackground="{StaticResource SurfaceBrush}"
                           FontSize="13" FontFamily="{StaticResource UIFontFamily}"
                           BorderThickness="0" Background="Transparent"

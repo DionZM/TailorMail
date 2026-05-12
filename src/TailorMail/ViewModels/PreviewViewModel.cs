@@ -94,7 +94,7 @@ public partial class PreviewViewModel : ObservableObject
 
         var settings = CachedSettings;
         var varVm = CachedVarVm;
-        PreviewSubject = varVm.ProcessBody(settings.LastSubject, SelectedRecipient);
+        PreviewSubject = VariablesViewModel.ProcessBodyFast(settings.LastSubject, SelectedRecipient);
         PreviewTo = SelectedRecipient.ToEmails;
         PreviewCc = SelectedRecipient.CcEmails;
         PreviewBcc = SelectedRecipient.BccEmails;
@@ -140,18 +140,18 @@ public partial class PreviewViewModel : ObservableObject
             catch (Exception ex)
             {
                 AppLogger.Error("预览文档加载失败", ex);
-                doc = CreatePlainTextDoc(varVm.ProcessBody(settings.LastBody, SelectedRecipient));
+                doc = CreatePlainTextDoc(VariablesViewModel.ProcessBodyFast(settings.LastBody, SelectedRecipient));
             }
         }
         else
         {
-            doc = CreatePlainTextDoc(varVm.ProcessBody(settings.LastBody, SelectedRecipient));
+            doc = CreatePlainTextDoc(VariablesViewModel.ProcessBodyFast(settings.LastBody, SelectedRecipient));
         }
 
         foreach (var run in GetAllRuns(doc).ToList())
         {
             if (!string.IsNullOrEmpty(run.Text))
-                run.Text = varVm.ProcessBody(run.Text, SelectedRecipient);
+                run.Text = VariablesViewModel.ProcessBodyFast(run.Text, SelectedRecipient);
         }
 
         return doc;
@@ -216,7 +216,7 @@ public partial class PreviewViewModel : ObservableObject
         try
         {
             var varVm = CachedVarVm;
-            var subject = varVm.ProcessBody(settings.LastSubject, SelectedRecipient);
+            var subject = VariablesViewModel.ProcessBodyFast(settings.LastSubject, SelectedRecipient);
 
             string bodyHtml;
             if (!string.IsNullOrEmpty(settings.LastBodyXaml))
@@ -229,23 +229,23 @@ public partial class PreviewViewModel : ObservableObject
                     foreach (var run in GetAllRuns(doc).ToList())
                     {
                         if (!string.IsNullOrEmpty(run.Text))
-                            run.Text = varVm.ProcessBody(run.Text, SelectedRecipient);
+                            run.Text = VariablesViewModel.ProcessBodyFast(run.Text, SelectedRecipient);
                     }
                     bodyHtml = Helpers.FlowDocumentHelper.ToHtml(doc);
                     bodyHtml = Helpers.FlowDocumentHelper.WrapAsEmailDocument(bodyHtml);
                 }
                 catch
                 {
-                    bodyHtml = $"<pre>{System.Net.WebUtility.HtmlEncode(varVm.ProcessBody(settings.LastBody, SelectedRecipient))}</pre>";
+                    bodyHtml = $"<pre>{System.Net.WebUtility.HtmlEncode(VariablesViewModel.ProcessBodyFast(settings.LastBody, SelectedRecipient))}</pre>";
                 }
             }
             else
             {
-                bodyHtml = $"<pre>{System.Net.WebUtility.HtmlEncode(varVm.ProcessBody(settings.LastBody, SelectedRecipient))}</pre>";
+                bodyHtml = $"<pre>{System.Net.WebUtility.HtmlEncode(VariablesViewModel.ProcessBodyFast(settings.LastBody, SelectedRecipient))}</pre>";
             }
 
             if (!string.IsNullOrEmpty(settings.Signature))
-                bodyHtml += $"<br/><br/><span style='color:#666;'>{System.Net.WebUtility.HtmlEncode(varVm.ProcessBody(settings.Signature, SelectedRecipient))}</span>";
+                bodyHtml += $"<br/><br/><span style='color:#666;'>{System.Net.WebUtility.HtmlEncode(VariablesViewModel.ProcessBodyFast(settings.Signature, SelectedRecipient))}</span>";
 
             var attachments = PreviewAttachments?.ToArray() ?? [];
 

@@ -6,6 +6,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using TailorMail.Models;
 using TailorMail.ViewModels;
+using System.Windows.Threading;
 
 namespace TailorMail.Views;
 
@@ -19,6 +20,10 @@ public partial class RecipientsPage : UserControl, IRefreshable, IDynamicStepDes
     private bool _skipNextSort;
     private string? _lastSortProperty;
     private ListSortDirection _lastSortDirection;
+    private readonly DispatcherTimer _searchTimer;
+    private string _pendingSearchText = "";
+    private Point _dragStartPoint;
+    private bool _isDragging;
 
     public event Action? StepDescriptionChanged;
 
@@ -36,6 +41,8 @@ public partial class RecipientsPage : UserControl, IRefreshable, IDynamicStepDes
             if (e.PropertyName is nameof(_vm.SelectedCount) or nameof(_vm.TotalCount))
                 StepDescriptionChanged?.Invoke();
         };
+        _searchTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(300) };
+        _searchTimer.Tick += OnSearchTimerTick;
         RestorePanelWidth();
         System.ComponentModel.DependencyPropertyDescriptor.FromProperty(ColumnDefinition.WidthProperty, typeof(ColumnDefinition))
             ?.AddValueChanged(LeftPanelColumn, (_, _) => SavePanelWidth());
@@ -82,7 +89,15 @@ public partial class RecipientsPage : UserControl, IRefreshable, IDynamicStepDes
 
     private void OnSearchTextChanged(object sender, TextChangedEventArgs e)
     {
-        var searchText = ((System.Windows.Controls.TextBox)sender).Text.Trim().ToLower();
+        _pendingSearchText = ((System.Windows.Controls.TextBox)sender).Text.Trim().ToLower();
+        _searchTimer.Stop();
+        _searchTimer.Start();
+    }
+
+    private void OnSearchTimerTick(object? sender, EventArgs e)
+    {
+        _searchTimer.Stop();
+        var searchText = _pendingSearchText;
         var view = CollectionViewSource.GetDefaultView(_vm.CurrentRecipients);
         view.Filter = item =>
         {
@@ -291,13 +306,12 @@ public partial class RecipientsPage : UserControl, IRefreshable, IDynamicStepDes
         }
     }
 
-    private static T? FindVisualParent<T>(DependencyObject child) where T : DependencyObject
+    private static T? FindVisualParent<T>(DependencyObject? child) where T : DependencyObject
     {
-        var parent = System.Windows.Media.VisualTreeHelper.GetParent(child);
-        while (parent != null)
+        while (child != null)
         {
-            if (parent is T result) return result;
-            parent = System.Windows.Media.VisualTreeHelper.GetParent(parent);
+            if (child is T result) return result;
+            child = System.Windows.Media.VisualTreeHelper.GetParent(child);
         }
         return null;
     }
@@ -614,5 +628,77 @@ public partial class RecipientsPage : UserControl, IRefreshable, IDynamicStepDes
             UpdateHeaderCheckBox();
         }
         catch { }
+    }
+
+    // UI-01: Drag-drop row reordering
+    private void OnGridPreviewMouseMove(object sender, MouseEventArgs e)
+    {
+        if (e.LeftButton != MouseButtonState.Pressed || _isDragging) return;
+        var pos = e.GetPosition(RecipientsGrid);
+        if (Math.Abs(pos.X - _dragStartPoint.X) > SystemParameters.MinimumHorizontalDragDistance ||
+            Math.Abs(pos.Y - _dragStartPoint.Y) > SystemParameters.MinimumVerticalDragDistance)
+        {
+            var row = FindVisualParent<DataGridRow>(e.OriginalSource as DependencyObject);
+            if (row == null) return;
+            _isDragging = true;
+            var data = new DataObject("RecipientRow", row.Item);
+            DragDrop.DoDragDrop(RecipientsGrid, data, DragDropEffects.Move);
+            _isDragging = false;
+        }
+    }
+
+    private void OnGridPreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        _dragStartPoint = e.GetPosition(RecipientsGrid);
+    }
+
+    private void OnGridDragOver(object sender, DragEventArgs e)
+    {
+        e.Effects = e.Data.GetDataPresent("RecipientRow") ? DragDropEffects.Move : DragDropEffects.None;
+        e.Handled = true;
+    }
+
+    private void OnGridDrop(object sender, DragEventArgs e)
+    {
+        if (!e.Data.GetDataPresent("RecipientRow")) return;
+        var draggedItem = e.Data.GetData("RecipientRow") as Recipient;
+        if (draggedItem == null) return;
+
+        var target = FindVisualParent<DataGridRow>(e.OriginalSource as DependencyObject);
+        Recipient? targetItem = target?.Item as Recipient;
+        if (targetItem == null || targetItem == draggedItem) return;
+
+        var list = _vm.CurrentRecipients;
+        int oldIndex = list.IndexOf(draggedItem);
+        int newIndex = list.IndexOf(targetItem);
+        if (oldIndex < 0 || newIndex < 0) return;
+
+        list.Move(oldIndex, newIndex);
+        _vm.SyncRecipientsToGroup();
+        _vm.ScheduleSave();
+    }
+
+    // UI-02: Group rename via context menu
+    private void OnRenameGroup(object sender, RoutedEventArgs e)
+    {
+        if (_vm.SelectedGroup == null) return;
+        var inputDlg = new InputDialog
+        {
+            Title = "重命名分组",
+            Prompt = "请输入新的分组名称：",
+            InputText = _vm.SelectedGroup.Name
+        };
+        if (inputDlg.ShowDialog() == true && !string.IsNullOrWhiteSpace(inputDlg.InputText))
+        {
+            var newName = inputDlg.InputText.Trim();
+            if (newName == _vm.SelectedGroup.Name) return;
+            if (_vm.Groups.Any(g => g.Name == newName))
+            {
+                App.ShowWarning("分组名已存在");
+                return;
+            }
+            _vm.SelectedGroup.Name = newName;
+            _vm.SaveAll();
+        }
     }
 }

@@ -94,7 +94,7 @@ public partial class MainWindow
     {
         InitializeComponent();
         Loaded += OnLoaded;
-        Closed += OnMainWindowClosed;
+        Closing += OnMainWindowClosing;
         KeyDown += OnWindowKeyDown;
     }
 
@@ -117,6 +117,18 @@ public partial class MainWindow
                     FocusCurrentSearch();
                     break;
             }
+        }
+        else if (Keyboard.Modifiers == ModifierKeys.Alt && e.Key == Key.Left)
+        {
+            e.Handled = true;
+            SaveCurrentStep();
+            if (_currentStep > 0) NavigateToStep(_currentStep - 1);
+        }
+        else if (Keyboard.Modifiers == ModifierKeys.Alt && e.Key == Key.Right)
+        {
+            e.Handled = true;
+            SaveCurrentStep();
+            if (_currentStep < 5) NavigateToStep(_currentStep + 1);
         }
         else if (e.Key == Key.F1)
         {
@@ -594,10 +606,21 @@ public partial class MainWindow
         MainContentTransform.BeginAnimation(TranslateTransform.YProperty, slideAnimation);
     }
 
-    private void OnMainWindowClosed(object? sender, EventArgs e)
+    private void OnMainWindowClosing(object? sender, CancelEventArgs e)
     {
+        SaveCurrentStep();
+
+        if (_step6 is { IsSending: true })
+        {
+            var dlg = new ConfirmDialog { Title = "确认", Message = "正在发送邮件，确定要关闭窗口吗？" };
+            if (dlg.ShowDialog() != true)
+            {
+                e.Cancel = true;
+                return;
+            }
+        }
+
         SaveWindowPosition();
-        Application.Current.Shutdown();
     }
 
     private void RestoreWindowPosition()

@@ -259,6 +259,7 @@
             <converters:FileSizeConverter x:Key="FileSizeConverter"/>
             <converters:FilePathSizeConverter x:Key="FilePathSizeConverter"/>
             <converters:InverseBoolToVisibilityConverter x:Key="InverseBoolToVisibilityConverter"/>
+            <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
             <converters:FailedToVisibilityConverter x:Key="FailedToVisibilityConverter"/>
         </ResourceDictionary>
     </Application.Resources>

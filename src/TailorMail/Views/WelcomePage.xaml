@@ -28,6 +28,27 @@
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                     <ui:Button x:Name="BtnStart" Content="开始使用" Click="BtnStart_Click" Padding="24,8" Appearance="Primary" MinWidth="120"/>
                 </StackPanel>
+
+                <!-- UI-57: Statistics -->
+                <Border x:Name="StatsPanel" Background="{StaticResource SurfaceBrush}" CornerRadius="{StaticResource CornerRadiusMD}"
+                        Padding="16" Margin="0,20,0,0" Visibility="Collapsed">
+                    <StackPanel>
+                        <TextBlock Text="数据概览" FontWeight="SemiBold" FontSize="13" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,8"/>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                            <TextBlock Text="收件人分组：" FontSize="12" Foreground="{StaticResource TextTertiaryBrush}"/>
+                            <TextBlock x:Name="TxtGroupCount" Text="0" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource AccentBrush}"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                            <TextBlock Text="已选收件人：" FontSize="12" Foreground="{StaticResource TextTertiaryBrush}"/>
+                            <TextBlock x:Name="TxtRecipientCount" Text="0" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource AccentBrush}"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+                <!-- UI-58: Version -->
+                <TextBlock x:Name="TxtVersion" Text="" FontSize="11"
+                           HorizontalAlignment="Center" Foreground="{StaticResource TextTertiaryBrush}"
+                           Margin="0,16,0,0"/>
             </StackPanel>
         </Border>
     </Grid>

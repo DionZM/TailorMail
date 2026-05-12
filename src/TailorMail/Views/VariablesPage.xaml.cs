@@ -75,6 +75,7 @@ public partial class VariablesPage : UserControl, IRefreshable
         }
 
         VariablesGrid.ItemsSource = _vm.SelectedRecipients;
+        VariablesGrid.FrozenColumnCount = 1;
 
         if (_editingRowIndex.HasValue && _editingColIndex.HasValue
             && _editingRowIndex.Value < VariablesGrid.Items.Count

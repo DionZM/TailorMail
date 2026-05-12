@@ -51,6 +51,7 @@
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
                     <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
 
                 <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,8">
@@ -92,7 +93,19 @@
                                                IsToolBarVisible="False"/>
                 </Border>
 
-                <StackPanel Grid.Row="5" Margin="0,8,0,0">
+                <!-- UI-39: Zoom slider -->
+                <StackPanel Grid.Row="5" Orientation="Horizontal" Margin="0,8,0,0" VerticalAlignment="Center">
+                    <TextBlock Text="缩放：" VerticalAlignment="Center" FontSize="12"
+                               Foreground="{StaticResource TextTertiaryBrush}" Margin="0,0,8,0"/>
+                    <Slider x:Name="ZoomSlider" Minimum="50" Maximum="200" Value="100"
+                            Width="120" VerticalAlignment="Center" TickFrequency="25"
+                            IsSnapToTickEnabled="True" ValueChanged="OnZoomChanged"/>
+                    <TextBlock x:Name="TxtZoom" Text="100%" VerticalAlignment="Center" FontSize="12"
+                               Foreground="{StaticResource TextTertiaryBrush}" Margin="8,0,0,0"
+                               MinWidth="36"/>
+                </StackPanel>
+
+                <StackPanel Grid.Row="6" Margin="0,8,0,0">
                     <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
                         <TextBlock Text="附件：" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}"/>
                         <TextBlock x:Name="TxtAttachmentTotal" Text="" FontSize="12"

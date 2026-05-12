@@ -12,6 +12,8 @@ public class SqliteDataService : IDataService
         Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
     };
 
+    private static bool _dedupDone;
+
     private readonly string _dbPath;
     private readonly string _connectionString;
 
@@ -81,6 +83,8 @@ public class SqliteDataService : IDataService
 
     private void DeduplicateDefaultGroups(SqliteConnection conn)
     {
+        if (_dedupDone) return;
+
         using var cmd = conn.CreateCommand();
         cmd.CommandText = """
             SELECT Id FROM RecipientGroups WHERE Name = '默认分组' ORDER BY rowid
@@ -106,6 +110,8 @@ public class SqliteDataService : IDataService
             mergeCmd.Parameters.AddWithValue("@removeId", ids[i]);
             mergeCmd.ExecuteNonQuery();
         }
+
+        _dedupDone = true;
     }
 
     private void MigrateFromJsonIfNeeded()
@@ -166,10 +172,78 @@ public class SqliteDataService : IDataService
         conn.Open();
 
         var groups = new List<RecipientGroup>();
+        var groupMap = new Dictionary<string, RecipientGroup>();
 
+        // PERF-3: Single query with JOIN instead of N+1 queries
         using (var cmd = conn.CreateCommand())
         {
-            cmd.CommandText = "SELECT Id, Name FROM RecipientGroups ORDER BY rowid";
+            cmd.CommandText = """
+                SELECT r.Id, r.GroupId, r.Name, r.ShortName, r.ToEmails, r.CcEmails, r.BccEmails, r.Remark, r.IsSelected, r.VariablesJson, r.SortOrder,
+                       g.Name AS GroupName
+                FROM Recipients r
+                INNER JOIN RecipientGroups g ON r.GroupId = g.Id
+                ORDER BY g.rowid, r.SortOrder, r.rowid
+                """;
+            using var reader = cmd.ExecuteReader();
+
+            // PERF-9: Use named ordinals instead of hardcoded indices
+            var idOrdinal = reader.GetOrdinal("Id");
+            var groupIdOrdinal = reader.GetOrdinal("GroupId");
+            var nameOrdinal = reader.GetOrdinal("Name");
+            var shortNameOrdinal = reader.GetOrdinal("ShortName");
+            var toEmailsOrdinal = reader.GetOrdinal("ToEmails");
+            var ccEmailsOrdinal = reader.GetOrdinal("CcEmails");
+            var bccEmailsOrdinal = reader.GetOrdinal("BccEmails");
+            var remarkOrdinal = reader.GetOrdinal("Remark");
+            var isSelectedOrdinal = reader.GetOrdinal("IsSelected");
+            var variablesOrdinal = reader.GetOrdinal("VariablesJson");
+            var groupNameOrdinal = reader.GetOrdinal("GroupName");
+
+            while (reader.Read())
+            {
+                var groupId = reader.GetString(groupIdOrdinal);
+
+                if (!groupMap.TryGetValue(groupId, out var group))
+                {
+                    group = new RecipientGroup
+                    {
+                        Id = groupId,
+                        Name = reader.GetString(groupNameOrdinal)
+                    };
+                    groupMap[groupId] = group;
+                    groups.Add(group);
+                }
+
+                var variablesJson = reader.GetString(variablesOrdinal);
+                Dictionary<string, string> variables = [];
+                if (!string.IsNullOrEmpty(variablesJson) && variablesJson != "{}")
+                {
+                    try
+                    {
+                        variables = JsonSerializer.Deserialize<Dictionary<string, string>>(variablesJson, _jsonOptions) ?? [];
+                    }
+                    catch { }
+                }
+
+                group.Recipients.Add(new Recipient
+                {
+                    Id = reader.GetString(idOrdinal),
+                    Name = reader.GetString(nameOrdinal),
+                    ShortName = reader.GetString(shortNameOrdinal),
+                    ToEmails = reader.GetString(toEmailsOrdinal),
+                    CcEmails = reader.GetString(ccEmailsOrdinal),
+                    BccEmails = reader.GetString(bccEmailsOrdinal),
+                    Remark = reader.GetString(remarkOrdinal),
+                    IsSelected = reader.GetInt32(isSelectedOrdinal) == 1,
+                    Variables = variables
+                });
+            }
+        }
+
+        // Also load groups that have no recipients
+        using (var cmd = conn.CreateCommand())
+        {
+            cmd.CommandText = "SELECT Id, Name FROM RecipientGroups WHERE Id NOT IN (SELECT DISTINCT GroupId FROM Recipients) ORDER BY rowid";
             using var reader = cmd.ExecuteReader();
             while (reader.Read())
             {
@@ -179,11 +253,6 @@ public class SqliteDataService : IDataService
                     Name = reader.GetString(1)
                 });
             }
-        }
-
-        foreach (var group in groups)
-        {
-            group.Recipients = LoadRecipientsByGroup(conn, group.Id);
         }
 
         if (groups.Count == 0)
@@ -200,48 +269,6 @@ public class SqliteDataService : IDataService
         }
 
         return groups;
-    }
-
-    private List<Recipient> LoadRecipientsByGroup(SqliteConnection conn, string groupId)
-    {
-        var recipients = new List<Recipient>();
-
-        using var cmd = conn.CreateCommand();
-        cmd.CommandText = """
-            SELECT Id, Name, ShortName, ToEmails, CcEmails, BccEmails, Remark, IsSelected, VariablesJson
-            FROM Recipients WHERE GroupId = @groupId ORDER BY SortOrder, rowid
-            """;
-        cmd.Parameters.AddWithValue("@groupId", groupId);
-
-        using var reader = cmd.ExecuteReader();
-        while (reader.Read())
-        {
-            var variablesJson = reader.GetString(8);
-            Dictionary<string, string> variables = [];
-            if (!string.IsNullOrEmpty(variablesJson) && variablesJson != "{}")
-            {
-                try
-                {
-                    variables = JsonSerializer.Deserialize<Dictionary<string, string>>(variablesJson, _jsonOptions) ?? [];
-                }
-                catch { }
-            }
-
-            recipients.Add(new Recipient
-            {
-                Id = reader.GetString(0),
-                Name = reader.GetString(1),
-                ShortName = reader.GetString(2),
-                ToEmails = reader.GetString(3),
-                CcEmails = reader.GetString(4),
-                BccEmails = reader.GetString(5),
-                Remark = reader.GetString(6),
-                IsSelected = reader.GetInt32(7) == 1,
-                Variables = variables
-            });
-        }
-
-        return recipients;
     }
 
     public void SaveRecipientGroups(List<RecipientGroup> groups)
@@ -453,20 +480,28 @@ public class SqliteDataService : IDataService
                 cmd.ExecuteNonQuery();
             }
 
-            foreach (var t in templates)
+            using (var cmd = conn.CreateCommand())
             {
-                using var cmd = conn.CreateCommand();
                 cmd.CommandText = """
                     INSERT INTO MailTemplates (Id, Name, Subject, Body, CreatedAt)
                     VALUES (@id, @name, @subject, @body, @createdAt)
                     """;
                 cmd.Transaction = tx;
-                cmd.Parameters.AddWithValue("@id", t.Id);
-                cmd.Parameters.AddWithValue("@name", t.Name);
-                cmd.Parameters.AddWithValue("@subject", t.Subject);
-                cmd.Parameters.AddWithValue("@body", t.Body);
-                cmd.Parameters.AddWithValue("@createdAt", t.CreatedAt.ToString("O"));
-                cmd.ExecuteNonQuery();
+                var idParam = cmd.Parameters.Add("@id", SqliteType.Text);
+                var nameParam = cmd.Parameters.Add("@name", SqliteType.Text);
+                var subjectParam = cmd.Parameters.Add("@subject", SqliteType.Text);
+                var bodyParam = cmd.Parameters.Add("@body", SqliteType.Text);
+                var createdAtParam = cmd.Parameters.Add("@createdAt", SqliteType.Text);
+
+                foreach (var t in templates)
+                {
+                    idParam.Value = t.Id;
+                    nameParam.Value = t.Name;
+                    subjectParam.Value = t.Subject;
+                    bodyParam.Value = t.Body;
+                    createdAtParam.Value = t.CreatedAt.ToString("O");
+                    cmd.ExecuteNonQuery();
+                }
             }
 
             tx.Commit();

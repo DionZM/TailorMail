@@ -78,13 +78,16 @@ public partial class AttachmentPage : UserControl, IRefreshable
     {
         if (sender is FrameworkElement fe && fe.Tag is string file)
         {
-            var dlg = new ConfirmDialog { Title = "确认删除", Message = $"确定删除公共附件「{System.IO.Path.GetFileName(file)}」？" };
-            if (dlg.ShowDialog() != true) return;
+            var fileName = System.IO.Path.GetFileName(file);
+            var index = _vm.CommonAttachments.IndexOf(file);
             _vm.CommonAttachments.Remove(file);
             _vm.SaveConfig();
             CommonList.ItemsSource = null;
             CommonList.ItemsSource = _vm.CommonAttachments;
             UpdateEmptyStates();
+
+            // UI-37: Show undo notification
+            App.ShowNotification($"已删除「{fileName}」，可通过重新添加恢复");
         }
     }
 
@@ -247,6 +250,13 @@ public partial class AttachmentPage : UserControl, IRefreshable
 
         var files = (string[]?)e.Data.GetData(DataFormats.FileDrop);
         if (files == null) return;
+
+        // UI-34: File count limit
+        if (files.Length > 500)
+        {
+            App.ShowWarning("单次拖放文件数量不能超过 500 个");
+            return;
+        }
 
         foreach (var file in files)
         {

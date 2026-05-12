@@ -50,6 +50,7 @@ public partial class MailComposePage : UserControl, IRefreshable
         AttachSubjectAutoComplete();
         AttachEditorAutoComplete();
         AutoCompleteList.PreviewKeyDown += OnAutoCompleteListKeyDown;
+        DataObject.AddPastingHandler(Editor, OnEditorPasting);
     }
 
     private void InitFontSizeCombo()
@@ -66,6 +67,8 @@ public partial class MailComposePage : UserControl, IRefreshable
         _isUpdating = true;
         if (!string.IsNullOrEmpty(_vm.BodyXaml))
             FlowDocumentHelper.LoadFromXaml(Editor.Document, _vm.BodyXaml);
+        Editor.UndoLimit = 0;
+        Editor.UndoLimit = 100;
         _isUpdating = false;
     }
 
@@ -274,7 +277,7 @@ public partial class MailComposePage : UserControl, IRefreshable
             rtb.CaretPosition = replaceRange.End;
         }
         CloseAutoComplete();
-        Editor?.Focus();
+        _acSource?.Focus();
     }
 
     private void CloseAutoComplete()
@@ -306,6 +309,20 @@ public partial class MailComposePage : UserControl, IRefreshable
     }
 
     #endregion
+
+    // UI-21: Strip rich formatting on paste, keep plain text only
+    private void OnEditorPasting(object sender, DataObjectPastingEventArgs e)
+    {
+        if (e.DataObject.GetDataPresent(DataFormats.Text))
+        {
+            var text = e.DataObject.GetData(DataFormats.Text) as string;
+            if (!string.IsNullOrEmpty(text))
+            {
+                var cleanData = new DataObject(DataFormats.Text, text);
+                e.DataObject = cleanData;
+            }
+        }
+    }
 
     private void OnEditorTextChanged(object sender, TextChangedEventArgs e)
     {
@@ -397,6 +414,21 @@ public partial class MailComposePage : UserControl, IRefreshable
         if (foreground is SolidColorBrush scb)
             ColorPreview.Background = scb;
 
+        // UI-30: Update alignment toggle states
+        TextAlignment alignment;
+        if (sel.IsEmpty)
+        {
+            var parent = Editor.CaretPosition.Parent as FrameworkContentElement;
+            alignment = ReadProperty<TextAlignment>(parent, Block.TextAlignmentProperty, v => v is TextAlignment ta ? ta : TextAlignment.Left);
+        }
+        else
+        {
+            alignment = sel.GetPropertyValue(Block.TextAlignmentProperty) as TextAlignment? ?? TextAlignment.Left;
+        }
+        AlignLeftBtn.IsChecked = alignment == TextAlignment.Left;
+        AlignCenterBtn.IsChecked = alignment == TextAlignment.Center;
+        AlignRightBtn.IsChecked = alignment == TextAlignment.Right;
+
         var intSize = (int)fontSize;
         if (FontSizeCombo.Items.Contains(intSize))
             FontSizeCombo.SelectedItem = intSize;
@@ -469,18 +501,27 @@ public partial class MailComposePage : UserControl, IRefreshable
     private void OnAlignLeft(object sender, RoutedEventArgs e)
     {
         ApplyAlignment(TextAlignment.Left);
+        AlignLeftBtn.IsChecked = true;
+        AlignCenterBtn.IsChecked = false;
+        AlignRightBtn.IsChecked = false;
         Editor.Focus();
     }
 
     private void OnAlignCenter(object sender, RoutedEventArgs e)
     {
         ApplyAlignment(TextAlignment.Center);
+        AlignLeftBtn.IsChecked = false;
+        AlignCenterBtn.IsChecked = true;
+        AlignRightBtn.IsChecked = false;
         Editor.Focus();
     }
 
     private void OnAlignRight(object sender, RoutedEventArgs e)
     {
         ApplyAlignment(TextAlignment.Right);
+        AlignLeftBtn.IsChecked = false;
+        AlignCenterBtn.IsChecked = false;
+        AlignRightBtn.IsChecked = true;
         Editor.Focus();
     }
 
@@ -689,6 +730,25 @@ public partial class MailComposePage : UserControl, IRefreshable
             VariableCombo.ItemsSource = _allVariablePlaceholders;
             VariableCombo.Text = "";
             Editor.Focus();
+        }
+    }
+
+    // UI-28: Line height
+    private void OnLineHeightChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (Editor == null) return; // Fires during InitializeComponent before Editor is ready
+        if (LineHeightCombo.SelectedItem is ComboBoxItem item && item.Tag is string tagStr && double.TryParse(tagStr, out var lineHeight))
+        {
+            if (Editor.Selection != null && !Editor.Selection.IsEmpty)
+            {
+                Editor.Selection.ApplyPropertyValue(Block.LineHeightProperty, lineHeight * Editor.FontSize);
+            }
+            else
+            {
+                var paragraph = Editor.CaretPosition.Paragraph;
+                if (paragraph != null)
+                    paragraph.LineHeight = lineHeight * Editor.FontSize;
+            }
         }
     }
 

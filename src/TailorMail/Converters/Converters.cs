@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Globalization;
 using System.Windows;
 using System.Windows.Data;
@@ -116,6 +117,26 @@ public class InverseBoolToVisibilityConverter : IValueConverter
 }
 
 /// <summary>
+/// 布尔值转可见性转换器。true → Visible，false → Collapsed。
+/// 支持 "invert" 参数反转逻辑。
+/// </summary>
+public class BoolToVisibilityConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        var flag = value is bool b && b;
+        if (parameter is string s && s.Equals("invert", StringComparison.OrdinalIgnoreCase))
+            flag = !flag;
+        return flag ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        throw new NotImplementedException();
+    }
+}
+
+/// <summary>
 /// 文件路径转文件名转换器。从完整路径中提取文件名部分用于显示。
 /// </summary>
 public class FileNameConverter : IValueConverter
@@ -138,14 +159,24 @@ public class FileNameConverter : IValueConverter
 /// </summary>
 public class FilePathSizeConverter : IValueConverter
 {
+    private static readonly ConcurrentDictionary<string, (string size, DateTime cachedAt)> _sizeCache = new();
+
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
     {
         if (value is not string path || string.IsNullOrEmpty(path))
             return "";
+
+        if (_sizeCache.TryGetValue(path, out var cached) && (DateTime.UtcNow - cached.cachedAt).TotalSeconds < 30)
+            return cached.size;
+
         try
         {
             var info = new System.IO.FileInfo(path);
-            if (!info.Exists) return "";
+            if (!info.Exists)
+            {
+                _sizeCache[path] = ("", DateTime.UtcNow);
+                return "";
+            }
             string[] suffixes = { "B", "KB", "MB", "GB" };
             var order = 0;
             double size = info.Length;
@@ -154,10 +185,13 @@ public class FilePathSizeConverter : IValueConverter
                 order++;
                 size /= 1024;
             }
-            return order == 0 ? $"{info.Length} {suffixes[order]}" : $"{size:0.#} {suffixes[order]}";
+            var result = order == 0 ? $"{info.Length} {suffixes[order]}" : $"{size:0.#} {suffixes[order]}";
+            _sizeCache[path] = (result, DateTime.UtcNow);
+            return result;
         }
         catch
         {
+            _sizeCache[path] = ("", DateTime.UtcNow);
             return "";
         }
     }
