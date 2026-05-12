@@ -17,6 +17,7 @@ _ReSharper*/
 ## 发布输出
 publish/
 publish2/
+publish3/
 *.zip
 
 ## 审计报告

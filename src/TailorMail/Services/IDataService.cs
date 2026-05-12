@@ -15,6 +15,11 @@ public interface IDataService
     List<RecipientGroup> LoadRecipientGroups();
 
     /// <summary>
+    /// 异步加载收件人分组列表（P-01: 避免阻塞 UI 线程）。
+    /// </summary>
+    Task<List<RecipientGroup>> LoadRecipientGroupsAsync();
+
+    /// <summary>
     /// 保存收件人分组列表到持久化存储。
     /// </summary>
     /// <param name="groups">要保存的收件人分组列表。</param>
@@ -25,36 +30,35 @@ public interface IDataService
     /// <summary>
     /// 加载应用程序设置。
     /// </summary>
-    /// <returns>应用程序设置对象；若数据文件不存在则返回默认设置。</returns>
     AppSettings LoadSettings();
+
+    /// <summary>
+    /// 异步加载应用程序设置（P-01: 避免阻塞 UI 线程）。
+    /// </summary>
+    Task<AppSettings> LoadSettingsAsync();
 
     /// <summary>
     /// 保存应用程序设置到持久化存储。
     /// </summary>
-    /// <param name="settings">要保存的应用程序设置对象。</param>
     void SaveSettings(AppSettings settings);
 
     /// <summary>
     /// 加载附件配置。
     /// </summary>
-    /// <returns>附件配置对象；若数据文件不存在则返回默认配置。</returns>
     AttachmentConfig LoadAttachmentConfig();
 
     /// <summary>
     /// 保存附件配置到持久化存储。
     /// </summary>
-    /// <param name="config">要保存的附件配置对象。</param>
     void SaveAttachmentConfig(AttachmentConfig config);
 
     /// <summary>
     /// 加载邮件模板列表。
     /// </summary>
-    /// <returns>邮件模板列表；若数据文件不存在则返回空列表。</returns>
     List<MailTemplate> LoadTemplates();
 
     /// <summary>
     /// 保存邮件模板列表到持久化存储。
     /// </summary>
-    /// <param name="templates">要保存的邮件模板列表。</param>
     void SaveTemplates(List<MailTemplate> templates);
 }

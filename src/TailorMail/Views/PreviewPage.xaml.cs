@@ -318,8 +318,8 @@ public partial class PreviewPage : UserControl, IRefreshable
                 ? (string.IsNullOrWhiteSpace(settings.Smtp.SenderEmail) ? settings.Smtp.UserName : settings.Smtp.SenderEmail)
                 : "";
 
-            var result = await System.Threading.Tasks.Task.Run(() =>
-                _viewModel.SendTestEmail(settings, senderEmail));
+            // S-04: Use async method directly
+            var result = await _viewModel.SendTestEmailAsync(settings, senderEmail);
 
             if (result.success)
                 App.ShowNotification($"测试邮件已发送至 {senderEmail}");

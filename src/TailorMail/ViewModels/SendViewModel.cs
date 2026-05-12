@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using TailorMail.Models;
 using TailorMail.Services;
@@ -10,7 +11,8 @@ public partial class SendViewModel : ObservableObject
 {
     private readonly IDataService _dataService;
     private CancellationTokenSource? _cts;
-    private List<Recipient>? _cachedSelectedRecipients;
+    // T-05: volatile for thread-safe visibility
+    private volatile List<Recipient>? _cachedSelectedRecipients;
 
     [ObservableProperty]
     private ObservableCollection<SendResult> _sendResults = [];
@@ -36,9 +38,12 @@ public partial class SendViewModel : ObservableObject
     [ObservableProperty]
     private SendMethod _sendMethod;
 
+    private readonly System.Windows.Threading.Dispatcher _dispatcher;
+
     public SendViewModel(IDataService dataService)
     {
         _dataService = dataService;
+        _dispatcher = System.Windows.Application.Current.Dispatcher;
         var settings = _dataService.LoadSettings();
         SendMethod = settings.SendMethod;
     }
@@ -59,7 +64,6 @@ public partial class SendViewModel : ObservableObject
 
     public Recipient? FindRecipient(string id)
     {
-        // Use cached list if available, otherwise query DB
         if (_cachedSelectedRecipients != null)
             return _cachedSelectedRecipients.FirstOrDefault(r => r.Id == id);
         var groups = _dataService.LoadRecipientGroups();
@@ -83,7 +87,6 @@ public partial class SendViewModel : ObservableObject
         }
         else
         {
-            // PERF-20: Pre-build resultMap from existing SendResults to avoid FirstOrDefault in loop
             foreach (var sr in SendResults)
                 resultMap[sr.RecipientId] = sr;
         }
@@ -109,6 +112,7 @@ public partial class SendViewModel : ObservableObject
 
         // --- Resolve sender and prepare for bulk send ---
         IEmailSender sender;
+        SmtpEmailSender? smtpForCleanup = null;
         if (SendMethod == SendMethod.Outlook)
         {
             var outlook = App.Services.GetRequiredService<OutlookEmailSender>();
@@ -118,6 +122,7 @@ public partial class SendViewModel : ObservableObject
         else
         {
             var smtp = App.Services.GetRequiredService<SmtpEmailSender>();
+            smtpForCleanup = smtp;
             await smtp.PrepareForBulkSend(
                 settings.Smtp,
                 smtpPassword ?? "",
@@ -125,27 +130,35 @@ public partial class SendViewModel : ObservableObject
             sender = smtp;
         }
 
-        // --- Build HTML body once ---
+        // U-01: Build HTML body on current thread (UI thread at entry point)
         string htmlBody;
-        if (!string.IsNullOrEmpty(settings.LastBodyXaml))
+        try
         {
-            try
+            if (!string.IsNullOrEmpty(settings.LastBodyXaml))
             {
-                var doc = new System.Windows.Documents.FlowDocument();
-                Helpers.FlowDocumentHelper.LoadFromXaml(doc, settings.LastBodyXaml);
-                var bodyContent = Helpers.FlowDocumentHelper.ToHtml(doc);
-                htmlBody = Helpers.FlowDocumentHelper.WrapAsEmailDocument(bodyContent);
+                try
+                {
+                    var doc = new System.Windows.Documents.FlowDocument();
+                    Helpers.FlowDocumentHelper.LoadFromXaml(doc, settings.LastBodyXaml);
+                    var bodyContent = Helpers.FlowDocumentHelper.ToHtml(doc);
+                    htmlBody = Helpers.FlowDocumentHelper.WrapAsEmailDocument(bodyContent);
+                }
+                catch
+                {
+                    var bodyContent = Helpers.FlowDocumentHelper.PlainTextToHtml(settings.LastBody);
+                    htmlBody = Helpers.FlowDocumentHelper.WrapAsEmailDocument(bodyContent);
+                }
             }
-            catch
+            else
             {
                 var bodyContent = Helpers.FlowDocumentHelper.PlainTextToHtml(settings.LastBody);
                 htmlBody = Helpers.FlowDocumentHelper.WrapAsEmailDocument(bodyContent);
             }
         }
-        else
+        catch (Exception ex)
         {
-            var bodyContent = Helpers.FlowDocumentHelper.PlainTextToHtml(settings.LastBody);
-            htmlBody = Helpers.FlowDocumentHelper.WrapAsEmailDocument(bodyContent);
+            AppLogger.Error("构建邮件HTML失败", ex);
+            htmlBody = $"<html><body><p>{System.Net.WebUtility.HtmlEncode(settings.LastBody)}</p></body></html>";
         }
 
         // Append signature
@@ -181,9 +194,12 @@ public partial class SendViewModel : ObservableObject
             : $"发送完成: 成功 {SuccessCount} 封, 失败 {FailedCount} 封";
         IsSending = false;
         _cts = null;
-        _cachedSelectedRecipients = null; // Invalidate cache after send
+        _cachedSelectedRecipients = null;
 
-        if (sender is IDisposable disposable)
+        // R-03: Properly dispose sender
+        if (smtpForCleanup != null)
+            smtpForCleanup.Dispose();
+        else if (sender is IDisposable disposable)
             disposable.Dispose();
     }
 
@@ -214,11 +230,15 @@ public partial class SendViewModel : ObservableObject
 
             var result = await sender.SendAsync(subject, body, recipient, perRecipientAttachments, smtpPassword, settings.Smtp);
 
+            // T-01/T-03: Update UI-bound properties on UI thread
             if (existing != null)
             {
-                existing.Status = result.Status;
-                existing.ErrorMessage = result.ErrorMessage;
-                existing.SendTime = result.SendTime;
+                _dispatcher.Invoke(() =>
+                {
+                    existing.Status = result.Status;
+                    existing.ErrorMessage = result.ErrorMessage;
+                    existing.SendTime = result.SendTime;
+                });
             }
 
             if (result.Status == SendStatus.Success) SuccessCount++;
@@ -248,30 +268,38 @@ public partial class SendViewModel : ObservableObject
         var completedCount = 0;
         var lockObj = new object();
 
-        // Pre-create sender pool, each with its own SMTP connection
-        // PERF-12: First sender reads common attachments, others reuse via SetCachedCommonAttachments
+        // P-05: Each sender gets its own connection (no shared MimePart with FileStream)
         var senders = new SmtpEmailSender[concurrency];
-        senders[0] = new SmtpEmailSender();
-        await senders[0].PrepareForBulkSend(settings.Smtp, smtpPassword ?? "", commonAttachments);
-        var sharedAttachments = senders[0].GetCachedCommonAttachments();
-
-        for (int s = 1; s < concurrency; s++)
+        for (int s = 0; s < concurrency; s++)
         {
             senders[s] = new SmtpEmailSender();
-            await senders[s].PrepareForBulkSend(settings.Smtp, smtpPassword ?? "", new List<string>());
+            // Only first sender reads common attachments, rest get empty list
+            await senders[s].PrepareForBulkSend(
+                settings.Smtp, smtpPassword ?? "",
+                s == 0 ? commonAttachments : new List<string>());
+        }
+
+        // Share the byte[]-backed MimeParts (P-04/P-05: MemoryStream is safe to share)
+        var sharedAttachments = senders[0].GetCachedCommonAttachments();
+        for (int s = 1; s < concurrency; s++)
+        {
             if (sharedAttachments != null)
                 senders[s].SetCachedCommonAttachments(sharedAttachments);
         }
 
+        // T-02: Use atomic counter for sender assignment
+        var senderCounter = -1;
+
         try
         {
-            var tasks = recipients.Select(async (recipient, index) =>
+            var tasks = recipients.Select(async (recipient, _) =>
             {
                 if (_cts!.IsCancellationRequested) return;
 
                 await semaphore.WaitAsync(_cts.Token);
-                var senderIndex = index % concurrency;
-                var sender = senders[senderIndex];
+                // T-02: Each task gets its own sender via atomic increment
+                var taskSenderIndex = Interlocked.Increment(ref senderCounter) % concurrency;
+                var sender = senders[taskSenderIndex];
                 try
                 {
                     var perRecipientAttachments = GetPerRecipientAttachments(recipient.Id, recipientAttachMap);
@@ -279,15 +307,23 @@ public partial class SendViewModel : ObservableObject
                     var body = VariablesViewModel.ProcessBodyFast(htmlBody, recipient);
 
                     var existing = resultMap.GetValueOrDefault(recipient.Id);
-                    if (existing != null) existing.Status = SendStatus.Sending;
+                    if (existing != null)
+                    {
+                        // T-01/T-03: Update on UI thread
+                        _dispatcher.Invoke(() => existing.Status = SendStatus.Sending);
+                    }
 
                     var result = await sender.SendAsync(subject, body, recipient, perRecipientAttachments, smtpPassword, settings.Smtp);
 
                     if (existing != null)
                     {
-                        existing.Status = result.Status;
-                        existing.ErrorMessage = result.ErrorMessage;
-                        existing.SendTime = result.SendTime;
+                        // T-01/T-03: Update on UI thread
+                        _dispatcher.Invoke(() =>
+                        {
+                            existing.Status = result.Status;
+                            existing.ErrorMessage = result.ErrorMessage;
+                            existing.SendTime = result.SendTime;
+                        });
                     }
 
                     lock (lockObj)

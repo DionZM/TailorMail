@@ -116,7 +116,7 @@
 
                     <!-- 右侧的搜索和导入导出按钮 -->
                     <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
-                        <ui:TextBox x:Name="SearchBox" PlaceholderText="搜索收件人..." Width="140" Margin="0,0,4,0"
+                        <ui:TextBox x:Name="SearchBox" PlaceholderText="搜索收件人..." MinWidth="140" MaxWidth="260" Margin="0,0,4,0"
                                     TextChanged="OnSearchTextChanged" Icon="{ui:SymbolIcon Search24}"/>
                         <Button Command="{Binding ImportFromOtherGroupCommand}" Margin="0,0,4,0" Padding="12,6">
                             <StackPanel Orientation="Horizontal">

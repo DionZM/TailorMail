@@ -36,8 +36,9 @@ public class OutlookEmailSender : IEmailSender, IDisposable
     {
         if (_bulkOutlookApp != null)
         {
-            try { Marshal.ReleaseComObject(_bulkOutlookApp); }
-            catch { }
+            // R-01: Use FinalReleaseComObject to ensure full release
+            try { Marshal.FinalReleaseComObject(_bulkOutlookApp); }
+            catch (Exception ex) { AppLogger.Warning($"Outlook COM释放警告: {ex.Message}"); }
             _bulkOutlookApp = null;
         }
         _isBulkMode = false;
@@ -102,8 +103,9 @@ public class OutlookEmailSender : IEmailSender, IDisposable
                 }
                 finally
                 {
-                    if (mailItem != null) Marshal.ReleaseComObject(mailItem);
-                    if (localApp != null) Marshal.ReleaseComObject(localApp);
+                    // R-01: Use FinalReleaseComObject for thorough cleanup
+                    if (mailItem != null) try { Marshal.FinalReleaseComObject(mailItem); } catch (Exception ex) { AppLogger.Warning($"Outlook mailItem释放警告: {ex.Message}"); }
+                    if (localApp != null) try { Marshal.FinalReleaseComObject(localApp); } catch (Exception ex) { AppLogger.Warning($"Outlook localApp释放警告: {ex.Message}"); }
                 }
             });
 
@@ -140,8 +142,9 @@ public class OutlookEmailSender : IEmailSender, IDisposable
             }
             finally
             {
-                if (mailItem != null) Marshal.ReleaseComObject(mailItem);
-                if (outlookApp != null) Marshal.ReleaseComObject(outlookApp);
+                // R-01: Use FinalReleaseComObject for thorough cleanup
+                if (mailItem != null) try { Marshal.FinalReleaseComObject(mailItem); } catch (Exception ex) { AppLogger.Warning($"Outlook mailItem释放警告: {ex.Message}"); }
+                if (outlookApp != null) try { Marshal.FinalReleaseComObject(outlookApp); } catch (Exception ex) { AppLogger.Warning($"Outlook app释放警告: {ex.Message}"); }
             }
 
             error = string.Empty;

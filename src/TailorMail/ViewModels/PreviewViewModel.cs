@@ -208,14 +208,13 @@ public partial class PreviewViewModel : ObservableObject
         return doc;
     }
 
-    public (bool success, string error) SendTestEmail(AppSettings settings, string senderEmail)
+    public async Task<(bool success, string error)> SendTestEmailAsync(AppSettings settings, string senderEmail)
     {
         if (SelectedRecipient == null)
             return (false, "未选择收件人");
 
         try
         {
-            var varVm = CachedVarVm;
             var subject = VariablesViewModel.ProcessBodyFast(settings.LastSubject, SelectedRecipient);
 
             string bodyHtml;
@@ -225,7 +224,6 @@ public partial class PreviewViewModel : ObservableObject
                 {
                     var doc = new System.Windows.Documents.FlowDocument();
                     Helpers.FlowDocumentHelper.LoadFromXaml(doc, settings.LastBodyXaml);
-                    // Replace variables
                     foreach (var run in GetAllRuns(doc).ToList())
                     {
                         if (!string.IsNullOrEmpty(run.Text))
@@ -265,9 +263,9 @@ public partial class PreviewViewModel : ObservableObject
                 var displayName = !string.IsNullOrWhiteSpace(smtpSettings.DisplayName) ? smtpSettings.DisplayName : smtpSettings.UserName;
                 var from = !string.IsNullOrWhiteSpace(smtpSettings.SenderEmail) ? smtpSettings.SenderEmail : smtpSettings.UserName;
 
+                // S-04: Use async SendTestAsync to avoid blocking UI
                 var smtpSender = new SmtpEmailSender();
-                var result = smtpSender.SendTest(from, displayName, password, senderEmail, subject, bodyHtml, attachments, out string error);
-                return (result, error);
+                return await smtpSender.SendTestAsync(from, displayName, password, senderEmail, subject, bodyHtml, attachments, settings.Smtp);
             }
         }
         catch (Exception ex)

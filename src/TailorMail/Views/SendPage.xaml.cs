@@ -1,6 +1,5 @@
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Controls.Primitives;
 using System.Windows.Data;
 using TailorMail.Helpers;
 using TailorMail.Models;
@@ -14,7 +13,6 @@ public partial class SendPage : UserControl, IRefreshable, IDynamicStepDesc
     private List<Recipient> _allRecipients = [];
     private string? _smtpPassword;
     private DateTime? _sendStartTime;
-    private object? _lastFilterSender;
     private int _doneAtResume;
     private bool _hasInitialized;
     private System.ComponentModel.PropertyChangedEventHandler? _propertyChangedHandler;
@@ -173,8 +171,12 @@ public partial class SendPage : UserControl, IRefreshable, IDynamicStepDesc
             UpdateProgressDisplay();
             NotifyStateChanged();
             _sendStartTime = null;
-            // UI-46: Play completion sound
-            System.Media.SystemSounds.Beep.Play();
+            // U-05: Play different sounds based on results
+            var hasFailures = _viewModel.FailedCount > 0;
+            if (hasFailures)
+                System.Media.SystemSounds.Exclamation.Play();
+            else
+                System.Media.SystemSounds.Asterisk.Play();
         }
     }
 
@@ -335,25 +337,7 @@ public partial class SendPage : UserControl, IRefreshable, IDynamicStepDesc
 
     private void OnFilterClicked(object sender, RoutedEventArgs e)
     {
-        if (sender is not ToggleButton tb) return;
-
-        if (sender == FilterAll)
-        {
-            FilterSuccess.IsChecked = false;
-            FilterFailed.IsChecked = false;
-            FilterPending.IsChecked = false;
-        }
-        else
-        {
-            FilterAll.IsChecked = false;
-            if (tb.IsChecked == true && _lastFilterSender == sender)
-            {
-                tb.IsChecked = false;
-                FilterAll.IsChecked = true;
-            }
-        }
-
-        _lastFilterSender = FilterAll.IsChecked == true ? null : sender;
+        // U-04: RadioButton handles mutual exclusion via GroupName
         ApplyFilter();
     }
 

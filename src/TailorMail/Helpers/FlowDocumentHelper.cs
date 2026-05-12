@@ -15,6 +15,10 @@ namespace TailorMail.Helpers;
 /// </summary>
 public static class FlowDocumentHelper
 {
+    // P-08: Compiled regex for performance
+    private static readonly Regex _orderedListItemPattern = new(@"^(\d+)[.)]\s", RegexOptions.Compiled);
+    private static readonly Regex _orderedListItemContentPattern = new(@"^(\d+)[.)]\s*(.*)$", RegexOptions.Compiled);
+
     /// <summary>
     /// 邮件 HTML 容器的基础内联 CSS，基于极简主义设计规范。
     /// </summary>
@@ -441,8 +445,7 @@ public static class FlowDocumentHelper
     private static bool IsOrderedListItem(string trimmed)
     {
         if (trimmed.Length < 2) return false;
-        var match = Regex.Match(trimmed, @"^(\d+)[.)]\s");
-        return match.Success;
+        return _orderedListItemPattern.IsMatch(trimmed);
     }
 
     /// <summary>
@@ -450,7 +453,7 @@ public static class FlowDocumentHelper
     /// </summary>
     private static string ExtractOrderedListItemContent(string trimmed)
     {
-        var match = Regex.Match(trimmed, @"^(\d+)[.)]\s*(.*)$");
+        var match = _orderedListItemContentPattern.Match(trimmed);
         return match.Success ? match.Groups[2].Value : trimmed;
     }
 

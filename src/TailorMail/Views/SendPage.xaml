@@ -47,18 +47,15 @@
                 </Grid.ColumnDefinitions>
                 <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
                     <TextBlock Text="筛选：" VerticalAlignment="Center" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,8,0" FontSize="13"/>
-                    <ToggleButton x:Name="FilterAll" Content="全部" IsChecked="True" Click="OnFilterClicked" Margin="0,0,8,0"
-                                 FontSize="13" FontFamily="{StaticResource UIFontFamily}" Padding="10,4"
-                                 Style="{StaticResource {x:Type ToggleButton}}"/>
-                    <ToggleButton x:Name="FilterSuccess" Content="成功" Click="OnFilterClicked" Margin="0,0,8,0"
-                                 FontSize="13" FontFamily="{StaticResource UIFontFamily}" Padding="10,4"
-                                 Style="{StaticResource {x:Type ToggleButton}}"/>
-                    <ToggleButton x:Name="FilterFailed" Content="失败" Click="OnFilterClicked" Margin="0,0,8,0"
-                                 FontSize="13" FontFamily="{StaticResource UIFontFamily}" Padding="10,4"
-                                 Style="{StaticResource {x:Type ToggleButton}}"/>
-                    <ToggleButton x:Name="FilterPending" Content="等待" Click="OnFilterClicked"
-                                 FontSize="13" FontFamily="{StaticResource UIFontFamily}" Padding="10,4"
-                                 Style="{StaticResource {x:Type ToggleButton}}"/>
+                    <!-- U-04: RadioButton with GroupName for clear mutual exclusion -->
+                    <RadioButton x:Name="FilterAll" Content="全部" IsChecked="True" GroupName="SendFilter" Click="OnFilterClicked" Margin="0,0,8,0"
+                                 FontSize="13" FontFamily="{StaticResource UIFontFamily}" Padding="10,4"/>
+                    <RadioButton x:Name="FilterSuccess" Content="成功" GroupName="SendFilter" Click="OnFilterClicked" Margin="0,0,8,0"
+                                 FontSize="13" FontFamily="{StaticResource UIFontFamily}" Padding="10,4"/>
+                    <RadioButton x:Name="FilterFailed" Content="失败" GroupName="SendFilter" Click="OnFilterClicked" Margin="0,0,8,0"
+                                 FontSize="13" FontFamily="{StaticResource UIFontFamily}" Padding="10,4"/>
+                    <RadioButton x:Name="FilterPending" Content="等待" GroupName="SendFilter" Click="OnFilterClicked"
+                                 FontSize="13" FontFamily="{StaticResource UIFontFamily}" Padding="10,4"/>
                 </StackPanel>
                 <TextBlock Grid.Column="1" x:Name="TxtEta" Text="" VerticalAlignment="Center" HorizontalAlignment="Center"
                            Style="{StaticResource CaptionTextStyle}" Foreground="{StaticResource TextTertiaryBrush}"/>

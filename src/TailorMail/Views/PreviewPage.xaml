@@ -26,6 +26,8 @@
                     <ListBox Grid.Row="1" x:Name="ListGroups" DisplayMemberPath="Name"
                              BorderThickness="0" Background="Transparent"
                              FontFamily="{StaticResource UIFontFamily}"
+                             VirtualizingPanel.IsVirtualizing="True"
+                             VirtualizingPanel.VirtualizationMode="Recycling"
                              SelectionChanged="OnGroupSelected"/>
                 </StackPanel>
                 <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,8,0,0">

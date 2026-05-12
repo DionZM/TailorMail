@@ -236,7 +236,9 @@ public partial class MailComposePage : UserControl, IRefreshable
         string typed;
         if (source is UiTextBox tb)
         {
-            typed = tb.Text?.Substring(_acStartIndex) ?? "";
+            var text = tb.Text ?? "";
+            if (_acStartIndex >= text.Length) { CloseAutoComplete(); return; }
+            typed = text.Substring(_acStartIndex);
         }
         else if (source is RichTextBox rtb && _acStartPointer != null)
         {
@@ -265,10 +267,21 @@ public partial class MailComposePage : UserControl, IRefreshable
         var insertText = varName + "}";
         if (source is UiTextBox tb)
         {
-            var before = tb.Text?.Substring(0, _acStartIndex) ?? "";
-            var after = tb.Text?.Substring(tb.SelectionStart) ?? "";
-            tb.Text = before + insertText + after;
-            tb.SelectionStart = _acStartIndex + insertText.Length;
+            var text = tb.Text ?? "";
+            var safeStart = Math.Min(_acStartIndex, text.Length);
+            var before = text.Substring(0, safeStart);
+            var after = tb.SelectionStart < text.Length ? text.Substring(tb.SelectionStart) : "";
+            var newText = before + insertText + after;
+            var newCursorPos = safeStart + insertText.Length;
+
+            // Update ViewModel directly — binding pushes newText to TextBox,
+            // which resets SelectionStart to 0 during the render pass.
+            if (source.DataContext is MailComposeViewModel vm)
+                vm.Subject = newText;
+
+            // Defer cursor positioning until after binding + layout + render completes
+            Dispatcher.BeginInvoke(() => tb.SelectionStart = newCursorPos,
+                System.Windows.Threading.DispatcherPriority.Loaded);
         }
         else if (source is RichTextBox rtb && _acStartPointer != null)
         {

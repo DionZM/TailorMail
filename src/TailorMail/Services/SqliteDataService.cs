@@ -12,7 +12,9 @@ public class SqliteDataService : IDataService
         Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
     };
 
-    private static bool _dedupDone;
+    // R-05: Instance field with lock instead of static flag
+    private readonly object _dedupLock = new();
+    private bool _dedupDone;
 
     private readonly string _dbPath;
     private readonly string _connectionString;
@@ -22,6 +24,7 @@ public class SqliteDataService : IDataService
         var dataDir = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "data");
         System.IO.Directory.CreateDirectory(dataDir);
         _dbPath = System.IO.Path.Combine(dataDir, "tailormail.db");
+        // P-02: Enable WAL mode and busy_timeout for better concurrency
         _connectionString = $"Data Source={_dbPath}";
         InitializeDatabase();
         MigrateFromJsonIfNeeded();
@@ -33,6 +36,13 @@ public class SqliteDataService : IDataService
     {
         using var conn = CreateConnection();
         conn.Open();
+
+        // P-02: Enable WAL mode and set busy timeout
+        using (var pragma = conn.CreateCommand())
+        {
+            pragma.CommandText = "PRAGMA journal_mode=WAL; PRAGMA busy_timeout=5000;";
+            pragma.ExecuteNonQuery();
+        }
 
         using var cmd = conn.CreateCommand();
         cmd.CommandText = """
@@ -83,35 +93,57 @@ public class SqliteDataService : IDataService
 
     private void DeduplicateDefaultGroups(SqliteConnection conn)
     {
-        if (_dedupDone) return;
-
-        using var cmd = conn.CreateCommand();
-        cmd.CommandText = """
-            SELECT Id FROM RecipientGroups WHERE Name = '默认分组' ORDER BY rowid
-            """;
-        var ids = new List<string>();
-        using (var reader = cmd.ExecuteReader())
+        // R-05: Thread-safe check with instance lock
+        lock (_dedupLock)
         {
-            while (reader.Read())
-                ids.Add(reader.GetString(0));
+            if (_dedupDone) return;
         }
 
-        if (ids.Count <= 1) return;
-
-        var keepId = ids[0];
-        for (int i = 1; i < ids.Count; i++)
+        // E-02: Transaction protection + exception handling
+        using var tx = conn.BeginTransaction();
+        try
         {
-            using var mergeCmd = conn.CreateCommand();
-            mergeCmd.CommandText = """
-                UPDATE Recipients SET GroupId = @keepId WHERE GroupId = @removeId;
-                DELETE FROM RecipientGroups WHERE Id = @removeId
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = """
+                SELECT Id FROM RecipientGroups WHERE Name = '默认分组' ORDER BY rowid
                 """;
-            mergeCmd.Parameters.AddWithValue("@keepId", keepId);
-            mergeCmd.Parameters.AddWithValue("@removeId", ids[i]);
-            mergeCmd.ExecuteNonQuery();
-        }
+            cmd.Transaction = tx;
+            var ids = new List<string>();
+            using (var reader = cmd.ExecuteReader())
+            {
+                while (reader.Read())
+                    ids.Add(reader.GetString(0));
+            }
 
-        _dedupDone = true;
+            if (ids.Count <= 1)
+            {
+                tx.Commit();
+                lock (_dedupLock) { _dedupDone = true; }
+                return;
+            }
+
+            var keepId = ids[0];
+            for (int i = 1; i < ids.Count; i++)
+            {
+                using var mergeCmd = conn.CreateCommand();
+                mergeCmd.CommandText = """
+                    UPDATE Recipients SET GroupId = @keepId WHERE GroupId = @removeId;
+                    DELETE FROM RecipientGroups WHERE Id = @removeId
+                    """;
+                mergeCmd.Transaction = tx;
+                mergeCmd.Parameters.AddWithValue("@keepId", keepId);
+                mergeCmd.Parameters.AddWithValue("@removeId", ids[i]);
+                mergeCmd.ExecuteNonQuery();
+            }
+
+            tx.Commit();
+            lock (_dedupLock) { _dedupDone = true; }
+        }
+        catch (Exception ex)
+        {
+            try { tx.Rollback(); } catch { }
+            AppLogger.Error("DeduplicateDefaultGroups 失败", ex);
+        }
     }
 
     private void MigrateFromJsonIfNeeded()
@@ -123,6 +155,7 @@ public class SqliteDataService : IDataService
 
         var jsonService = new JsonDataService();
 
+        // E-01: Log migration failures instead of silently swallowing
         try
         {
             var groups = jsonService.LoadRecipientGroups();
@@ -131,7 +164,10 @@ public class SqliteDataService : IDataService
                 SaveRecipientGroups(groups);
             }
         }
-        catch { }
+        catch (Exception ex)
+        {
+            AppLogger.Error("迁移收件人分组失败", ex);
+        }
 
         try
         {
@@ -141,7 +177,10 @@ public class SqliteDataService : IDataService
                 SaveSettings(settings);
             }
         }
-        catch { }
+        catch (Exception ex)
+        {
+            AppLogger.Error("迁移应用设置失败", ex);
+        }
 
         try
         {
@@ -151,7 +190,10 @@ public class SqliteDataService : IDataService
                 SaveAttachmentConfig(config);
             }
         }
-        catch { }
+        catch (Exception ex)
+        {
+            AppLogger.Error("迁移附件配置失败", ex);
+        }
 
         try
         {
@@ -161,7 +203,10 @@ public class SqliteDataService : IDataService
                 SaveTemplates(templates);
             }
         }
-        catch { }
+        catch (Exception ex)
+        {
+            AppLogger.Error("迁移邮件模板失败", ex);
+        }
 
         System.IO.File.WriteAllText(migrationFlag, DateTime.Now.ToString("O"));
     }
@@ -222,7 +267,10 @@ public class SqliteDataService : IDataService
                     {
                         variables = JsonSerializer.Deserialize<Dictionary<string, string>>(variablesJson, _jsonOptions) ?? [];
                     }
-                    catch { }
+                    catch (Exception ex)
+                    {
+                        AppLogger.Warning($"解析收件人变量JSON失败: {ex.Message}");
+                    }
                 }
 
                 group.Recipients.Add(new Recipient
@@ -271,6 +319,112 @@ public class SqliteDataService : IDataService
         return groups;
     }
 
+    // P-01: Async overload
+    public async Task<List<RecipientGroup>> LoadRecipientGroupsAsync()
+    {
+        await using var conn = CreateConnection();
+        await conn.OpenAsync();
+
+        var groups = new List<RecipientGroup>();
+        var groupMap = new Dictionary<string, RecipientGroup>();
+
+        using (var cmd = conn.CreateCommand())
+        {
+            cmd.CommandText = """
+                SELECT r.Id, r.GroupId, r.Name, r.ShortName, r.ToEmails, r.CcEmails, r.BccEmails, r.Remark, r.IsSelected, r.VariablesJson, r.SortOrder,
+                       g.Name AS GroupName
+                FROM Recipients r
+                INNER JOIN RecipientGroups g ON r.GroupId = g.Id
+                ORDER BY g.rowid, r.SortOrder, r.rowid
+                """;
+            await using var reader = await cmd.ExecuteReaderAsync();
+
+            var idOrdinal = reader.GetOrdinal("Id");
+            var groupIdOrdinal = reader.GetOrdinal("GroupId");
+            var nameOrdinal = reader.GetOrdinal("Name");
+            var shortNameOrdinal = reader.GetOrdinal("ShortName");
+            var toEmailsOrdinal = reader.GetOrdinal("ToEmails");
+            var ccEmailsOrdinal = reader.GetOrdinal("CcEmails");
+            var bccEmailsOrdinal = reader.GetOrdinal("BccEmails");
+            var remarkOrdinal = reader.GetOrdinal("Remark");
+            var isSelectedOrdinal = reader.GetOrdinal("IsSelected");
+            var variablesOrdinal = reader.GetOrdinal("VariablesJson");
+            var groupNameOrdinal = reader.GetOrdinal("GroupName");
+
+            while (await reader.ReadAsync())
+            {
+                var groupId = reader.GetString(groupIdOrdinal);
+
+                if (!groupMap.TryGetValue(groupId, out var group))
+                {
+                    group = new RecipientGroup
+                    {
+                        Id = groupId,
+                        Name = reader.GetString(groupNameOrdinal)
+                    };
+                    groupMap[groupId] = group;
+                    groups.Add(group);
+                }
+
+                var variablesJson = reader.GetString(variablesOrdinal);
+                Dictionary<string, string> variables = [];
+                if (!string.IsNullOrEmpty(variablesJson) && variablesJson != "{}")
+                {
+                    try
+                    {
+                        variables = JsonSerializer.Deserialize<Dictionary<string, string>>(variablesJson, _jsonOptions) ?? [];
+                    }
+                    catch (Exception ex)
+                    {
+                        AppLogger.Warning($"解析收件人变量JSON失败: {ex.Message}");
+                    }
+                }
+
+                group.Recipients.Add(new Recipient
+                {
+                    Id = reader.GetString(idOrdinal),
+                    Name = reader.GetString(nameOrdinal),
+                    ShortName = reader.GetString(shortNameOrdinal),
+                    ToEmails = reader.GetString(toEmailsOrdinal),
+                    CcEmails = reader.GetString(ccEmailsOrdinal),
+                    BccEmails = reader.GetString(bccEmailsOrdinal),
+                    Remark = reader.GetString(remarkOrdinal),
+                    IsSelected = reader.GetInt32(isSelectedOrdinal) == 1,
+                    Variables = variables
+                });
+            }
+        }
+
+        using (var cmd = conn.CreateCommand())
+        {
+            cmd.CommandText = "SELECT Id, Name FROM RecipientGroups WHERE Id NOT IN (SELECT DISTINCT GroupId FROM Recipients) ORDER BY rowid";
+            await using var reader = await cmd.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                groups.Add(new RecipientGroup
+                {
+                    Id = reader.GetString(0),
+                    Name = reader.GetString(1)
+                });
+            }
+        }
+
+        if (groups.Count == 0)
+        {
+            var defaultGroup = new RecipientGroup { Name = "默认分组" };
+            using (var cmd = conn.CreateCommand())
+            {
+                cmd.CommandText = "INSERT INTO RecipientGroups (Id, Name) VALUES (@id, @name)";
+                cmd.Parameters.AddWithValue("@id", defaultGroup.Id);
+                cmd.Parameters.AddWithValue("@name", defaultGroup.Name);
+                await cmd.ExecuteNonQueryAsync();
+            }
+            groups.Add(defaultGroup);
+        }
+
+        return groups;
+    }
+
     public void SaveRecipientGroups(List<RecipientGroup> groups)
     {
         using var conn = CreateConnection();
@@ -279,17 +433,12 @@ public class SqliteDataService : IDataService
 
         try
         {
-            using (var cmd = conn.CreateCommand())
-            {
-                cmd.CommandText = "DELETE FROM Recipients; DELETE FROM RecipientGroups";
-                cmd.Transaction = tx;
-                cmd.ExecuteNonQuery();
-            }
-
-            // Reuse a single command for all group inserts
+            // P-03: Use UPSERT (INSERT OR REPLACE) instead of DELETE + re-insert
             using (var groupCmd = conn.CreateCommand())
             {
-                groupCmd.CommandText = "INSERT INTO RecipientGroups (Id, Name) VALUES (@id, @name)";
+                groupCmd.CommandText = """
+                    INSERT OR REPLACE INTO RecipientGroups (Id, Name) VALUES (@id, @name)
+                    """;
                 groupCmd.Transaction = tx;
                 var gIdParam = groupCmd.Parameters.Add("@id", SqliteType.Text);
                 var gNameParam = groupCmd.Parameters.Add("@name", SqliteType.Text);
@@ -302,11 +451,61 @@ public class SqliteDataService : IDataService
                 }
             }
 
-            // Reuse a single command for all recipient inserts
+            // P-03: Collect all current recipient IDs for cleanup
+            var currentRecipientIds = new HashSet<string>();
+            foreach (var group in groups)
+                foreach (var r in group.Recipients)
+                    currentRecipientIds.Add(r.Id);
+
+            // P-03: Delete recipients that are no longer in any group
+            using (var cmd = conn.CreateCommand())
+            {
+                cmd.CommandText = "DELETE FROM Recipients WHERE Id NOT IN (SELECT Id FROM Recipients WHERE 1=0)";
+                cmd.Transaction = tx;
+                // Build a proper exclusion list
+                if (currentRecipientIds.Count > 0)
+                {
+                    var placeholders = string.Join(",", currentRecipientIds.Select((_, i) => $"@delId{i}"));
+                    cmd.CommandText = $"DELETE FROM Recipients WHERE Id NOT IN ({placeholders})";
+                    int idx = 0;
+                    foreach (var id in currentRecipientIds)
+                        cmd.Parameters.AddWithValue($"@delId{idx++}", id);
+                }
+                else
+                {
+                    cmd.CommandText = "DELETE FROM Recipients";
+                }
+                cmd.ExecuteNonQuery();
+            }
+
+            // Delete groups that are no longer present
+            if (groups.Count > 0)
+            {
+                using (var cmd = conn.CreateCommand())
+                {
+                    var placeholders = string.Join(",", groups.Select((_, i) => $"@g{i}"));
+                    cmd.CommandText = $"DELETE FROM RecipientGroups WHERE Id NOT IN ({placeholders})";
+                    cmd.Transaction = tx;
+                    for (int i = 0; i < groups.Count; i++)
+                        cmd.Parameters.AddWithValue($"@g{i}", groups[i].Id);
+                    cmd.ExecuteNonQuery();
+                }
+            }
+            else
+            {
+                using (var cmd = conn.CreateCommand())
+                {
+                    cmd.CommandText = "DELETE FROM RecipientGroups";
+                    cmd.Transaction = tx;
+                    cmd.ExecuteNonQuery();
+                }
+            }
+
+            // P-03: UPSERT recipients
             using (var recCmd = conn.CreateCommand())
             {
                 recCmd.CommandText = """
-                    INSERT INTO Recipients (Id, GroupId, Name, ShortName, ToEmails, CcEmails, BccEmails, Remark, IsSelected, VariablesJson, SortOrder)
+                    INSERT OR REPLACE INTO Recipients (Id, GroupId, Name, ShortName, ToEmails, CcEmails, BccEmails, Remark, IsSelected, VariablesJson, SortOrder)
                     VALUES (@id, @groupId, @name, @shortName, @toEmails, @ccEmails, @bccEmails, @remark, @isSelected, @variablesJson, @sortOrder)
                     """;
                 recCmd.Transaction = tx;
@@ -395,6 +594,20 @@ public class SqliteDataService : IDataService
         return JsonSerializer.Deserialize<AppSettings>(json, _jsonOptions) ?? new AppSettings();
     }
 
+    // P-01: Async overload
+    public async Task<AppSettings> LoadSettingsAsync()
+    {
+        await using var conn = CreateConnection();
+        await conn.OpenAsync();
+
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "SELECT SettingsJson FROM AppSettings WHERE Id = 1";
+        var json = await cmd.ExecuteScalarAsync() as string;
+
+        if (string.IsNullOrEmpty(json)) return new AppSettings();
+        return JsonSerializer.Deserialize<AppSettings>(json, _jsonOptions) ?? new AppSettings();
+    }
+
     public void SaveSettings(AppSettings settings)
     {
         using var conn = CreateConnection();
@@ -473,17 +686,11 @@ public class SqliteDataService : IDataService
 
         try
         {
-            using (var cmd = conn.CreateCommand())
-            {
-                cmd.CommandText = "DELETE FROM MailTemplates";
-                cmd.Transaction = tx;
-                cmd.ExecuteNonQuery();
-            }
-
+            // P-03: UPSERT instead of DELETE + INSERT
             using (var cmd = conn.CreateCommand())
             {
                 cmd.CommandText = """
-                    INSERT INTO MailTemplates (Id, Name, Subject, Body, CreatedAt)
+                    INSERT OR REPLACE INTO MailTemplates (Id, Name, Subject, Body, CreatedAt)
                     VALUES (@id, @name, @subject, @body, @createdAt)
                     """;
                 cmd.Transaction = tx;
@@ -502,6 +709,25 @@ public class SqliteDataService : IDataService
                     createdAtParam.Value = t.CreatedAt.ToString("O");
                     cmd.ExecuteNonQuery();
                 }
+            }
+
+            // Delete templates no longer in the list
+            if (templates.Count > 0)
+            {
+                using var cmd = conn.CreateCommand();
+                var placeholders = string.Join(",", templates.Select((_, i) => $"@t{i}"));
+                cmd.CommandText = $"DELETE FROM MailTemplates WHERE Id NOT IN ({placeholders})";
+                cmd.Transaction = tx;
+                for (int i = 0; i < templates.Count; i++)
+                    cmd.Parameters.AddWithValue($"@t{i}", templates[i].Id);
+                cmd.ExecuteNonQuery();
+            }
+            else
+            {
+                using var cmd = conn.CreateCommand();
+                cmd.CommandText = "DELETE FROM MailTemplates";
+                cmd.Transaction = tx;
+                cmd.ExecuteNonQuery();
             }
 
             tx.Commit();

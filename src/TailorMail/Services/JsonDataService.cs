@@ -129,4 +129,12 @@ public class JsonDataService : IDataService
         var json = JsonSerializer.Serialize(templates, _jsonOptions);
         File.WriteAllText(path, json);
     }
+
+    /// <inheritdoc/>
+    public Task<List<RecipientGroup>> LoadRecipientGroupsAsync()
+        => Task.FromResult(LoadRecipientGroups());
+
+    /// <inheritdoc/>
+    public Task<AppSettings> LoadSettingsAsync()
+        => Task.FromResult(LoadSettings());
 }

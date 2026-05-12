@@ -23,9 +23,10 @@ public static class FolderPicker
         if (hr != 0 || punk == IntPtr.Zero)
             return null;
 
+        IFileOpenDialog? dialog = null;
         try
         {
-            var dialog = (IFileOpenDialog)Marshal.GetObjectForIUnknown(punk);
+            dialog = (IFileOpenDialog)Marshal.GetObjectForIUnknown(punk);
             // 设置为文件夹选择模式，仅允许选择文件系统路径
             dialog.SetOptions(FOS.FOS_PICKFOLDERS | FOS.FOS_FORCEFILESYSTEM);
 
@@ -36,15 +37,22 @@ public static class FolderPicker
             if (hr != 0)
                 return null;
 
-            // 获取用户选择的结果
+            // R-02: Nested try/finally to ensure item COM is always released
             dialog.GetResult(out var item);
-            item.GetDisplayName(SIGDN.SIGDN_FILESYSPATH, out var path);
-            Marshal.ReleaseComObject(item);
-            Marshal.ReleaseComObject(dialog);
-            return path;
+            try
+            {
+                item.GetDisplayName(SIGDN.SIGDN_FILESYSPATH, out var path);
+                return path;
+            }
+            finally
+            {
+                Marshal.ReleaseComObject(item);
+            }
         }
         finally
         {
+            // R-02: Always release dialog and punk, even on exception
+            if (dialog != null) try { Marshal.ReleaseComObject(dialog); } catch { }
             Marshal.Release(punk);
         }
     }

@@ -156,10 +156,12 @@ public class FileNameConverter : IValueConverter
 
 /// <summary>
 /// 文件路径转文件大小字符串转换器。从完整路径获取文件大小并转换为人类可读格式。
+/// P-09: Added LRU eviction (max 500 entries) to prevent unbounded growth.
 /// </summary>
 public class FilePathSizeConverter : IValueConverter
 {
     private static readonly ConcurrentDictionary<string, (string size, DateTime cachedAt)> _sizeCache = new();
+    private const int MaxCacheEntries = 500;
 
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
     {
@@ -175,6 +177,7 @@ public class FilePathSizeConverter : IValueConverter
             if (!info.Exists)
             {
                 _sizeCache[path] = ("", DateTime.UtcNow);
+                EvictIfNeeded();
                 return "";
             }
             string[] suffixes = { "B", "KB", "MB", "GB" };
@@ -187,13 +190,29 @@ public class FilePathSizeConverter : IValueConverter
             }
             var result = order == 0 ? $"{info.Length} {suffixes[order]}" : $"{size:0.#} {suffixes[order]}";
             _sizeCache[path] = (result, DateTime.UtcNow);
+            EvictIfNeeded();
             return result;
         }
         catch
         {
             _sizeCache[path] = ("", DateTime.UtcNow);
+            EvictIfNeeded();
             return "";
         }
+    }
+
+    // P-09: Evict oldest entries when cache exceeds max size
+    private static void EvictIfNeeded()
+    {
+        if (_sizeCache.Count <= MaxCacheEntries) return;
+        var now = DateTime.UtcNow;
+        var toRemove = _sizeCache
+            .OrderBy(kv => kv.Value.cachedAt)
+            .Take(_sizeCache.Count - MaxCacheEntries + 50)
+            .Select(kv => kv.Key)
+            .ToList();
+        foreach (var key in toRemove)
+            _sizeCache.TryRemove(key, out _);
     }
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
