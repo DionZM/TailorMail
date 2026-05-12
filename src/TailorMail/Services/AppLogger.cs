@@ -9,8 +9,9 @@ namespace TailorMail.Services;
 public static class AppLogger
 {
     private static readonly string LogDir = System.IO.Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-        "TailorMail", "Logs");
+        AppDomain.CurrentDomain.BaseDirectory, "Logs");
+
+    private const int MaxLogFiles = 3;
 
     // M-02: Unbounded channel for async log queue
     private static readonly Channel<string> _logChannel = Channel.CreateUnbounded<string>(
@@ -98,6 +99,7 @@ public static class AppLogger
                 try
                 {
                     System.IO.File.AppendAllLines(LogFile, batch);
+                    CleanupOldLogs();
                 }
                 catch
                 {
@@ -109,5 +111,22 @@ public static class AppLogger
         }
         catch (ChannelClosedException) { }
         catch (OperationCanceledException) { }
+    }
+
+    private static void CleanupOldLogs()
+    {
+        try
+        {
+            var logFiles = System.IO.Directory.GetFiles(LogDir, "log_*.txt")
+                .OrderByDescending(f => f)
+                .Skip(MaxLogFiles)
+                .ToList();
+            foreach (var file in logFiles)
+            {
+                try { System.IO.File.Delete(file); }
+                catch { }
+            }
+        }
+        catch { }
     }
 }
