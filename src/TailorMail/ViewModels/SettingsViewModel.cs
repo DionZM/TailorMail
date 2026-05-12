@@ -71,7 +71,9 @@ public partial class SettingsViewModel : ObservableObject
     [ObservableProperty]
     private int _sendIntervalMs = 1000;
 
-    public string StoredPassword => CredentialHelper.Unprotect(SmtpPassword);
+    private string? _cachedPassword;
+
+    public string StoredPassword => _cachedPassword ??= CredentialHelper.Unprotect(SmtpPassword);
 
     public SettingsViewModel(IDataService dataService)
     {
@@ -126,19 +128,27 @@ public partial class SettingsViewModel : ObservableObject
     [RelayCommand]
     private void Save()
     {
-        var settings = _dataService.LoadSettings();
-        settings.SendMethod = SendMethod;
-        settings.Smtp.Host = SmtpHost;
-        settings.Smtp.Port = SmtpPort;
-        settings.Smtp.UseSsl = SmtpUseSsl;
-        settings.Smtp.UserName = SmtpUserName;
-        settings.Smtp.DisplayName = SmtpDisplayName;
-        settings.Smtp.SenderEmail = SmtpSenderEmail;
-        settings.Smtp.EncryptedPassword = string.IsNullOrWhiteSpace(SmtpPassword)
-            ? string.Empty
-            : CredentialHelper.Protect(SmtpPassword);
-        settings.SendIntervalMs = SendIntervalMs;
-        settings.Signature = Signature;
-        _dataService.SaveSettings(settings);
+        try
+        {
+            var settings = _dataService.LoadSettings();
+            settings.SendMethod = SendMethod;
+            settings.Smtp.Host = SmtpHost;
+            settings.Smtp.Port = SmtpPort;
+            settings.Smtp.UseSsl = SmtpUseSsl;
+            settings.Smtp.UserName = SmtpUserName;
+            settings.Smtp.DisplayName = SmtpDisplayName;
+            settings.Smtp.SenderEmail = SmtpSenderEmail;
+            settings.Smtp.EncryptedPassword = string.IsNullOrWhiteSpace(SmtpPassword)
+                ? string.Empty
+                : CredentialHelper.Protect(SmtpPassword);
+            settings.SendIntervalMs = SendIntervalMs;
+            settings.Signature = Signature;
+            _dataService.SaveSettings(settings);
+        }
+        catch (Exception ex)
+        {
+            AppLogger.Error("保存设置失败", ex);
+            App.ShowError($"保存失败: {ex.Message}");
+        }
     }
 }

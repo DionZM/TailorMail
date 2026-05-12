@@ -163,19 +163,8 @@ public partial class PreviewViewModel : ObservableObject
         {
             if (block is System.Windows.Documents.Paragraph para)
             {
-                foreach (var inline in para.Inlines)
-                {
-                    if (inline is System.Windows.Documents.Run run)
-                        yield return run;
-                    else if (inline is System.Windows.Documents.Span span)
-                    {
-                        foreach (var child in span.Inlines)
-                        {
-                            if (child is System.Windows.Documents.Run childRun)
-                                yield return childRun;
-                        }
-                    }
-                }
+                foreach (var run in CollectRuns(para.Inlines))
+                    yield return run;
             }
             else if (block is System.Windows.Documents.Table table)
             {
@@ -184,9 +173,22 @@ public partial class PreviewViewModel : ObservableObject
                         foreach (var cell in row.Cells)
                             foreach (var cellBlock in cell.Blocks)
                                 if (cellBlock is System.Windows.Documents.Paragraph cellPara)
-                                    foreach (var inline in cellPara.Inlines)
-                                        if (inline is System.Windows.Documents.Run run)
-                                            yield return run;
+                                    foreach (var run in CollectRuns(cellPara.Inlines))
+                                        yield return run;
+            }
+        }
+    }
+
+    private static IEnumerable<System.Windows.Documents.Run> CollectRuns(System.Windows.Documents.InlineCollection inlines)
+    {
+        foreach (var inline in inlines)
+        {
+            if (inline is System.Windows.Documents.Run run)
+                yield return run;
+            else if (inline is System.Windows.Documents.Span span)
+            {
+                foreach (var child in CollectRuns(span.Inlines))
+                    yield return child;
             }
         }
     }
@@ -249,7 +251,7 @@ public partial class PreviewViewModel : ObservableObject
 
             if (settings.SendMethod == Models.SendMethod.Outlook)
             {
-                var outlookSender = new OutlookEmailSender();
+                using var outlookSender = new OutlookEmailSender();
                 var result = outlookSender.SendTest(senderEmail, senderEmail, subject, bodyHtml, attachments, out string error);
                 return (result, error);
             }
@@ -263,8 +265,8 @@ public partial class PreviewViewModel : ObservableObject
                 var displayName = !string.IsNullOrWhiteSpace(smtpSettings.DisplayName) ? smtpSettings.DisplayName : smtpSettings.UserName;
                 var from = !string.IsNullOrWhiteSpace(smtpSettings.SenderEmail) ? smtpSettings.SenderEmail : smtpSettings.UserName;
 
-                // S-04: Use async SendTestAsync to avoid blocking UI
-                var smtpSender = new SmtpEmailSender();
+                // H-05: Dispose SmtpEmailSender after use
+                using var smtpSender = new SmtpEmailSender();
                 return await smtpSender.SendTestAsync(from, displayName, password, senderEmail, subject, bodyHtml, attachments, settings.Smtp);
             }
         }

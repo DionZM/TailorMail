@@ -130,11 +130,15 @@ public class JsonDataService : IDataService
         File.WriteAllText(path, json);
     }
 
-    /// <inheritdoc/>
+    /// <summary>
+    /// L-16: Offload sync I/O to thread pool to avoid blocking the caller.
+    /// </summary>
     public Task<List<RecipientGroup>> LoadRecipientGroupsAsync()
-        => Task.FromResult(LoadRecipientGroups());
+        => Task.Run(LoadRecipientGroups);
 
-    /// <inheritdoc/>
+    /// <summary>
+    /// L-16: Offload sync I/O to thread pool to avoid blocking the caller.
+    /// </summary>
     public Task<AppSettings> LoadSettingsAsync()
-        => Task.FromResult(LoadSettings());
+        => Task.Run(LoadSettings);
 }

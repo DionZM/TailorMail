@@ -102,6 +102,9 @@ public class SmtpEmailSender : IEmailSender, IDisposable
 
                 await EnsureConnectedAsync(settings, password);
 
+                // M-01: Set send timeout before sending
+                if (_client != null) _client.Timeout = SendTimeoutMs;
+
                 var message = new MimeMessage();
 
                 var senderEmail = !string.IsNullOrEmpty(settings.SenderEmail) ? settings.SenderEmail : settings.UserName;
@@ -118,11 +121,14 @@ public class SmtpEmailSender : IEmailSender, IDisposable
 
                 var bodyBuilder = new BodyBuilder { HtmlBody = body };
 
-                // Add pre-cached common attachments
+                // H-08: Clone cached MimeParts for each message to avoid stream reuse issues
                 if (_cachedCommonAttachments != null)
                 {
                     foreach (var part in _cachedCommonAttachments)
-                        bodyBuilder.Attachments.Add(part);
+                    {
+                        var cloned = await CloneMimePartAsync(part);
+                        if (cloned != null) bodyBuilder.Attachments.Add(cloned);
+                    }
                 }
 
                 // P-04: Add per-recipient attachments with byte[] to avoid FileStream leak
@@ -161,11 +167,35 @@ public class SmtpEmailSender : IEmailSender, IDisposable
             }
         }
 
+        // C-02: Ensure status is Failed after all retries exhausted
+        result.Status = SendStatus.Failed;
+        result.ErrorMessage ??= "发送失败：所有重试已耗尽";
         return result;
     }
 
     /// <summary>
-    /// S-02: Determine if an exception is transient and worth retrying.
+    /// H-08: Clone a MimePart by reading its content into a new MemoryStream.
+    /// </summary>
+    private static async Task<MimePart?> CloneMimePartAsync(MimePart source)
+    {
+        try
+        {
+            var ms = new System.IO.MemoryStream();
+            await source.Content.DecodeToAsync(ms);
+            ms.Position = 0;
+            return new MimePart(source.ContentType)
+            {
+                Content = new MimeContent(ms),
+                ContentDisposition = source.ContentDisposition,
+                ContentTransferEncoding = source.ContentTransferEncoding,
+                FileName = source.FileName
+            };
+        }
+        catch { return null; }
+    }
+
+    /// <summary>
+    /// S-02: Determine if an exception is transient.
     /// </summary>
     private static bool IsTransientError(Exception ex)
     {
@@ -182,16 +212,16 @@ public class SmtpEmailSender : IEmailSender, IDisposable
     /// <summary>
     /// P-04: Read file into byte[] then wrap in MemoryStream to avoid FileStream leak.
     /// </summary>
-    private static Task<MimePart?> CreateMimePartFromFileAsync(string filePath)
+    private static async Task<MimePart?> CreateMimePartFromFileAsync(string filePath)
     {
         try
         {
             var fileName = System.IO.Path.GetFileName(filePath);
-            var fileBytes = System.IO.File.ReadAllBytes(filePath);
+            var fileBytes = await System.IO.File.ReadAllBytesAsync(filePath);
             var stream = new System.IO.MemoryStream(fileBytes);
             var contentType = MimeTypes.GetMimeType(fileName);
             var contentTypeParsed = ContentType.Parse(contentType);
-            return Task.FromResult<MimePart?>(new MimePart(contentTypeParsed)
+            return await Task.FromResult<MimePart?>(new MimePart(contentTypeParsed)
             {
                 Content = new MimeContent(stream),
                 ContentDisposition = new ContentDisposition(ContentDisposition.Attachment),
@@ -202,7 +232,7 @@ public class SmtpEmailSender : IEmailSender, IDisposable
         catch (Exception ex)
         {
             AppLogger.Warning($"创建附件MimePart失败: {filePath} - {ex.Message}");
-            return Task.FromResult<MimePart?>(null);
+            return await Task.FromResult<MimePart?>(null);
         }
     }
 

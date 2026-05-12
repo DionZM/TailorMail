@@ -187,11 +187,13 @@ public partial class VariablesViewModel : ObservableObject
                 VariableNames.Add(h);
 
             // 按行读取数据，按名称匹配收件人并写入变量值
+            // M-05: Pre-build dictionary for O(1) name lookup
+            var recipientByName = SelectedRecipients.ToDictionary(r => r.Name);
+
             for (int row = 2; row <= rowCount; row++)
             {
                 var name = ws.Cells[row, 1].Text?.Trim() ?? "";
-                var recipient = SelectedRecipients.FirstOrDefault(r => r.Name == name);
-                if (recipient == null) continue;
+                if (!recipientByName.TryGetValue(name, out var recipient)) continue;
                 for (int col = 2; col <= colCount; col++)
                 {
                     var varName = headers[col - 2];

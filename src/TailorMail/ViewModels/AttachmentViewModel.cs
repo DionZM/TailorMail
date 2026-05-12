@@ -206,7 +206,10 @@ public partial class AttachmentViewModel : ObservableObject
         var selectedRecipients = groups.SelectMany(g => g.Recipients).Where(r => r.IsSelected).ToList();
         var matched = _matchService.MatchFilesByRecipient(dir, selectedRecipients, CommonAttachments);
 
-        // 生成匹配预览文本
+        // M-04: Pre-build dictionaries for O(1) lookup
+        var recipientById = selectedRecipients.ToDictionary(r => r.Id);
+        var attachmentByRecipientId = RecipientAttachments.ToDictionary(ua => ua.RecipientId);
+
         var preview = new System.Text.StringBuilder();
         preview.AppendLine($"匹配目录: {dir}");
         preview.AppendLine();
@@ -214,17 +217,14 @@ public partial class AttachmentViewModel : ObservableObject
         var matchedIds = new HashSet<string>();
         foreach (var kvp in matched)
         {
-            var recipient = selectedRecipients.FirstOrDefault(r => r.Id == kvp.Key);
-            if (recipient == null) continue;
+            if (!recipientById.TryGetValue(kvp.Key, out var recipient)) continue;
             matchedIds.Add(recipient.Id);
 
             preview.AppendLine($"✓ {recipient.Name}");
             foreach (var file in kvp.Value)
                 preview.AppendLine($"    → {System.IO.Path.GetFileName(file)}");
 
-            // 将匹配结果合并到收件人附件列表
-            var existing = RecipientAttachments.FirstOrDefault(ua => ua.RecipientId == kvp.Key);
-            if (existing != null)
+            if (attachmentByRecipientId.TryGetValue(kvp.Key, out var existing))
             {
                 foreach (var file in kvp.Value)
                 {
@@ -234,30 +234,32 @@ public partial class AttachmentViewModel : ObservableObject
             }
             else
             {
-                RecipientAttachments.Add(new RecipientAttachment
+                var newAtt = new RecipientAttachment
                 {
                     RecipientId = kvp.Key,
                     RecipientName = recipient.Name,
                     Files = kvp.Value,
                     IsAutoMatched = true
-                });
+                };
+                RecipientAttachments.Add(newAtt);
+                attachmentByRecipientId[kvp.Key] = newAtt;
             }
         }
 
-        // 记录未匹配的收件人
         var unmatched = selectedRecipients.Where(r => !matchedIds.Contains(r.Id)).ToList();
         foreach (var r in unmatched)
         {
-            var existing = RecipientAttachments.FirstOrDefault(ua => ua.RecipientId == r.Id);
-            if (existing == null)
+            if (!attachmentByRecipientId.TryGetValue(r.Id, out var existing))
             {
-                RecipientAttachments.Add(new RecipientAttachment
+                var newAtt = new RecipientAttachment
                 {
                     RecipientId = r.Id,
                     RecipientName = r.Name,
                     Files = [],
                     IsAutoMatched = false
-                });
+                };
+                RecipientAttachments.Add(newAtt);
+                attachmentByRecipientId[r.Id] = newAtt;
             }
             preview.AppendLine($"✗ {r.Name}");
         }

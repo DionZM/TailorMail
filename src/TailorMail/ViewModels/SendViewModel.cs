@@ -102,6 +102,13 @@ public partial class SendViewModel : ObservableObject
             resultMap[r.Id] = sr;
         }
 
+        // H-07: Snapshot variables for thread-safe access during send
+        foreach (var r in selectedRecipients)
+        {
+            if (r.Variables.Count > 0)
+                r.Variables = new Dictionary<string, string>(r.Variables);
+        }
+
         _cts = new CancellationTokenSource();
 
         // --- Load settings and dependencies once ---
@@ -113,11 +120,18 @@ public partial class SendViewModel : ObservableObject
         // --- Resolve sender and prepare for bulk send ---
         IEmailSender sender;
         SmtpEmailSender? smtpForCleanup = null;
+        var useConcurrentSmtp = SendMethod == SendMethod.Smtp && selectedRecipients.Count > 1;
+
         if (SendMethod == SendMethod.Outlook)
         {
             var outlook = App.Services.GetRequiredService<OutlookEmailSender>();
             outlook.PrepareForBulkSend();
             sender = outlook;
+        }
+        else if (useConcurrentSmtp)
+        {
+            // C-03: Concurrent path creates its own senders; no need to prepare here
+            sender = null!; // not used in concurrent path
         }
         else
         {
@@ -175,7 +189,7 @@ public partial class SendViewModel : ObservableObject
         var progressUpdateInterval = TimeSpan.FromMilliseconds(200);
 
         // --- Send loop ---
-        if (SendMethod == SendMethod.Smtp && selectedRecipients.Count > 1)
+        if (useConcurrentSmtp)
         {
             // Concurrent SMTP sending
             await SendConcurrentSmtp(selectedRecipients, resultMap, recipientAttachMap,
@@ -193,6 +207,7 @@ public partial class SendViewModel : ObservableObject
             ? $"已取消: 成功 {SuccessCount} 封, 失败 {FailedCount} 封"
             : $"发送完成: 成功 {SuccessCount} 封, 失败 {FailedCount} 封";
         IsSending = false;
+        _cts?.Dispose();
         _cts = null;
         _cachedSelectedRecipients = null;
 
@@ -309,16 +324,16 @@ public partial class SendViewModel : ObservableObject
                     var existing = resultMap.GetValueOrDefault(recipient.Id);
                     if (existing != null)
                     {
-                        // T-01/T-03: Update on UI thread
-                        _dispatcher.Invoke(() => existing.Status = SendStatus.Sending);
+                        // H-06: Use BeginInvoke to avoid blocking concurrent threads
+                        _dispatcher.BeginInvoke(() => existing.Status = SendStatus.Sending);
                     }
 
                     var result = await sender.SendAsync(subject, body, recipient, perRecipientAttachments, smtpPassword, settings.Smtp);
 
                     if (existing != null)
                     {
-                        // T-01/T-03: Update on UI thread
-                        _dispatcher.Invoke(() =>
+                        // H-06: Use BeginInvoke to avoid blocking concurrent threads
+                        _dispatcher.BeginInvoke(() =>
                         {
                             existing.Status = result.Status;
                             existing.ErrorMessage = result.ErrorMessage;

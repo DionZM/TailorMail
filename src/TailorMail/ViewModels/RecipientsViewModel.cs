@@ -360,7 +360,7 @@ public partial class RecipientsViewModel : ObservableObject
 
     private List<Recipient> ImportFromFile(string filePath)
     {
-        ExcelPackage.License.SetNonCommercialPersonal("TailorMail");
+        ExcelPackage.License.SetNonCommercialPersonal("TailorMail"); // L-12: Redundant but harmless — already set in App.xaml.cs
         using var package = new ExcelPackage(new System.IO.FileInfo(filePath));
         var ws = package.Workbook.Worksheets[0];
         var recipients = new List<Recipient>();

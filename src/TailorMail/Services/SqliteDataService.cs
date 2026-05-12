@@ -93,56 +93,56 @@ public class SqliteDataService : IDataService
 
     private void DeduplicateDefaultGroups(SqliteConnection conn)
     {
-        // R-05: Thread-safe check with instance lock
+        // H-03: Entire dedup logic inside lock to prevent TOCTOU race
         lock (_dedupLock)
         {
             if (_dedupDone) return;
-        }
 
-        // E-02: Transaction protection + exception handling
-        using var tx = conn.BeginTransaction();
-        try
-        {
-            using var cmd = conn.CreateCommand();
-            cmd.CommandText = """
-                SELECT Id FROM RecipientGroups WHERE Name = '默认分组' ORDER BY rowid
-                """;
-            cmd.Transaction = tx;
-            var ids = new List<string>();
-            using (var reader = cmd.ExecuteReader())
+            // E-02: Transaction protection + exception handling
+            using var tx = conn.BeginTransaction();
+            try
             {
-                while (reader.Read())
-                    ids.Add(reader.GetString(0));
-            }
-
-            if (ids.Count <= 1)
-            {
-                tx.Commit();
-                lock (_dedupLock) { _dedupDone = true; }
-                return;
-            }
-
-            var keepId = ids[0];
-            for (int i = 1; i < ids.Count; i++)
-            {
-                using var mergeCmd = conn.CreateCommand();
-                mergeCmd.CommandText = """
-                    UPDATE Recipients SET GroupId = @keepId WHERE GroupId = @removeId;
-                    DELETE FROM RecipientGroups WHERE Id = @removeId
+                using var cmd = conn.CreateCommand();
+                cmd.CommandText = """
+                    SELECT Id FROM RecipientGroups WHERE Name = '默认分组' ORDER BY rowid
                     """;
-                mergeCmd.Transaction = tx;
-                mergeCmd.Parameters.AddWithValue("@keepId", keepId);
-                mergeCmd.Parameters.AddWithValue("@removeId", ids[i]);
-                mergeCmd.ExecuteNonQuery();
-            }
+                cmd.Transaction = tx;
+                var ids = new List<string>();
+                using (var reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read())
+                        ids.Add(reader.GetString(0));
+                }
 
-            tx.Commit();
-            lock (_dedupLock) { _dedupDone = true; }
-        }
-        catch (Exception ex)
-        {
-            try { tx.Rollback(); } catch { }
-            AppLogger.Error("DeduplicateDefaultGroups 失败", ex);
+                if (ids.Count <= 1)
+                {
+                    tx.Commit();
+                    _dedupDone = true;
+                    return;
+                }
+
+                var keepId = ids[0];
+                for (int i = 1; i < ids.Count; i++)
+                {
+                    using var mergeCmd = conn.CreateCommand();
+                    mergeCmd.CommandText = """
+                        UPDATE Recipients SET GroupId = @keepId WHERE GroupId = @removeId;
+                        DELETE FROM RecipientGroups WHERE Id = @removeId
+                        """;
+                    mergeCmd.Transaction = tx;
+                    mergeCmd.Parameters.AddWithValue("@keepId", keepId);
+                    mergeCmd.Parameters.AddWithValue("@removeId", ids[i]);
+                    mergeCmd.ExecuteNonQuery();
+                }
+
+                tx.Commit();
+                _dedupDone = true;
+            }
+            catch (Exception ex)
+            {
+                try { tx.Rollback(); } catch { }
+                AppLogger.Error("DeduplicateDefaultGroups 失败", ex);
+            }
         }
     }
 
@@ -457,25 +457,24 @@ public class SqliteDataService : IDataService
                 foreach (var r in group.Recipients)
                     currentRecipientIds.Add(r.Id);
 
-            // P-03: Delete recipients that are no longer in any group
-            using (var cmd = conn.CreateCommand())
+            // H-10: Guard against empty list deleting all data
+            if (currentRecipientIds.Count == 0)
             {
-                cmd.CommandText = "DELETE FROM Recipients WHERE Id NOT IN (SELECT Id FROM Recipients WHERE 1=0)";
-                cmd.Transaction = tx;
-                // Build a proper exclusion list
-                if (currentRecipientIds.Count > 0)
+                // No recipients to save — skip deletion to prevent accidental data loss
+            }
+            else
+            {
+                // P-03: Delete recipients that are no longer in any group
+                using (var cmd = conn.CreateCommand())
                 {
                     var placeholders = string.Join(",", currentRecipientIds.Select((_, i) => $"@delId{i}"));
                     cmd.CommandText = $"DELETE FROM Recipients WHERE Id NOT IN ({placeholders})";
+                    cmd.Transaction = tx;
                     int idx = 0;
                     foreach (var id in currentRecipientIds)
                         cmd.Parameters.AddWithValue($"@delId{idx++}", id);
+                    cmd.ExecuteNonQuery();
                 }
-                else
-                {
-                    cmd.CommandText = "DELETE FROM Recipients";
-                }
-                cmd.ExecuteNonQuery();
             }
 
             // Delete groups that are no longer present

@@ -548,7 +548,7 @@ public static class FlowDocumentHelper
     private static string GetInlineStyles(Inline inline)
     {
         var parts = new List<string>();
-        if (inline.FontSize != double.NaN && inline.FontSize != 0 && Math.Abs(inline.FontSize - DefaultFontSize) > 0.5)
+        if (!double.IsNaN(inline.FontSize) && inline.FontSize != 0 && Math.Abs(inline.FontSize - DefaultFontSize) > 0.5)
             parts.Add($"font-size:{(int)inline.FontSize}px");
         if (inline.ReadLocalValue(System.Windows.Documents.TextElement.ForegroundProperty) != DependencyProperty.UnsetValue)
         {
@@ -643,9 +643,19 @@ public static class FlowDocumentHelper
         }
         catch (Exception ex)
         {
-            AppLogger.Error("加载XAML到FlowDocument失败", ex);
+            AppLogger.Error("加载XAML到FlowDocument失败，回退纯文本", ex);
             var range = new TextRange(doc.ContentStart, doc.ContentEnd);
-            range.Text = xaml;
+            // M-12: Show plain text instead of raw XAML markup
+            try
+            {
+                var text = System.Text.RegularExpressions.Regex.Replace(xaml,
+                    @"<[^>]+>", "", System.Text.RegularExpressions.RegexOptions.Compiled);
+                range.Text = System.Net.WebUtility.HtmlDecode(text);
+            }
+            catch
+            {
+                range.Text = "（文档内容加载失败）";
+            }
         }
     }
 

@@ -23,6 +23,8 @@ public class OutlookEmailSender : IEmailSender, IDisposable
     /// </summary>
     public void PrepareForBulkSend()
     {
+        // H-09: Release previous COM object if PrepareForBulkSend called twice
+        CleanupBulkSend();
         var outlookType = _outlookType.Value
             ?? throw new InvalidOperationException("未检测到 Outlook，请确认已安装 Microsoft Outlook。");
         _bulkOutlookApp = Activator.CreateInstance(outlookType)!;
@@ -122,6 +124,9 @@ public class OutlookEmailSender : IEmailSender, IDisposable
         return result;
     }
 
+    /// <summary>
+    /// H-10: SendTest now includes attachments.
+    /// </summary>
     public bool SendTest(string fromAddress, string toAddress, string subject, string bodyHtml, string[] attachments, out string error)
     {
         try
@@ -138,11 +143,17 @@ public class OutlookEmailSender : IEmailSender, IDisposable
                 mailItem.Subject = subject;
                 mailItem.HTMLBody = bodyHtml;
                 mailItem.To = toAddress;
+
+                foreach (var filePath in attachments)
+                {
+                    if (!string.IsNullOrEmpty(filePath) && System.IO.File.Exists(filePath))
+                        mailItem.Attachments.Add(filePath, 1);
+                }
+
                 mailItem.Send();
             }
             finally
             {
-                // R-01: Use FinalReleaseComObject for thorough cleanup
                 if (mailItem != null) try { Marshal.FinalReleaseComObject(mailItem); } catch (Exception ex) { AppLogger.Warning($"Outlook mailItem释放警告: {ex.Message}"); }
                 if (outlookApp != null) try { Marshal.FinalReleaseComObject(outlookApp); } catch (Exception ex) { AppLogger.Warning($"Outlook app释放警告: {ex.Message}"); }
             }

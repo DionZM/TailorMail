@@ -177,7 +177,6 @@ public class FilePathSizeConverter : IValueConverter
             if (!info.Exists)
             {
                 _sizeCache[path] = ("", DateTime.UtcNow);
-                EvictIfNeeded();
                 return "";
             }
             string[] suffixes = { "B", "KB", "MB", "GB" };
@@ -190,13 +189,14 @@ public class FilePathSizeConverter : IValueConverter
             }
             var result = order == 0 ? $"{info.Length} {suffixes[order]}" : $"{size:0.#} {suffixes[order]}";
             _sizeCache[path] = (result, DateTime.UtcNow);
-            EvictIfNeeded();
+            // M-07: Only evict when approaching limit
+            if (_sizeCache.Count > MaxCacheEntries)
+                EvictIfNeeded();
             return result;
         }
         catch
         {
             _sizeCache[path] = ("", DateTime.UtcNow);
-            EvictIfNeeded();
             return "";
         }
     }
