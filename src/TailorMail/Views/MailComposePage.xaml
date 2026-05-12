@@ -42,8 +42,29 @@
                             <TextBlock TextDecorations="Underline" Text="U"/>
                         </ToggleButton>
                         <Border Background="{StaticResource BorderSubtleBrush}" Width="1" Margin="8,2"/>
+                        <Button x:Name="AlignLeftBtn" Click="OnAlignLeft" ToolTip="左对齐" Margin="8,0,0,0" Padding="6,4" Width="32" Height="28">
+                            <ui:SymbolIcon Symbol="TextAlignLeft24" FontSize="14"/>
+                        </Button>
+                        <Button x:Name="AlignCenterBtn" Click="OnAlignCenter" ToolTip="居中" Margin="4,0,0,0" Padding="6,4" Width="32" Height="28">
+                            <ui:SymbolIcon Symbol="TextAlignCenter24" FontSize="14"/>
+                        </Button>
+                        <Button x:Name="AlignRightBtn" Click="OnAlignRight" ToolTip="右对齐" Margin="4,0,0,0" Padding="6,4" Width="32" Height="28">
+                            <ui:SymbolIcon Symbol="TextAlignRight24" FontSize="14"/>
+                        </Button>
+                        <Border Background="{StaticResource BorderSubtleBrush}" Width="1" Margin="8,2"/>
+                        <Button x:Name="UndoBtn" Click="OnUndo" ToolTip="撤销 (Ctrl+Z)" Margin="8,0,0,0" Padding="6,4" Width="32" Height="28">
+                            <ui:SymbolIcon Symbol="ArrowUndo24" FontSize="14"/>
+                        </Button>
+                        <Button x:Name="RedoBtn" Click="OnRedo" ToolTip="重做 (Ctrl+Y)" Margin="4,0,0,0" Padding="6,4" Width="32" Height="28">
+                            <ui:SymbolIcon Symbol="ArrowRedo24" FontSize="14"/>
+                        </Button>
+                        <Border Background="{StaticResource BorderSubtleBrush}" Width="1" Margin="8,2"/>
                         <ComboBox x:Name="FontSizeCombo" Width="64" Margin="8,0,0,0" Padding="4,4"
-                                  SelectionChanged="OnFontSizeComboChanged" IsEditable="False" FontSize="12"/>
+                                  SelectionChanged="OnFontSizeComboChanged" IsEditable="True"
+                                  KeyDown="OnFontSizeKeyDown" FontSize="12"
+                                  PreviewTextInput="OnFontSizePreviewTextInput"/>
+                        <TextBlock x:Name="FontSizeError" Text="" FontSize="10" Foreground="{StaticResource DangerBrush}"
+                                   VerticalAlignment="Center" Margin="4,0,0,0" Visibility="Collapsed"/>
                         <Border Background="{StaticResource BorderSubtleBrush}" Width="1" Margin="8,2"/>
                         <Border x:Name="ColorPreview" Width="22" Height="22" CornerRadius="4"
                                 Background="Black" Margin="0,0,0,0" VerticalAlignment="Center"
@@ -77,6 +98,8 @@
                                                     FontFamily="{StaticResource MonoFontFamily}" FontSize="12" Padding="6,4"/>
                                         <Button Content="应用" Click="OnApplyCustomColor" Margin="4,0,0,0" Padding="8,4" FontSize="12"/>
                                     </StackPanel>
+                                    <TextBlock x:Name="CustomColorError" Text="" FontSize="11" Foreground="{StaticResource DangerBrush}"
+                                               Visibility="Collapsed" Margin="0,4,0,0"/>
                                 </StackPanel>
                             </Border>
                         </Popup>
@@ -93,7 +116,18 @@
                                  BorderThickness="0" TextChanged="OnEditorTextChanged"
                                  SelectionChanged="OnEditorSelectionChanged"
                                  SpellCheck.IsEnabled="False" AcceptsTab="False"
-                                 Background="Transparent"/>
+                                 Background="Transparent">
+                            <RichTextBox.ContextMenu>
+                                <ContextMenu>
+                                    <MenuItem Header="剪切" Command="ApplicationCommands.Cut"/>
+                                    <MenuItem Header="复制" Command="ApplicationCommands.Copy"/>
+                                    <MenuItem Header="粘贴" Command="ApplicationCommands.Paste"/>
+                                    <Separator/>
+                                    <MenuItem Header="插入变量" Click="OnInsertVariable"/>
+                                    <MenuItem Header="插入链接" Click="OnInsertLink"/>
+                                </ContextMenu>
+                            </RichTextBox.ContextMenu>
+                        </RichTextBox>
                 </Border>
 
                 <Popup x:Name="AutoCompletePopup" StaysOpen="False" Placement="Bottom"

@@ -1,4 +1,4 @@
-﻿﻿namespace TailorMail.Models;
+﻿﻿﻿﻿﻿namespace TailorMail.Models;
 
 /// <summary>
 /// 应用程序全局配置模型，包含邮件发送方式、SMTP 服务器设置
@@ -38,6 +38,19 @@ public class AppSettings
     public bool ReducedMotion { get; set; }
 
     public string Signature { get; set; } = string.Empty;
+
+    public int SendIntervalMs { get; set; } = 1000;
+
+    public double? WindowLeft { get; set; }
+    public double? WindowTop { get; set; }
+    public double? WindowWidth { get; set; }
+    public double? WindowHeight { get; set; }
+    public string? WindowState { get; set; }
+
+    public double? RecipientsPanelWidth { get; set; }
+    public double? AttachmentPanelWidth { get; set; }
+
+    public bool HasSeenWelcome { get; set; }
 }
 
 /// <summary>
@@ -76,6 +89,8 @@ public class SmtpSettings
     /// 获取或设置发件人邮箱地址。即实际发送邮件的邮箱地址，需与 <see cref="UserName"/> 对应的邮箱一致。
     /// </summary>
     public string SenderEmail { get; set; } = string.Empty;
+
+    public string EncryptedPassword { get; set; } = string.Empty;
 }
 
 /// <summary>

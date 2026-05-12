@@ -1,5 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using TailorMail.Helpers;
 using TailorMail.Models;
 using TailorMail.Services;
 
@@ -64,6 +65,14 @@ public partial class SettingsViewModel : ObservableObject
     [ObservableProperty]
     private string _signature = string.Empty;
 
+    [ObservableProperty]
+    private string _smtpPassword = string.Empty;
+
+    [ObservableProperty]
+    private int _sendIntervalMs = 1000;
+
+    public string StoredPassword => CredentialHelper.Unprotect(SmtpPassword);
+
     public SettingsViewModel(IDataService dataService)
     {
         _dataService = dataService;
@@ -84,6 +93,8 @@ public partial class SettingsViewModel : ObservableObject
         SmtpUserName = settings.Smtp.UserName;
         SmtpDisplayName = settings.Smtp.DisplayName;
         SmtpSenderEmail = settings.Smtp.SenderEmail;
+        SmtpPassword = settings.Smtp.EncryptedPassword;
+        SendIntervalMs = settings.SendIntervalMs;
         Signature = settings.Signature;
     }
 
@@ -123,6 +134,10 @@ public partial class SettingsViewModel : ObservableObject
         settings.Smtp.UserName = SmtpUserName;
         settings.Smtp.DisplayName = SmtpDisplayName;
         settings.Smtp.SenderEmail = SmtpSenderEmail;
+        settings.Smtp.EncryptedPassword = string.IsNullOrWhiteSpace(SmtpPassword)
+            ? string.Empty
+            : CredentialHelper.Protect(SmtpPassword);
+        settings.SendIntervalMs = SendIntervalMs;
         settings.Signature = Signature;
         _dataService.SaveSettings(settings);
     }

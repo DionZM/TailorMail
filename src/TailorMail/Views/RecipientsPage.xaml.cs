@@ -36,6 +36,9 @@ public partial class RecipientsPage : UserControl, IRefreshable, IDynamicStepDes
             if (e.PropertyName is nameof(_vm.SelectedCount) or nameof(_vm.TotalCount))
                 StepDescriptionChanged?.Invoke();
         };
+        RestorePanelWidth();
+        System.ComponentModel.DependencyPropertyDescriptor.FromProperty(ColumnDefinition.WidthProperty, typeof(ColumnDefinition))
+            ?.AddValueChanged(LeftPanelColumn, (_, _) => SavePanelWidth());
     }
 
     public string GetStepDescription() => $"已选 {_vm.SelectedCount} / 共 {_vm.TotalCount}";
@@ -88,7 +91,10 @@ public partial class RecipientsPage : UserControl, IRefreshable, IDynamicStepDes
             {
                 return (r.Name?.ToLower().Contains(searchText) == true) ||
                        (r.ToEmails?.ToLower().Contains(searchText) == true) ||
-                       (r.ShortName?.ToLower().Contains(searchText) == true);
+                       (r.ShortName?.ToLower().Contains(searchText) == true) ||
+                       (r.CcEmails?.ToLower().Contains(searchText) == true) ||
+                       (r.BccEmails?.ToLower().Contains(searchText) == true) ||
+                       (r.Remark?.ToLower().Contains(searchText) == true);
             }
             return false;
         };
@@ -102,8 +108,8 @@ public partial class RecipientsPage : UserControl, IRefreshable, IDynamicStepDes
     private void OnDeleteGroup(object sender, RoutedEventArgs e)
     {
         if (_vm.SelectedGroup == null) return;
-        if (MessageBox.Show($"确定删除分组「{_vm.SelectedGroup.Name}」及其所有收件人？", "确认删除",
-            MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) return;
+        var dlg = new ConfirmDialog { Title = "确认删除", Message = $"确定删除分组「{_vm.SelectedGroup.Name}」及其所有收件人？" };
+        if (dlg.ShowDialog() != true) return;
         _vm.DeleteGroupCommand.Execute(null);
         UpdateEmptyState();
     }
@@ -135,6 +141,21 @@ public partial class RecipientsPage : UserControl, IRefreshable, IDynamicStepDes
     {
         var count = _vm.CurrentRecipients.Count(r => r.IsSelected);
         BtnDeleteSelected.Content = count > 0 ? $"删除已选 ({count})" : "删除已选";
+    }
+
+    private void BtnDeleteSelected_Click(object sender, RoutedEventArgs e)
+    {
+        var count = _vm.CurrentRecipients.Count(r => r.IsSelected);
+        if (count == 0) return;
+
+        var dlg = new ConfirmDialog
+        {
+            Title = "确认删除",
+            Message = $"确定删除选中的 {count} 个收件人？此操作不可撤销。"
+        };
+        if (dlg.ShowDialog() != true) return;
+
+        _vm.DeleteSelectedRecipientsCommand.Execute(null);
     }
 
     private void UpdateHeaderCheckBox()
@@ -179,7 +200,6 @@ public partial class RecipientsPage : UserControl, IRefreshable, IDynamicStepDes
                 if (duplicate != null)
                 {
                     App.ShowWarning($"名称「{newName}」已存在，请使用不同的名称");
-                    if (textBox != null) textBox.Text = "";
                     e.Cancel = true;
                     Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Loaded, () =>
                     {
@@ -435,6 +455,11 @@ public partial class RecipientsPage : UserControl, IRefreshable, IDynamicStepDes
         {
             grid.CancelEdit();
         }
+        else if (e.Key == Key.V && Keyboard.Modifiers == ModifierKeys.Control)
+        {
+            PasteFromClipboard(grid, rowIndex);
+            e.Handled = true;
+        }
     }
 
     private void OnGridSorting(object sender, DataGridSortingEventArgs e)
@@ -528,10 +553,66 @@ public partial class RecipientsPage : UserControl, IRefreshable, IDynamicStepDes
         }
     }
 
+    private void RestorePanelWidth()
+    {
+        var settings = App.DataService.LoadSettings();
+        if (settings.RecipientsPanelWidth is > 160 and < 400)
+            LeftPanelColumn.Width = new GridLength(settings.RecipientsPanelWidth.Value);
+    }
+
+    private void SavePanelWidth()
+    {
+        var settings = App.DataService.LoadSettings();
+        settings.RecipientsPanelWidth = LeftPanelColumn.ActualWidth;
+        App.DataService.SaveSettings(settings);
+    }
+
     public void SaveAll() => _vm.SaveAll();
 
     public void FocusSearch()
     {
         SearchBox?.Focus();
+    }
+
+    private void PasteFromClipboard(DataGrid grid, int startRowIndex)
+    {
+        try
+        {
+            var text = Clipboard.GetText();
+            if (string.IsNullOrEmpty(text)) return;
+
+            var lines = text.Split(new[] { "\r\n", "\n" }, StringSplitOptions.None);
+            var dataLines = lines.Where(l => !string.IsNullOrWhiteSpace(l)).ToList();
+            if (dataLines.Count == 0) return;
+
+            for (int i = 0; i < dataLines.Count; i++)
+            {
+                var columns = dataLines[i].Split('\t');
+                var rowIdx = startRowIndex + i;
+
+                if (rowIdx >= grid.Items.Count)
+                {
+                    if (HasEmptyNameRow()) break;
+                    var newRecipient = new Recipient { Name = columns.Length > 0 ? columns[0].Trim() : "", IsSelected = false };
+                    _vm.CurrentRecipients.Add(newRecipient);
+                }
+
+                if (rowIdx < grid.Items.Count && grid.Items[rowIdx] is Recipient recipient)
+                {
+                    if (columns.Length > 0) recipient.Name = columns[0].Trim();
+                    if (columns.Length > 1) recipient.ShortName = columns[1].Trim();
+                    if (columns.Length > 2) recipient.ToEmails = columns[2].Trim();
+                    if (columns.Length > 3) recipient.CcEmails = columns[3].Trim();
+                    if (columns.Length > 4) recipient.BccEmails = columns[4].Trim();
+                    if (columns.Length > 5) recipient.Remark = columns[5].Trim();
+                }
+            }
+
+            grid.Items.Refresh();
+            _vm.SaveAll();
+            UpdateEmptyState();
+            UpdateHeaderCheckBox();
+        }
+        catch { }
     }
 }

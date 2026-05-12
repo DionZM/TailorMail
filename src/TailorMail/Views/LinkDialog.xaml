@@ -1,0 +1,32 @@
+<ui:FluentWindow x:Class="TailorMail.Views.LinkDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+        Title="插入链接" Height="Auto" Width="400"
+        SizeToContent="Height"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize" MinWidth="340" MinHeight="200"
+        FontFamily="{StaticResource UIFontFamily}"
+        Background="{StaticResource SurfaceBrush}">
+    <Grid Margin="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0" Text="链接文字" Style="{StaticResource LabelTextStyle}" Margin="0,0,0,4"/>
+        <ui:TextBox Grid.Row="1" x:Name="TxtLinkText" Margin="0,0,0,12"
+                    PlaceholderText="显示的链接文字"/>
+
+        <TextBlock Grid.Row="2" Text="链接地址" Style="{StaticResource LabelTextStyle}" Margin="0,0,0,4"/>
+        <ui:TextBox Grid.Row="3" x:Name="TxtLinkUrl" Margin="0,0,0,16"
+                    PlaceholderText="https://..."/>
+
+        <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right">
+            <ui:Button Content="取消" Click="BtnCancel_Click" Padding="16,6" Margin="0,0,8,0" Appearance="Secondary"/>
+            <ui:Button x:Name="BtnOk" Content="确定" Click="BtnOk_Click" Padding="16,6" Appearance="Primary"/>
+        </StackPanel>
+    </Grid>
+</ui:FluentWindow>

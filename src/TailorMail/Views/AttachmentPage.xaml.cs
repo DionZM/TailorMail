@@ -16,6 +16,9 @@ public partial class AttachmentPage : UserControl, IRefreshable
             App.GetRequiredService<Services.AttachmentMatchService>());
         DataContext = _vm;
         LoadLists();
+        RestorePanelWidth();
+        System.ComponentModel.DependencyPropertyDescriptor.FromProperty(ColumnDefinition.WidthProperty, typeof(ColumnDefinition))
+            ?.AddValueChanged(CommonPanelColumn, (_, _) => SavePanelWidth());
     }
 
     public void RefreshData()
@@ -35,7 +38,8 @@ public partial class AttachmentPage : UserControl, IRefreshable
 
     private void UpdateEmptyStates()
     {
-        CommonEmptyState.Visibility = _vm.CommonAttachments.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+        var hasCommon = _vm.CommonAttachments.Count > 0;
+        CommonEmptyState.Visibility = hasCommon ? Visibility.Collapsed : Visibility.Visible;
         SpecialEmptyState.Visibility = _vm.RecipientAttachments.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
     }
 
@@ -62,8 +66,8 @@ public partial class AttachmentPage : UserControl, IRefreshable
 
     private void OnClearCommon(object sender, RoutedEventArgs e)
     {
-        if (MessageBox.Show("确定清空所有公共附件？", "确认清空",
-            MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) return;
+        var dlg = new ConfirmDialog { Title = "确认清空", Message = "确定清空所有公共附件？" };
+        if (dlg.ShowDialog() != true) return;
         _vm.CommonAttachments.Clear();
         _vm.SaveConfig();
         CommonList.ItemsSource = null;
@@ -74,8 +78,8 @@ public partial class AttachmentPage : UserControl, IRefreshable
     {
         if (sender is FrameworkElement fe && fe.Tag is string file)
         {
-            if (MessageBox.Show($"确定删除公共附件「{System.IO.Path.GetFileName(file)}」？", "确认删除",
-                MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) return;
+            var dlg = new ConfirmDialog { Title = "确认删除", Message = $"确定删除公共附件「{System.IO.Path.GetFileName(file)}」？" };
+            if (dlg.ShowDialog() != true) return;
             _vm.CommonAttachments.Remove(file);
             _vm.SaveConfig();
             CommonList.ItemsSource = null;
@@ -99,6 +103,9 @@ public partial class AttachmentPage : UserControl, IRefreshable
 
     private void OnAutoMatch(object sender, RoutedEventArgs e)
     {
+        BtnAutoMatch.IsEnabled = false;
+        BtnAutoMatch.Content = "匹配中...";
+
         var beforeCount = _vm.RecipientAttachments.Sum(ra => ra.Files.Count);
         _vm.AutoMatchCommand.Execute(null);
         var afterCount = _vm.RecipientAttachments.Sum(ra => ra.Files.Count);
@@ -107,18 +114,28 @@ public partial class AttachmentPage : UserControl, IRefreshable
         RefreshGrid();
         UpdateEmptyStates();
 
-        TxtMatchResult.Text = matched >= 0
-            ? $"自动匹配完成，新增 {matched} 个附件"
-            : "自动匹配完成";
-        TxtMatchResult.Visibility = Visibility.Visible;
-
-        var timer = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromSeconds(3) };
-        timer.Tick += (_, _) =>
+        if (matched > 0)
         {
-            timer.Stop();
-            TxtMatchResult.Visibility = Visibility.Collapsed;
-        };
-        timer.Start();
+            TxtMatchResult.Text = $"自动匹配完成，新增 {matched} 个附件";
+            TxtMatchResult.Foreground = (System.Windows.Media.Brush)FindResource("SuccessBrush");
+            TxtMatchResult.Visibility = Visibility.Visible;
+            var timer = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromSeconds(3) };
+            timer.Tick += (_, _) =>
+            {
+                timer.Stop();
+                TxtMatchResult.Visibility = Visibility.Collapsed;
+            };
+            timer.Start();
+        }
+        else if (beforeCount == afterCount && _vm.RecipientAttachments.Count > 0)
+        {
+            TxtMatchResult.Text = "未匹配到新的附件，请检查文件名是否与收件人名称匹配";
+            TxtMatchResult.Foreground = (System.Windows.Media.Brush)FindResource("WarningBrush");
+            TxtMatchResult.Visibility = Visibility.Visible;
+        }
+
+        BtnAutoMatch.IsEnabled = true;
+        BtnAutoMatch.Content = "自动匹配";
     }
 
     private void OnAddRecipientAttachmentFromGrid(object sender, RoutedEventArgs e)
@@ -152,8 +169,8 @@ public partial class AttachmentPage : UserControl, IRefreshable
 
     private void OnClearSpecial(object sender, RoutedEventArgs e)
     {
-        if (MessageBox.Show("确定清空所有专有附件？", "确认清空",
-            MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) return;
+        var dlg = new ConfirmDialog { Title = "确认清空", Message = "确定清空所有专有附件？" };
+        if (dlg.ShowDialog() != true) return;
         foreach (var ua in _vm.RecipientAttachments.ToList())
         {
             ua.Files.Clear();
@@ -168,7 +185,47 @@ public partial class AttachmentPage : UserControl, IRefreshable
         RecipientGrid.ItemsSource = _vm.RecipientAttachments;
     }
 
+    private void RestorePanelWidth()
+    {
+        var settings = App.DataService.LoadSettings();
+        if (settings.AttachmentPanelWidth is > 160 and < 400)
+            CommonPanelColumn.Width = new System.Windows.GridLength(settings.AttachmentPanelWidth.Value);
+    }
+
+    private void SavePanelWidth()
+    {
+        var settings = App.DataService.LoadSettings();
+        settings.AttachmentPanelWidth = CommonPanelColumn.ActualWidth;
+        App.DataService.SaveSettings(settings);
+    }
+
     #region Drag & Drop
+
+    private void OnDragEnter(object sender, DragEventArgs e)
+    {
+        if (e.Data.GetDataPresent(DataFormats.FileDrop))
+        {
+            e.Effects = DragDropEffects.Copy;
+            if (sender is Border border)
+            {
+                border.BorderBrush = (System.Windows.Media.Brush)FindResource("AccentBrush");
+                border.BorderThickness = new Thickness(2);
+                border.Background = (System.Windows.Media.Brush)FindResource("AccentLightBrush");
+            }
+        }
+        e.Handled = true;
+    }
+
+    private void OnDragLeave(object sender, DragEventArgs e)
+    {
+        if (sender is Border border)
+        {
+            border.BorderBrush = (System.Windows.Media.Brush)FindResource("BorderSubtleBrush");
+            border.BorderThickness = new Thickness(1);
+            border.Background = (System.Windows.Media.Brush)FindResource("SurfaceElevatedBrush");
+        }
+        e.Handled = true;
+    }
 
     private void OnDragOver(object sender, DragEventArgs e)
     {

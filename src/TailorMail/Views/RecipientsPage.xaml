@@ -4,7 +4,8 @@
       xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml">
     <Grid Margin="0">
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="260"/>
+            <ColumnDefinition x:Name="LeftPanelColumn" Width="200" MinWidth="160" MaxWidth="400"/>
+            <ColumnDefinition Width="Auto"/>
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
 
@@ -14,24 +15,19 @@
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
-                
-                <!-- 分组操作按钮 -->
-                <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,12">
-                    <Button Command="{Binding AddGroupCommand}" Margin="0,0,4,0" Padding="12,6">
+
+                <!-- 添加分组按钮 -->
+                <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,8" HorizontalAlignment="Right">
+                    <Button Command="{Binding AddGroupCommand}" Padding="12,6">
                         <StackPanel Orientation="Horizontal">
                             <ui:SymbolIcon Symbol="Add24" FontSize="14" Margin="0,0,4,0"/>
                             <TextBlock Text="添加分组"/>
                         </StackPanel>
                     </Button>
-                    <Button Click="OnDeleteGroup" Padding="12,6">
-                        <StackPanel Orientation="Horizontal">
-                            <ui:SymbolIcon Symbol="Delete24" FontSize="14" Margin="0,0,4,0"/>
-                            <TextBlock Text="删除分组"/>
-                        </StackPanel>
-                    </Button>
                 </StackPanel>
-                
+
                 <!-- 分组列表 -->
                 <ListBox Grid.Row="1" x:Name="GroupListBox" ItemsSource="{Binding Groups}"
                          SelectedItem="{Binding SelectedGroup}" DisplayMemberPath="Name"
@@ -64,11 +60,24 @@
                         </Style>
                     </ListBox.ItemContainerStyle>
                 </ListBox>
+
+                <!-- 删除分组按钮 -->
+                <Button Grid.Row="2" Click="OnDeleteGroup" Padding="12,6" Margin="0,8,0,0"
+                        HorizontalAlignment="Stretch" HorizontalContentAlignment="Center">
+                    <StackPanel Orientation="Horizontal">
+                        <ui:SymbolIcon Symbol="Delete24" FontSize="14" Margin="0,0,4,0"/>
+                        <TextBlock Text="删除分组"/>
+                    </StackPanel>
+                </Button>
             </Grid>
         </Border>
 
+        <GridSplitter Grid.Column="1" Width="4" HorizontalAlignment="Center"
+                      VerticalAlignment="Stretch" Background="Transparent"
+                      Cursor="SizeWE"/>
+
         <!-- 右侧：收件对象管理 -->
-        <Grid Grid.Column="1">
+        <Grid Grid.Column="2">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="*"/>
@@ -91,7 +100,7 @@
                                 <TextBlock Text="添加"/>
                             </StackPanel>
                         </Button>
-                        <Button x:Name="BtnDeleteSelected" Command="{Binding DeleteSelectedRecipientsCommand}" Padding="12,6">
+                        <Button x:Name="BtnDeleteSelected" Click="BtnDeleteSelected_Click" Padding="12,6">
                             <StackPanel Orientation="Horizontal">
                                 <ui:SymbolIcon Symbol="Delete24" FontSize="14" Margin="0,0,4,0"/>
                                 <TextBlock Text="删除已选"/>
@@ -106,7 +115,7 @@
                         <Button Command="{Binding ImportFromOtherGroupCommand}" Margin="0,0,4,0" Padding="12,6">
                             <StackPanel Orientation="Horizontal">
                                 <ui:SymbolIcon Symbol="Copy24" FontSize="14" Margin="0,0,4,0"/>
-                                <TextBlock Text="从其他组复制"/>
+                                <TextBlock Text="跨组复制"/>
                             </StackPanel>
                         </Button>
                         <Button Command="{Binding ExportToExcelCommand}" Margin="0,0,4,0" Padding="12,6">
@@ -240,7 +249,7 @@
                 <StackPanel>
                     <ui:SymbolIcon Symbol="ErrorCircle24" Style="{StaticResource EmptyStateIconStyle}" Foreground="{StaticResource DangerBrush}"/>
                     <TextBlock Text="数据加载失败" Style="{StaticResource EmptyStateTextStyle}" Foreground="{StaticResource DangerBrush}" Margin="0,0,0,4"/>
-                    <TextBlock Text="请检查数据库连接后重试" Style="{StaticResource CaptionTextStyle}" HorizontalAlignment="Center"/>
+                    <TextBlock Text="数据加载失败，请重新打开软件后重试" Style="{StaticResource CaptionTextStyle}" HorizontalAlignment="Center"/>
                 </StackPanel>
             </Border>
         </Grid>

@@ -23,13 +23,8 @@
                 <ui:ImageIcon Source="pack://application:,,,/logo_64.png" Width="16" Height="16"/>
             </ui:TitleBar.Icon>
             <ui:TitleBar.CenterContent>
-                <StackPanel Orientation="Horizontal">
-                    <TextBlock Text="千函 TailorMail" VerticalAlignment="Center"
-                               FontWeight="SemiBold" FontSize="15"
-                               FontFamily="{StaticResource DisplayFontFamily}"
-                               Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,18,0"/>
-                    <Border x:Name="PillStepper" Background="{StaticResource SurfaceBrush}"
-                        CornerRadius="20" Padding="4" Margin="0,2,0,0">
+                <Border x:Name="PillStepper" Background="{StaticResource SurfaceBrush}"
+                    CornerRadius="20" Padding="4" Margin="0,2,0,0">
                     <ItemsControl x:Name="StepItems">
                         <ItemsControl.ItemsPanel>
                             <ItemsPanelTemplate>
@@ -108,7 +103,6 @@
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
                 </Border>
-                </StackPanel>
             </ui:TitleBar.CenterContent>
         </ui:TitleBar>
 
@@ -158,22 +152,36 @@
                     <TextBlock Text=" — " Foreground="{StaticResource BorderSubtleBrush}" VerticalAlignment="Center"/>
                     <TextBlock x:Name="TxtStepDesc"
                                Style="{StaticResource CaptionTextStyle}"/>
+                    <TextBlock Text=" — " Foreground="{StaticResource BorderSubtleBrush}" VerticalAlignment="Center"/>
+                    <TextBlock x:Name="TxtShortcutHint"
+                               Style="{StaticResource CaptionTextStyle}"
+                               Foreground="{StaticResource TextTertiaryBrush}"/>
                 </StackPanel>
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                     <ui:Button x:Name="BtnPrev" Content="上一步" Padding="16,6" Margin="0,0,8,0"
-                               Click="BtnPrev_Click" Appearance="Secondary"/>
-                    <ui:Button x:Name="BtnNewMail" Content="新邮件" Padding="16,6" Margin="0,0,8,0"
-                               Click="BtnNewMail_Click" Appearance="Primary"/>
-                    <ui:Button x:Name="BtnNext" Content="下一步" Padding="20,6" Click="BtnNext_Click"/>
+                               Click="BtnPrev_Click" Appearance="Secondary"
+                               ToolTip="上一步"/>
+                    <ui:Button x:Name="BtnSend" Content="开始发送" Padding="20,6" Margin="0,0,8,0"
+                               Click="BtnSend_Click" Appearance="Primary"
+                               ToolTip="开始发送邮件"
+                               Visibility="Collapsed"/>
+                    <ui:Button x:Name="BtnStop" Content="停止发送" Padding="20,6" Margin="0,0,8,0"
+                               Click="BtnStop_Click" Appearance="Danger"
+                               ToolTip="停止正在进行的发送"
+                               Visibility="Collapsed"/>
+                    <ui:Button x:Name="BtnNext" Content="下一步" Padding="20,6" Click="BtnNext_Click"
+                               ToolTip="下一步"/>
                     <ui:DropDownButton x:Name="BtnMenu" Padding="8,6" Margin="8,0,0,0"
-                                       Appearance="Secondary">
+                                       Appearance="Secondary" ToolTip="更多操作">
                         <ui:DropDownButton.Icon>
                             <ui:SymbolIcon Symbol="MoreVertical24"/>
                         </ui:DropDownButton.Icon>
                         <ui:DropDownButton.Flyout>
                             <ContextMenu>
+                                <MenuItem Header="新建邮件 (Ctrl+N)" Click="BtnNewMail_Click"/>
+                                <Separator/>
                                 <MenuItem Header="设置" Click="BtnSettings_Click"/>
-                                <MenuItem Header="关于" Click="BtnAbout_Click"/>
+                                <MenuItem Header="关于 (F1)" Click="BtnAbout_Click"/>
                             </ContextMenu>
                         </ui:DropDownButton.Flyout>
                     </ui:DropDownButton>

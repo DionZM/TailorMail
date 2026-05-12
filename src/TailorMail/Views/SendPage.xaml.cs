@@ -1,6 +1,8 @@
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Data;
+using TailorMail.Helpers;
 using TailorMail.Models;
 using TailorMail.ViewModels;
 
@@ -12,6 +14,7 @@ public partial class SendPage : UserControl, IRefreshable, IDynamicStepDesc
     private List<Recipient> _allRecipients = [];
     private string? _smtpPassword;
     private DateTime? _sendStartTime;
+    private object? _lastFilterSender;
     private int _doneAtResume;
     private bool _hasInitialized;
     private System.ComponentModel.PropertyChangedEventHandler? _propertyChangedHandler;
@@ -108,8 +111,8 @@ public partial class SendPage : UserControl, IRefreshable, IDynamicStepDesc
             ? _viewModel.SendResults.Count(r => r.Status == SendStatus.Pending)
             : _allRecipients.Count;
 
-        if (MessageBox.Show($"确认发送 {pendingCount} 封邮件？", "确认发送",
-            MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) return;
+        var dlg = new Views.ConfirmDialog { Title = "确认发送", Message = $"确认发送 {pendingCount} 封邮件？" };
+        if (dlg.ShowDialog() != true) return;
 
         OnStartOrContinue();
     }
@@ -118,9 +121,18 @@ public partial class SendPage : UserControl, IRefreshable, IDynamicStepDesc
     {
         if (_viewModel.SendMethod == SendMethod.Smtp && _smtpPassword == null)
         {
-            var dialog = new SmtpPasswordDialog { Owner = Window.GetWindow(this) };
-            if (dialog.ShowDialog() != true) return;
-            _smtpPassword = dialog.Password;
+            var settings = App.DataService.LoadSettings();
+            var storedPassword = CredentialHelper.Unprotect(settings.Smtp.EncryptedPassword);
+            if (!string.IsNullOrEmpty(storedPassword))
+            {
+                _smtpPassword = storedPassword;
+            }
+            else
+            {
+                var dialog = new SmtpPasswordDialog { Owner = Window.GetWindow(this) };
+                if (dialog.ShowDialog() != true) return;
+                _smtpPassword = dialog.Password;
+            }
         }
 
         List<Recipient> toSend;
@@ -298,26 +310,42 @@ public partial class SendPage : UserControl, IRefreshable, IDynamicStepDesc
         SendStateChanged?.Invoke();
     }
 
-    private void OnFilterChanged(object sender, RoutedEventArgs e)
+    private void OnFilterClicked(object sender, RoutedEventArgs e)
+    {
+        if (sender is not ToggleButton tb) return;
+
+        if (sender == FilterAll)
+        {
+            FilterSuccess.IsChecked = false;
+            FilterFailed.IsChecked = false;
+            FilterPending.IsChecked = false;
+        }
+        else
+        {
+            FilterAll.IsChecked = false;
+            if (tb.IsChecked == true && _lastFilterSender == sender)
+            {
+                tb.IsChecked = false;
+                FilterAll.IsChecked = true;
+            }
+        }
+
+        _lastFilterSender = FilterAll.IsChecked == true ? null : sender;
+        ApplyFilter();
+    }
+
+    private void ApplyFilter()
     {
         var view = CollectionViewSource.GetDefaultView(DataGridResults.ItemsSource);
         if (view == null) return;
 
         if (FilterSuccess.IsChecked == true)
-        {
             view.Filter = item => item is SendResult s && s.Status == SendStatus.Success;
-        }
         else if (FilterFailed.IsChecked == true)
-        {
             view.Filter = item => item is SendResult s && s.Status == SendStatus.Failed;
-        }
         else if (FilterPending.IsChecked == true)
-        {
             view.Filter = item => item is SendResult s && s.Status == SendStatus.Pending;
-        }
         else
-        {
             view.Filter = null;
-        }
     }
 }

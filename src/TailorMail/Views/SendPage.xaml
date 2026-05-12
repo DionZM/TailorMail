@@ -47,14 +47,18 @@
                 </Grid.ColumnDefinitions>
                 <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
                     <TextBlock Text="筛选：" VerticalAlignment="Center" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,8,0" FontSize="13"/>
-                    <RadioButton x:Name="FilterAll" Content="全部" IsChecked="True" Click="OnFilterChanged" Margin="0,0,8,0"
-                                 FontSize="13" FontFamily="{StaticResource UIFontFamily}"/>
-                    <RadioButton x:Name="FilterSuccess" Content="成功" Click="OnFilterChanged" Margin="0,0,8,0"
-                                 Foreground="{StaticResource SuccessBrush}" FontSize="13" FontFamily="{StaticResource UIFontFamily}"/>
-                    <RadioButton x:Name="FilterFailed" Content="失败" Click="OnFilterChanged" Margin="0,0,8,0"
-                                 Foreground="{StaticResource DangerBrush}" FontSize="13" FontFamily="{StaticResource UIFontFamily}"/>
-                    <RadioButton x:Name="FilterPending" Content="等待" Click="OnFilterChanged"
-                                 Foreground="{StaticResource TextTertiaryBrush}" FontSize="13" FontFamily="{StaticResource UIFontFamily}"/>
+                    <ToggleButton x:Name="FilterAll" Content="全部" IsChecked="True" Click="OnFilterClicked" Margin="0,0,8,0"
+                                 FontSize="13" FontFamily="{StaticResource UIFontFamily}" Padding="10,4"
+                                 Style="{StaticResource {x:Type ToggleButton}}"/>
+                    <ToggleButton x:Name="FilterSuccess" Content="成功" Click="OnFilterClicked" Margin="0,0,8,0"
+                                 FontSize="13" FontFamily="{StaticResource UIFontFamily}" Padding="10,4"
+                                 Style="{StaticResource {x:Type ToggleButton}}"/>
+                    <ToggleButton x:Name="FilterFailed" Content="失败" Click="OnFilterClicked" Margin="0,0,8,0"
+                                 FontSize="13" FontFamily="{StaticResource UIFontFamily}" Padding="10,4"
+                                 Style="{StaticResource {x:Type ToggleButton}}"/>
+                    <ToggleButton x:Name="FilterPending" Content="等待" Click="OnFilterClicked"
+                                 FontSize="13" FontFamily="{StaticResource UIFontFamily}" Padding="10,4"
+                                 Style="{StaticResource {x:Type ToggleButton}}"/>
                 </StackPanel>
                 <TextBlock Grid.Column="1" x:Name="TxtEta" Text="" VerticalAlignment="Center" HorizontalAlignment="Center"
                            Style="{StaticResource CaptionTextStyle}" Foreground="{StaticResource TextTertiaryBrush}"/>
@@ -135,7 +139,15 @@
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>
-                        <DataGridTextColumn Header="发送时间" Binding="{Binding SendTime,StringFormat='{}{0:HH:mm:ss}'}" Width="80"/>
+                        <DataGridTemplateColumn Header="发送时间" Width="100">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding SendTime,StringFormat='{}{0:HH:mm:ss}'}"
+                                               ToolTip="{Binding SendTime,StringFormat='{}{0:yyyy-MM-dd HH:mm:ss}'}"
+                                               VerticalAlignment="Center"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
                         <DataGridTextColumn Header="错误信息" Binding="{Binding ErrorMessage}" Width="*"/>
                         <DataGridTemplateColumn Header="操作" Width="80">
                             <DataGridTemplateColumn.CellTemplate>

@@ -64,6 +64,9 @@ public partial class SendViewModel : ObservableObject
     {
         IsSending = true;
 
+        // --- Build result map for O(1) lookup ---
+        var resultMap = new Dictionary<string, SendResult>(selectedRecipients.Count);
+
         if (!append)
         {
             TotalCount = selectedRecipients.Count;
@@ -71,28 +74,61 @@ public partial class SendViewModel : ObservableObject
             FailedCount = 0;
             ProgressValue = 0;
             SendResults.Clear();
-            foreach (var r in selectedRecipients)
-                SendResults.Add(new SendResult { RecipientId = r.Id, RecipientName = r.Name });
         }
-        else
+
+        // Populate SendResults + resultMap
+        foreach (var r in selectedRecipients)
         {
-            foreach (var r in selectedRecipients)
+            if (append)
             {
-                if (!SendResults.Any(sr => sr.RecipientId == r.Id))
-                    SendResults.Add(new SendResult { RecipientId = r.Id, RecipientName = r.Name });
+                // In append mode, find existing or create new
+                if (!resultMap.ContainsKey(r.Id))
+                {
+                    var existing = SendResults.FirstOrDefault(sr => sr.RecipientId == r.Id);
+                    if (existing != null)
+                    {
+                        resultMap[r.Id] = existing;
+                        continue;
+                    }
+                }
+                else
+                {
+                    continue;
+                }
             }
+
+            var sr = new SendResult { RecipientId = r.Id, RecipientName = r.Name };
+            SendResults.Add(sr);
+            resultMap[r.Id] = sr;
         }
 
         _cts = new CancellationTokenSource();
 
+        // --- Load settings and dependencies once ---
         var settings = _dataService.LoadSettings();
         var attachConfig = _dataService.LoadAttachmentConfig();
-        var varVm = new VariablesViewModel(_dataService);
+        var recipientAttachMap = attachConfig.RecipientAttachments
+            .ToDictionary(ua => ua.RecipientId);
 
-        IEmailSender sender = SendMethod == SendMethod.Outlook
-            ? App.Services.GetRequiredService<OutlookEmailSender>()
-            : App.Services.GetRequiredService<SmtpEmailSender>();
+        // --- Resolve sender and prepare for bulk send ---
+        IEmailSender sender;
+        if (SendMethod == SendMethod.Outlook)
+        {
+            var outlook = App.Services.GetRequiredService<OutlookEmailSender>();
+            outlook.PrepareForBulkSend();
+            sender = outlook;
+        }
+        else
+        {
+            var smtp = App.Services.GetRequiredService<SmtpEmailSender>();
+            await smtp.PrepareForBulkSend(
+                settings.Smtp,
+                smtpPassword ?? "",
+                attachConfig.CommonAttachments);
+            sender = smtp;
+        }
 
+        // --- Build HTML body once ---
         string htmlBody;
         if (!string.IsNullOrEmpty(settings.LastBodyXaml))
         {
@@ -124,27 +160,61 @@ public partial class SendViewModel : ObservableObject
                 $"<br/><br/><div style='border-top:1px solid #ccc;padding-top:8px;margin-top:8px;color:#666;font-size:13px;'>{sigHtml}</div></body>");
         }
 
-        for (int i = 0; i < selectedRecipients.Count; i++)
+        // --- Progress throttling ---
+        var lastProgressUpdate = DateTime.UtcNow;
+        var progressUpdateInterval = TimeSpan.FromMilliseconds(200);
+
+        // --- Send loop ---
+        if (SendMethod == SendMethod.Smtp && selectedRecipients.Count > 1)
         {
-            if (_cts.IsCancellationRequested) break;
+            // Concurrent SMTP sending
+            await SendConcurrentSmtp(selectedRecipients, resultMap, recipientAttachMap,
+                settings, htmlBody, smtpPassword, lastProgressUpdate, progressUpdateInterval,
+                attachConfig.CommonAttachments);
+        }
+        else
+        {
+            // Sequential sending (Outlook or single recipient)
+            await SendSequential(selectedRecipients, resultMap, recipientAttachMap,
+                sender, settings, htmlBody, smtpPassword, lastProgressUpdate, progressUpdateInterval);
+        }
 
-            var recipient = selectedRecipients[i];
-            StatusText = $"正在发送: {recipient.Name} ({i + 1}/{selectedRecipients.Count})...";
+        StatusText = _cts.IsCancellationRequested
+            ? $"已取消: 成功 {SuccessCount} 封, 失败 {FailedCount} 封"
+            : $"发送完成: 成功 {SuccessCount} 封, 失败 {FailedCount} 封";
+        IsSending = false;
+        _cts = null;
 
-            var allAttachments = new List<string>(attachConfig.CommonAttachments);
-            var unitAtt = attachConfig.RecipientAttachments.FirstOrDefault(ua => ua.RecipientId == recipient.Id);
-            if (unitAtt != null) allAttachments.AddRange(unitAtt.Files);
+        if (sender is IDisposable disposable)
+            disposable.Dispose();
+    }
 
-            var subject = varVm.ProcessBody(settings.LastSubject, recipient);
-            var body = varVm.ProcessBody(htmlBody, recipient);
+    private async Task SendSequential(
+        List<Recipient> recipients,
+        Dictionary<string, SendResult> resultMap,
+        Dictionary<string, RecipientAttachment> recipientAttachMap,
+        IEmailSender sender,
+        AppSettings settings,
+        string htmlBody,
+        string? smtpPassword,
+        DateTime lastProgressUpdate,
+        TimeSpan progressUpdateInterval)
+    {
+        for (int i = 0; i < recipients.Count; i++)
+        {
+            if (_cts!.IsCancellationRequested) break;
 
-            var existing = SendResults.FirstOrDefault(r => r.RecipientId == recipient.Id);
-            if (existing != null)
-            {
-                existing.Status = SendStatus.Sending;
-            }
+            var recipient = recipients[i];
+            StatusText = $"正在发送: {recipient.Name} ({i + 1}/{recipients.Count})...";
 
-            var result = await sender.SendAsync(subject, body, recipient, allAttachments, smtpPassword);
+            var perRecipientAttachments = GetPerRecipientAttachments(recipient.Id, recipientAttachMap);
+            var subject = VariablesViewModel.ProcessBodyFast(settings.LastSubject, recipient);
+            var body = VariablesViewModel.ProcessBodyFast(htmlBody, recipient);
+
+            var existing = resultMap.GetValueOrDefault(recipient.Id);
+            if (existing != null) existing.Status = SendStatus.Sending;
+
+            var result = await sender.SendAsync(subject, body, recipient, perRecipientAttachments, smtpPassword, settings.Smtp);
 
             if (existing != null)
             {
@@ -156,21 +226,95 @@ public partial class SendViewModel : ObservableObject
             if (result.Status == SendStatus.Success) SuccessCount++;
             else FailedCount++;
 
-            var done = SuccessCount + FailedCount;
-            if (append)
-                ProgressValue = done * 100.0 / TotalCount;
-            else
-                ProgressValue = (i + 1) * 100.0 / selectedRecipients.Count;
+            ProgressValue = (i + 1) * 100.0 / recipients.Count;
+
+            var interval = settings.SendIntervalMs;
+            if (interval > 0 && i < recipients.Count - 1)
+                await Task.Delay(interval, _cts.Token);
+        }
+    }
+
+    private async Task SendConcurrentSmtp(
+        List<Recipient> recipients,
+        Dictionary<string, SendResult> resultMap,
+        Dictionary<string, RecipientAttachment> recipientAttachMap,
+        AppSettings settings,
+        string htmlBody,
+        string? smtpPassword,
+        DateTime lastProgressUpdate,
+        TimeSpan progressUpdateInterval,
+        List<string> commonAttachments)
+    {
+        const int concurrency = 10;
+        var semaphore = new SemaphoreSlim(concurrency, concurrency);
+        var completedCount = 0;
+        var lockObj = new object();
+
+        // Pre-create sender pool, each with its own SMTP connection
+        var senders = new SmtpEmailSender[concurrency];
+        for (int s = 0; s < concurrency; s++)
+        {
+            senders[s] = new SmtpEmailSender();
+            await senders[s].PrepareForBulkSend(settings.Smtp, smtpPassword ?? "", commonAttachments);
         }
 
-        StatusText = _cts.IsCancellationRequested
-            ? $"已取消: 成功 {SuccessCount} 封, 失败 {FailedCount} 封"
-            : $"发送完成: 成功 {SuccessCount} 封, 失败 {FailedCount} 封";
-        IsSending = false;
-        _cts = null;
+        try
+        {
+            var tasks = recipients.Select(async (recipient, index) =>
+            {
+                if (_cts!.IsCancellationRequested) return;
 
-        if (sender is IDisposable disposable)
-            disposable.Dispose();
+                await semaphore.WaitAsync(_cts.Token);
+                var senderIndex = index % concurrency;
+                var sender = senders[senderIndex];
+                try
+                {
+                    var perRecipientAttachments = GetPerRecipientAttachments(recipient.Id, recipientAttachMap);
+                    var subject = VariablesViewModel.ProcessBodyFast(settings.LastSubject, recipient);
+                    var body = VariablesViewModel.ProcessBodyFast(htmlBody, recipient);
+
+                    var existing = resultMap.GetValueOrDefault(recipient.Id);
+                    if (existing != null) existing.Status = SendStatus.Sending;
+
+                    var result = await sender.SendAsync(subject, body, recipient, perRecipientAttachments, smtpPassword, settings.Smtp);
+
+                    if (existing != null)
+                    {
+                        existing.Status = result.Status;
+                        existing.ErrorMessage = result.ErrorMessage;
+                        existing.SendTime = result.SendTime;
+                    }
+
+                    lock (lockObj)
+                    {
+                        if (result.Status == SendStatus.Success) SuccessCount++;
+                        else FailedCount++;
+                        completedCount++;
+                        ProgressValue = completedCount * 100.0 / recipients.Count;
+                    }
+                }
+                finally
+                {
+                    semaphore.Release();
+                }
+            });
+
+            await Task.WhenAll(tasks);
+        }
+        finally
+        {
+            foreach (var s in senders)
+                s.Dispose();
+        }
+    }
+
+    private static List<string> GetPerRecipientAttachments(
+        string recipientId,
+        Dictionary<string, RecipientAttachment> recipientAttachMap)
+    {
+        if (recipientAttachMap.TryGetValue(recipientId, out var ua))
+            return new List<string>(ua.Files);
+        return [];
     }
 
     public async Task RetryAllFailed()

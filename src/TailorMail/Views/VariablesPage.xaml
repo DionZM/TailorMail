@@ -5,6 +5,7 @@
     <Grid Margin="0">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
@@ -28,12 +29,12 @@
                             <TextBlock Text="重命名"/>
                         </StackPanel>
                     </Button>
-                    <Button Click="OnDeleteVariable" Margin="0,0,4,0" Padding="12,6">
+                    <ui:Button Click="OnDeleteVariable" Margin="0,0,4,0" Padding="12,6" Appearance="Secondary">
                         <StackPanel Orientation="Horizontal">
                             <ui:SymbolIcon Symbol="Delete24" FontSize="14" Margin="0,0,4,0"/>
                             <TextBlock Text="删除变量"/>
                         </StackPanel>
-                    </Button>
+                    </ui:Button>
                 </WrapPanel>
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                     <Button Command="{Binding ExportVariablesCommand}" Margin="0,0,4,0" Padding="12,6">
@@ -52,7 +53,11 @@
             </Grid>
         </Border>
 
-        <Grid Grid.Row="1">
+        <ui:InfoBar Grid.Row="1" x:Name="VarUsageHint"
+                    Title="" Message="" IsOpen="False" IsClosable="False"
+                    Severity="Informational" Margin="0,0,0,8"/>
+
+        <Grid Grid.Row="2">
             <Border Style="{StaticResource CardStyle}" Margin="0">
                 <DataGrid x:Name="VariablesGrid" AutoGenerateColumns="False"
                           CanUserAddRows="False" CanUserDeleteRows="False"
@@ -72,8 +77,10 @@
             <Border x:Name="VarEmptyState" Style="{StaticResource EmptyStateStyle}" Visibility="Collapsed">
                 <StackPanel>
                     <ui:SymbolIcon Symbol="Tag24" Style="{StaticResource EmptyStateIconStyle}"/>
-                    <TextBlock Text="暂无变量" Style="{StaticResource EmptyStateTextStyle}" Margin="0,0,0,4"/>
-                    <TextBlock Text="点击下方按钮创建新变量" Style="{StaticResource CaptionTextStyle}" HorizontalAlignment="Center" Margin="0,0,0,8"/>
+                    <TextBlock Text="暂无变量" Style="{StaticResource EmptyStateTextStyle}" Margin="0,0,0,8"/>
+                    <TextBlock Text="变量用于为每个收件人定制不同的邮件内容" Style="{StaticResource CaptionTextStyle}" HorizontalAlignment="Center" Margin="0,0,0,4"/>
+                    <TextBlock Text="例如：「公司」「职位」「入职日期」等" Style="{StaticResource CaptionTextStyle}" HorizontalAlignment="Center" Margin="0,0,0,8"/>
+                    <TextBlock Text="点击下方按钮或按 Tab 键创建新变量" Style="{StaticResource CaptionTextStyle}" HorizontalAlignment="Center" Margin="0,0,0,12"/>
                     <Button Click="OnAddVariableClick" Padding="16,6" HorizontalAlignment="Center" Background="{StaticResource AccentBrush}" Foreground="White" FontWeight="SemiBold">
                         <StackPanel Orientation="Horizontal">
                             <ui:SymbolIcon Symbol="Add24" FontSize="14" Margin="0,0,4,0" Foreground="White"/>
@@ -86,12 +93,12 @@
                 <StackPanel>
                     <ui:SymbolIcon Symbol="ErrorCircle24" Style="{StaticResource EmptyStateIconStyle}" Foreground="{StaticResource DangerBrush}"/>
                     <TextBlock Text="数据加载失败" Style="{StaticResource EmptyStateTextStyle}" Foreground="{StaticResource DangerBrush}" Margin="0,0,0,4"/>
-                    <TextBlock Text="请检查数据库连接后重试" Style="{StaticResource CaptionTextStyle}" HorizontalAlignment="Center"/>
+                    <TextBlock Text="数据加载失败，请重新打开软件后重试" Style="{StaticResource CaptionTextStyle}" HorizontalAlignment="Center"/>
                 </StackPanel>
             </Border>
         </Grid>
 
-        <TextBlock Grid.Row="2" x:Name="VarUsageHint" Text="" Visibility="Collapsed"
+        <TextBlock Grid.Row="3" x:Name="VarUsageHintBottom" Text="" Visibility="Collapsed"
                    Style="{StaticResource CaptionTextStyle}" Margin="0,8,0,0" TextWrapping="Wrap"/>
     </Grid>
 </UserControl>

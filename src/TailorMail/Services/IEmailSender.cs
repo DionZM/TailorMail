@@ -31,5 +31,6 @@ public interface IEmailSender
         string body,
         Recipient recipient,
         List<string> attachments,
-        string? smtpPassword = null);
+        string? smtpPassword = null,
+        Models.SmtpSettings? smtpSettings = null);
 }

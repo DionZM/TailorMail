@@ -4,35 +4,52 @@ using TailorMail.Models;
 
 namespace TailorMail.Services;
 
-/// <summary>
-/// 基于 Outlook COM 自动化的邮件发送器，实现 <see cref="IEmailSender"/> 接口。
-/// 通过 COM Interop 调用本地安装的 Microsoft Outlook 应用程序发送邮件。
-/// 需要用户已安装并配置好 Outlook 桌面客户端。
-/// </summary>
-public class OutlookEmailSender : IEmailSender
+public class OutlookEmailSender : IEmailSender, IDisposable
 {
-    /// <inheritdoc/>
+    private static readonly Lazy<Type?> _outlookType = new(() =>
+    {
+        try { return Type.GetTypeFromProgID("Outlook.Application"); }
+        catch { return null; }
+    });
+
+    // Bulk send: reuse single Outlook Application instance
+    private dynamic? _bulkOutlookApp;
+    private bool _isBulkMode;
+
     public string Name => "Outlook";
 
-    /// <inheritdoc/>
-    /// <remarks>
-    /// 实现流程：
-    /// <list type="number">
-    ///   <item>通过 ProgID "Outlook.Application" 获取 Outlook COM 类型</item>
-    ///   <item>创建 Outlook Application 实例和 MailItem 对象</item>
-    ///   <item>设置邮件主题、HTML 正文、收件人/抄送/密送地址</item>
-    ///   <item>添加附件文件（仅添加存在的文件）</item>
-    ///   <item>调用 MailItem.Send() 发送邮件</item>
-    ///   <item>在 finally 块中释放所有 COM 对象，防止内存泄漏</item>
-    /// </list>
-    /// 整个发送过程在 <see cref="Task.Run"/> 中执行，避免阻塞 UI 线程。
-    /// </remarks>
+    /// <summary>
+    /// Create and cache a single Outlook Application instance for bulk sending.
+    /// </summary>
+    public void PrepareForBulkSend()
+    {
+        var outlookType = _outlookType.Value
+            ?? throw new InvalidOperationException("未检测到 Outlook，请确认已安装 Microsoft Outlook。");
+        _bulkOutlookApp = Activator.CreateInstance(outlookType)!;
+        _isBulkMode = true;
+    }
+
+    /// <summary>
+    /// Release the cached Outlook Application instance after bulk sending.
+    /// </summary>
+    public void CleanupBulkSend()
+    {
+        if (_bulkOutlookApp != null)
+        {
+            try { Marshal.ReleaseComObject(_bulkOutlookApp); }
+            catch { }
+            _bulkOutlookApp = null;
+        }
+        _isBulkMode = false;
+    }
+
     public async Task<SendResult> SendAsync(
         string subject,
         string body,
         Recipient recipient,
         List<string> attachments,
-        string? smtpPassword = null)
+        string? smtpPassword = null,
+        Models.SmtpSettings? smtpSettings = null)
     {
         var result = new SendResult
         {
@@ -45,23 +62,28 @@ public class OutlookEmailSender : IEmailSender
         {
             await Task.Run(() =>
             {
-                // 通过 ProgID 获取 Outlook COM 类型，若未安装则抛出异常
-                var outlookType = Type.GetTypeFromProgID("Outlook.Application")
-                    ?? throw new InvalidOperationException("未检测到 Outlook，请确认已安装 Microsoft Outlook。");
-
-                dynamic? outlookApp = null;
                 dynamic? mailItem = null;
+                dynamic? localApp = null;
                 try
                 {
-                    // 创建 Outlook 应用实例和邮件项
-                    outlookApp = Activator.CreateInstance(outlookType)!;
+                    dynamic outlookApp;
+                    if (_isBulkMode && _bulkOutlookApp != null)
+                    {
+                        outlookApp = _bulkOutlookApp!;
+                    }
+                    else
+                    {
+                        var outlookType = _outlookType.Value
+                            ?? throw new InvalidOperationException("未检测到 Outlook，请确认已安装 Microsoft Outlook。");
+                        outlookApp = Activator.CreateInstance(outlookType)!;
+                        localApp = outlookApp;
+                    }
+
                     mailItem = outlookApp.CreateItem(0); // 0 = olMailItem
 
-                    // 设置邮件基本信息
                     mailItem.Subject = subject;
                     mailItem.HTMLBody = body;
 
-                    // 设置收件人地址（支持 TO/CC/BCC）
                     var toList = recipient.GetToList();
                     var ccList = recipient.GetCcList();
                     var bccList = recipient.GetBccList();
@@ -70,21 +92,18 @@ public class OutlookEmailSender : IEmailSender
                     if (ccList.Count > 0) mailItem.CC = string.Join(";", ccList);
                     if (bccList.Count > 0) mailItem.BCC = string.Join(";", bccList);
 
-                    // 添加附件（1 = olByValue，以值类型嵌入附件）
                     foreach (var filePath in attachments)
                     {
                         if (System.IO.File.Exists(filePath))
                             mailItem.Attachments.Add(filePath, 1);
                     }
 
-                    // 发送邮件
                     mailItem.Send();
                 }
                 finally
                 {
-                    // 释放 COM 对象，防止 Outlook 进程残留
                     if (mailItem != null) Marshal.ReleaseComObject(mailItem);
-                    if (outlookApp != null) Marshal.ReleaseComObject(outlookApp);
+                    if (localApp != null) Marshal.ReleaseComObject(localApp);
                 }
             });
 
@@ -99,5 +118,44 @@ public class OutlookEmailSender : IEmailSender
         }
 
         return result;
+    }
+
+    public bool SendTest(string fromAddress, string toAddress, string subject, string bodyHtml, string[] attachments, out string error)
+    {
+        try
+        {
+            var outlookType = _outlookType.Value
+                ?? throw new InvalidOperationException("未检测到 Outlook，请确认已安装 Microsoft Outlook。");
+
+            dynamic? outlookApp = null;
+            dynamic? mailItem = null;
+            try
+            {
+                outlookApp = Activator.CreateInstance(outlookType)!;
+                mailItem = outlookApp.CreateItem(0);
+                mailItem.Subject = subject;
+                mailItem.HTMLBody = bodyHtml;
+                mailItem.To = toAddress;
+                mailItem.Send();
+            }
+            finally
+            {
+                if (mailItem != null) Marshal.ReleaseComObject(mailItem);
+                if (outlookApp != null) Marshal.ReleaseComObject(outlookApp);
+            }
+
+            error = string.Empty;
+            return true;
+        }
+        catch (Exception ex)
+        {
+            error = ex.Message;
+            return false;
+        }
+    }
+
+    public void Dispose()
+    {
+        CleanupBulkSend();
     }
 }

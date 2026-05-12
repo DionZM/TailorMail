@@ -235,6 +235,13 @@
                 <Setter Property="Typography.NumeralAlignment" Value="Tabular"/>
             </Style>
 
+            <Style TargetType="Border" x:Key="DropZoneHighlightStyle">
+                <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}"/>
+                <Setter Property="BorderThickness" Value="2"/>
+                <Setter Property="CornerRadius" Value="{StaticResource CornerRadiusLG}"/>
+                <Setter Property="Background" Value="{StaticResource AccentLightBrush}"/>
+            </Style>
+
             <Style TargetType="TextBlock" x:Key="BodyTextStyle">
                 <Setter Property="FontFamily" Value="{StaticResource BodyFontFamily}"/>
                 <Setter Property="FontSize" Value="{StaticResource FontSizeBase}"/>

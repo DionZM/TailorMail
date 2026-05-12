@@ -259,38 +259,60 @@ public class SqliteDataService : IDataService
                 cmd.ExecuteNonQuery();
             }
 
-            foreach (var group in groups)
+            // Reuse a single command for all group inserts
+            using (var groupCmd = conn.CreateCommand())
             {
-                using (var cmd = conn.CreateCommand())
-                {
-                    cmd.CommandText = "INSERT INTO RecipientGroups (Id, Name) VALUES (@id, @name)";
-                    cmd.Transaction = tx;
-                    cmd.Parameters.AddWithValue("@id", group.Id);
-                    cmd.Parameters.AddWithValue("@name", group.Name);
-                    cmd.ExecuteNonQuery();
-                }
+                groupCmd.CommandText = "INSERT INTO RecipientGroups (Id, Name) VALUES (@id, @name)";
+                groupCmd.Transaction = tx;
+                var gIdParam = groupCmd.Parameters.Add("@id", SqliteType.Text);
+                var gNameParam = groupCmd.Parameters.Add("@name", SqliteType.Text);
 
-                for (int i = 0; i < group.Recipients.Count; i++)
+                foreach (var group in groups)
                 {
-                    var r = group.Recipients[i];
-                    using var cmd = conn.CreateCommand();
-                    cmd.CommandText = """
-                        INSERT INTO Recipients (Id, GroupId, Name, ShortName, ToEmails, CcEmails, BccEmails, Remark, IsSelected, VariablesJson, SortOrder)
-                        VALUES (@id, @groupId, @name, @shortName, @toEmails, @ccEmails, @bccEmails, @remark, @isSelected, @variablesJson, @sortOrder)
-                        """;
-                    cmd.Transaction = tx;
-                    cmd.Parameters.AddWithValue("@id", r.Id);
-                    cmd.Parameters.AddWithValue("@groupId", group.Id);
-                    cmd.Parameters.AddWithValue("@name", r.Name ?? "");
-                    cmd.Parameters.AddWithValue("@shortName", r.ShortName ?? "");
-                    cmd.Parameters.AddWithValue("@toEmails", r.ToEmails ?? "");
-                    cmd.Parameters.AddWithValue("@ccEmails", r.CcEmails ?? "");
-                    cmd.Parameters.AddWithValue("@bccEmails", r.BccEmails ?? "");
-                    cmd.Parameters.AddWithValue("@remark", r.Remark ?? "");
-                    cmd.Parameters.AddWithValue("@isSelected", r.IsSelected ? 1 : 0);
-                    cmd.Parameters.AddWithValue("@variablesJson", JsonSerializer.Serialize(r.Variables, _jsonOptions));
-                    cmd.Parameters.AddWithValue("@sortOrder", i);
-                    cmd.ExecuteNonQuery();
+                    gIdParam.Value = group.Id;
+                    gNameParam.Value = group.Name;
+                    groupCmd.ExecuteNonQuery();
+                }
+            }
+
+            // Reuse a single command for all recipient inserts
+            using (var recCmd = conn.CreateCommand())
+            {
+                recCmd.CommandText = """
+                    INSERT INTO Recipients (Id, GroupId, Name, ShortName, ToEmails, CcEmails, BccEmails, Remark, IsSelected, VariablesJson, SortOrder)
+                    VALUES (@id, @groupId, @name, @shortName, @toEmails, @ccEmails, @bccEmails, @remark, @isSelected, @variablesJson, @sortOrder)
+                    """;
+                recCmd.Transaction = tx;
+                var idParam = recCmd.Parameters.Add("@id", SqliteType.Text);
+                var groupIdParam = recCmd.Parameters.Add("@groupId", SqliteType.Text);
+                var nameParam = recCmd.Parameters.Add("@name", SqliteType.Text);
+                var shortNameParam = recCmd.Parameters.Add("@shortName", SqliteType.Text);
+                var toEmailsParam = recCmd.Parameters.Add("@toEmails", SqliteType.Text);
+                var ccEmailsParam = recCmd.Parameters.Add("@ccEmails", SqliteType.Text);
+                var bccEmailsParam = recCmd.Parameters.Add("@bccEmails", SqliteType.Text);
+                var remarkParam = recCmd.Parameters.Add("@remark", SqliteType.Text);
+                var isSelectedParam = recCmd.Parameters.Add("@isSelected", SqliteType.Integer);
+                var variablesParam = recCmd.Parameters.Add("@variablesJson", SqliteType.Text);
+                var sortOrderParam = recCmd.Parameters.Add("@sortOrder", SqliteType.Integer);
+
+                foreach (var group in groups)
+                {
+                    for (int i = 0; i < group.Recipients.Count; i++)
+                    {
+                        var r = group.Recipients[i];
+                        idParam.Value = r.Id;
+                        groupIdParam.Value = group.Id;
+                        nameParam.Value = r.Name ?? "";
+                        shortNameParam.Value = r.ShortName ?? "";
+                        toEmailsParam.Value = r.ToEmails ?? "";
+                        ccEmailsParam.Value = r.CcEmails ?? "";
+                        bccEmailsParam.Value = r.BccEmails ?? "";
+                        remarkParam.Value = r.Remark ?? "";
+                        isSelectedParam.Value = r.IsSelected ? 1 : 0;
+                        variablesParam.Value = JsonSerializer.Serialize(r.Variables, _jsonOptions);
+                        sortOrderParam.Value = i;
+                        recCmd.ExecuteNonQuery();
+                    }
                 }
             }
 

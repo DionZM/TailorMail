@@ -37,7 +37,58 @@ public partial class MainWindow
         "确认后开始批量发送"
     ];
 
+    private static readonly string[] StepShortcuts = ["Ctrl+F 搜索", "", "Ctrl+B 粗体 · Ctrl+I 斜体", "", "Ctrl+F 搜索 · ← → 切换", ""];
+
+    private static string ShortcutHintForStep(int step)
+    {
+        var hint = StepShortcuts[step];
+        return string.IsNullOrEmpty(hint) ? "" : hint;
+    }
+
     private readonly HashSet<int> _visitedSteps = [];
+
+    private StepCompletionCache? _stepCompletionCache;
+    private int _cacheCurrentStep = -1;
+
+    private class StepCompletionCache
+    {
+        public int SelectedCount { get; set; }
+        public int SelectedWithVariablesCount { get; set; }
+        public bool HasSubject { get; set; }
+        public bool HasBody { get; set; }
+        public int CommonAttachments { get; set; }
+        public int SpecialAttachments { get; set; }
+        public DateTime CachedAt { get; set; }
+    }
+
+    private void InvalidateStepCompletionCache()
+    {
+        _stepCompletionCache = null;
+    }
+
+    private void EnsureStepCompletionCache()
+    {
+        if (_stepCompletionCache != null && _cacheCurrentStep == _currentStep)
+            return;
+
+        var settings = App.DataService.LoadSettings();
+        var groups = App.DataService.LoadRecipientGroups();
+        var allRecipients = groups.SelectMany(g => g.Recipients).ToList();
+        var selectedRecipients = allRecipients.Where(r => r.IsSelected).ToList();
+        var attachConfig = App.DataService.LoadAttachmentConfig();
+
+        _stepCompletionCache = new StepCompletionCache
+        {
+            SelectedCount = selectedRecipients.Count,
+            SelectedWithVariablesCount = selectedRecipients.Count(r => r.Variables.Count > 0),
+            HasSubject = !string.IsNullOrEmpty(settings.LastSubject),
+            HasBody = !string.IsNullOrEmpty(settings.LastBody),
+            CommonAttachments = attachConfig.CommonAttachments.Count,
+            SpecialAttachments = attachConfig.RecipientAttachments.Count(ua => ua.Files.Count > 0),
+            CachedAt = DateTime.Now
+        };
+        _cacheCurrentStep = _currentStep;
+    }
 
     public MainWindow()
     {
@@ -59,7 +110,7 @@ public partial class MainWindow
                     break;
                 case Key.N:
                     e.Handled = true;
-                    NavigateToStep(2);
+                    BtnNewMail_Click(sender, e);
                     break;
                 case Key.F:
                     e.Handled = true;
@@ -98,7 +149,43 @@ public partial class MainWindow
             StepNames.Select((name, i) => new StepItem(i, name)));
         StepItems.ItemsSource = _steps;
 
-        NavigateToStep(0);
+        RestoreWindowPosition();
+
+        var settings = App.DataService.LoadSettings();
+        if (!settings.HasSeenWelcome)
+        {
+            settings.HasSeenWelcome = true;
+            App.DataService.SaveSettings(settings);
+            ShowWelcome();
+        }
+        else
+        {
+            NavigateToStep(0);
+        }
+    }
+
+    private void ShowWelcome()
+    {
+        var welcomePage = new WelcomePage();
+        MainContent.Content = welcomePage;
+        SkeletonPanel.Visibility = Visibility.Collapsed;
+        MainContent.Visibility = Visibility.Visible;
+        MainContent.Opacity = 1;
+        MainContentTransform.Y = 0;
+        TxtStepHint.Text = "欢迎";
+        TxtStepDesc.Text = "了解 TailorMail 功能流程";
+        TxtShortcutHint.Text = "";
+        BtnPrev.Visibility = Visibility.Collapsed;
+        BtnSend.Visibility = Visibility.Collapsed;
+        BtnStop.Visibility = Visibility.Collapsed;
+        BtnNext.Visibility = Visibility.Collapsed;
+
+        welcomePage.StartClicked += () =>
+        {
+            _currentStep = 0;
+            _visitedSteps.Add(0);
+            NavigateToStep(0);
+        };
     }
 
     private void OnStepClick(object sender, RoutedEventArgs e)
@@ -117,6 +204,7 @@ public partial class MainWindow
         UpdateStepIndicator();
         UpdateButtons();
         TxtStepHint.Text = $"步骤 {step + 1}/6 · {StepNames[step]}";
+        TxtShortcutHint.Text = ShortcutHintForStep(step);
 
         UnsubscribeDynamicDesc();
 
@@ -236,13 +324,13 @@ public partial class MainWindow
     private void UpdateButtons()
     {
         BtnPrev.Visibility = _currentStep > 0 ? Visibility.Visible : Visibility.Collapsed;
-        BtnNewMail.Visibility = _currentStep == 0 ? Visibility.Visible : Visibility.Collapsed;
+        BtnSend.Visibility = _currentStep == 5 ? Visibility.Visible : Visibility.Collapsed;
+        BtnStop.Visibility = Visibility.Collapsed;
+        BtnNext.Visibility = _currentStep == 5 ? Visibility.Collapsed : Visibility.Visible;
 
         if (_currentStep == 5)
         {
-            BtnNext.Content = "开始发送";
-            BtnNext.Appearance = Wpf.Ui.Controls.ControlAppearance.Primary;
-            BtnNext.IsEnabled = true;
+            UpdateSendButton();
         }
         else
         {
@@ -273,19 +361,16 @@ public partial class MainWindow
 
     private bool IsStepCompleted(int step)
     {
-        var settings = App.DataService.LoadSettings();
-        var groups = App.DataService.LoadRecipientGroups();
-        var allRecipients = groups.SelectMany(g => g.Recipients).ToList();
-        var selectedRecipients = allRecipients.Where(r => r.IsSelected).ToList();
-        var attachConfig = App.DataService.LoadAttachmentConfig();
+        EnsureStepCompletionCache();
+        var cache = _stepCompletionCache!;
 
         return step switch
         {
-            0 => selectedRecipients.Count > 0,
-            1 => selectedRecipients.Count > 0 && selectedRecipients.Any(r => r.Variables.Count > 0),
-            2 => !string.IsNullOrEmpty(settings.LastSubject) || !string.IsNullOrEmpty(settings.LastBody),
-            3 => attachConfig.CommonAttachments.Count > 0 || attachConfig.RecipientAttachments.Any(ua => ua.Files.Count > 0),
-            4 => selectedRecipients.Count > 0,
+            0 => cache.SelectedCount > 0,
+            1 => cache.SelectedCount > 0 && cache.SelectedWithVariablesCount > 0,
+            2 => cache.HasSubject || cache.HasBody,
+            3 => cache.CommonAttachments > 0 || cache.SpecialAttachments > 0,
+            4 => cache.SelectedCount > 0,
             5 => false,
             _ => false
         };
@@ -362,17 +447,6 @@ public partial class MainWindow
 
     private void BtnNext_Click(object sender, RoutedEventArgs e)
     {
-        if (_currentStep == 5 && _step6 != null)
-        {
-            if (_step6.IsSending)
-            {
-                _step6.StopSend();
-                return;
-            }
-            _step6.StartSend();
-            return;
-        }
-
         SaveCurrentStep();
         if (_currentStep < 5) NavigateToStep(_currentStep + 1);
     }
@@ -388,21 +462,43 @@ public partial class MainWindow
 
         if (_step6.IsSending)
         {
-            BtnNext.Content = "停止发送";
-            BtnNext.Appearance = Wpf.Ui.Controls.ControlAppearance.Danger;
-            BtnNext.IsEnabled = true;
-        }
-        else if (_step6.HasPendingRecipients)
-        {
-            BtnNext.Content = _step6.HasAnyResults ? "继续发送" : "开始发送";
-            BtnNext.Appearance = Wpf.Ui.Controls.ControlAppearance.Primary;
-            BtnNext.IsEnabled = true;
+            BtnSend.Content = "发送中...";
+            BtnSend.Appearance = Wpf.Ui.Controls.ControlAppearance.Secondary;
+            BtnSend.IsEnabled = false;
+            BtnStop.Visibility = Visibility.Visible;
+            BtnStop.IsEnabled = true;
         }
         else
         {
-            BtnNext.Content = "开始发送";
-            BtnNext.Appearance = Wpf.Ui.Controls.ControlAppearance.Primary;
-            BtnNext.IsEnabled = false;
+            BtnSend.IsEnabled = true;
+            BtnStop.Visibility = Visibility.Collapsed;
+            if (_step6.HasPendingRecipients)
+            {
+                BtnSend.Content = _step6.HasAnyResults ? "继续发送" : "开始发送";
+                BtnSend.Appearance = Wpf.Ui.Controls.ControlAppearance.Primary;
+            }
+            else
+            {
+                BtnSend.Content = "已完成";
+                BtnSend.Appearance = Wpf.Ui.Controls.ControlAppearance.Secondary;
+                BtnSend.IsEnabled = false;
+            }
+        }
+    }
+
+    private void BtnSend_Click(object sender, RoutedEventArgs e)
+    {
+        if (_currentStep == 5 && _step6 != null)
+        {
+            _step6.StartSend();
+        }
+    }
+
+    private void BtnStop_Click(object sender, RoutedEventArgs e)
+    {
+        if (_currentStep == 5 && _step6 != null)
+        {
+            _step6.StopSend();
         }
     }
 
@@ -418,8 +514,8 @@ public partial class MainWindow
     {
         if (HasEditedContent())
         {
-            if (MessageBox.Show("新建邮件将清除已撰写内容，是否继续？", "确认",
-                MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) return;
+            var dlg = new Views.ConfirmDialog { Title = "确认", Message = "新建邮件将清除已撰写内容，是否继续？" };
+            if (dlg.ShowDialog() != true) return;
         }
 
         SaveCurrentStep();
@@ -500,7 +596,47 @@ public partial class MainWindow
 
     private void OnMainWindowClosed(object? sender, EventArgs e)
     {
+        SaveWindowPosition();
         Application.Current.Shutdown();
+    }
+
+    private void RestoreWindowPosition()
+    {
+        var settings = App.DataService.LoadSettings();
+        if (settings.WindowLeft.HasValue && settings.WindowTop.HasValue)
+        {
+            Left = settings.WindowLeft.Value;
+            Top = settings.WindowTop.Value;
+        }
+        if (settings.WindowWidth.HasValue && settings.WindowWidth.Value > 0)
+            Width = settings.WindowWidth.Value;
+        if (settings.WindowHeight.HasValue && settings.WindowHeight.Value > 0)
+            Height = settings.WindowHeight.Value;
+        if (settings.WindowState == "Maximized")
+            WindowState = System.Windows.WindowState.Maximized;
+    }
+
+    private void SaveWindowPosition()
+    {
+        var settings = App.DataService.LoadSettings();
+        if (WindowState == System.Windows.WindowState.Maximized)
+        {
+            settings.WindowState = "Maximized";
+            var bounds = RestoreBounds;
+            settings.WindowLeft = bounds.Left;
+            settings.WindowTop = bounds.Top;
+            settings.WindowWidth = bounds.Width;
+            settings.WindowHeight = bounds.Height;
+        }
+        else
+        {
+            settings.WindowState = "Normal";
+            settings.WindowLeft = Left;
+            settings.WindowTop = Top;
+            settings.WindowWidth = Width;
+            settings.WindowHeight = Height;
+        }
+        App.DataService.SaveSettings(settings);
     }
 }
 

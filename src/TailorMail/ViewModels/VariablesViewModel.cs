@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Text;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using TailorMail.Models;
@@ -270,6 +271,51 @@ public partial class VariablesViewModel : ObservableObject
         foreach (var kvp in recipient.Variables)
             result = result.Replace($"{{{kvp.Key}}}", kvp.Value);
         return result;
+    }
+
+    /// <summary>
+    /// High-performance single-pass variable substitution using StringBuilder.
+    /// Scans the template once, replacing all {key} placeholders via dictionary lookup.
+    /// Avoids the N intermediate string allocations of chained .Replace() calls.
+    /// </summary>
+    public static string ProcessBodyFast(string body, Recipient recipient)
+    {
+        // Build the replacement dictionary
+        var replacements = new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            ["名称"] = recipient.Name ?? "",
+            ["简称"] = recipient.ShortName ?? ""
+        };
+        foreach (var kvp in recipient.Variables)
+            replacements[kvp.Key] = kvp.Value ?? "";
+
+        var sb = new StringBuilder(body.Length);
+        for (int i = 0; i < body.Length;)
+        {
+            if (body[i] == '{')
+            {
+                int closeIndex = body.IndexOf('}', i + 1);
+                if (closeIndex > i + 1)
+                {
+                    var key = body.AsSpan(i + 1, closeIndex - i - 1);
+                    // Try exact key match
+                    if (replacements.TryGetValue(key.ToString(), out var value))
+                    {
+                        sb.Append(value);
+                        i = closeIndex + 1;
+                        continue;
+                    }
+                }
+                sb.Append('{');
+                i++;
+            }
+            else
+            {
+                sb.Append(body[i]);
+                i++;
+            }
+        }
+        return sb.ToString();
     }
 
     /// <summary>
