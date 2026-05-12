@@ -8,7 +8,7 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition x:Name="CommonPanelColumn" Width="180" MinWidth="160" MaxWidth="400"/>
+            <ColumnDefinition x:Name="CommonPanelColumn" Width="240" MinWidth="180" MaxWidth="400"/>
             <ColumnDefinition Width="Auto"/>
             <ColumnDefinition Width="*" MinWidth="320"/>
         </Grid.ColumnDefinitions>

@@ -53,6 +53,7 @@ public partial class RecipientsPage : UserControl, IRefreshable, IDynamicStepDes
     public void RefreshData()
     {
         _vm.LoadGroups();
+        UpdateEmptyState();
         RestoreSortState();
     }
 

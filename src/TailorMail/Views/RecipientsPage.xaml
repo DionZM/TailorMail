@@ -10,7 +10,7 @@
         </Grid.ColumnDefinitions>
 
         <!-- 左侧：分组管理 -->
-        <Border Grid.Column="0" Style="{StaticResource CardStyle}" Margin="0,0,16,0">
+        <Border Grid.Column="0" Style="{StaticResource CardStyle}" Margin="0,0,8,0">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
@@ -88,16 +88,16 @@
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
-            
+
             <!-- 收件对象操作按钮 -->
-            <Border Grid.Row="0" Style="{StaticResource CardStyle}" Margin="0,0,0,16" Padding="16,8">
+            <Border Grid.Row="0" Style="{StaticResource CardStyle}" Margin="0,0,0,8" Padding="16,8">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
-                    
+
                     <!-- 左对齐的按钮 -->
                     <StackPanel Grid.Column="0" Orientation="Horizontal" HorizontalAlignment="Left">
                         <Button Click="OnAddRecipientClick" Margin="0,0,4,0" Padding="12,6">
@@ -139,7 +139,7 @@
                     </StackPanel>
                 </Grid>
             </Border>
-            
+
             <!-- 收件对象列表 -->
             <Border Grid.Row="1" Style="{StaticResource CardStyle}" Margin="0">
                 <DataGrid x:Name="RecipientsGrid" ItemsSource="{Binding CurrentRecipients}" AutoGenerateColumns="False"
@@ -211,22 +211,22 @@
                                 <Style TargetType="TextBlock" BasedOn="{StaticResource DataGridWrappingCellStyle}"/>
                             </DataGridTextColumn.ElementStyle>
                         </DataGridTextColumn>
-                        <DataGridTextColumn Header="收件人(To)" Binding="{Binding ToEmails,UpdateSourceTrigger=LostFocus}" Width="*" MinWidth="100" MaxWidth="350">
+                        <DataGridTextColumn Header="收件人" Binding="{Binding ToEmails,UpdateSourceTrigger=LostFocus}" Width="*" MinWidth="100" MaxWidth="350">
                             <DataGridTextColumn.ElementStyle>
                                 <Style TargetType="TextBlock" BasedOn="{StaticResource DataGridWrappingCellStyle}"/>
                             </DataGridTextColumn.ElementStyle>
                         </DataGridTextColumn>
-                        <DataGridTextColumn Header="抄送(Cc)" Binding="{Binding CcEmails,UpdateSourceTrigger=LostFocus}" Width="*" MinWidth="80" MaxWidth="300">
+                        <DataGridTextColumn Header="抄送" Binding="{Binding CcEmails,UpdateSourceTrigger=LostFocus}" Width="Auto" MinWidth="40" MaxWidth="250">
                             <DataGridTextColumn.ElementStyle>
                                 <Style TargetType="TextBlock" BasedOn="{StaticResource DataGridWrappingCellStyle}"/>
                             </DataGridTextColumn.ElementStyle>
                         </DataGridTextColumn>
-                        <DataGridTextColumn Header="密送(Bcc)" Binding="{Binding BccEmails,UpdateSourceTrigger=LostFocus}" Width="*" MinWidth="80" MaxWidth="300">
+                        <DataGridTextColumn Header="密送" Binding="{Binding BccEmails,UpdateSourceTrigger=LostFocus}" Width="Auto" MinWidth="40" MaxWidth="250">
                             <DataGridTextColumn.ElementStyle>
                                 <Style TargetType="TextBlock" BasedOn="{StaticResource DataGridWrappingCellStyle}"/>
                             </DataGridTextColumn.ElementStyle>
                         </DataGridTextColumn>
-                        <DataGridTextColumn Header="备注" Binding="{Binding Remark,UpdateSourceTrigger=LostFocus}" Width="*" MinWidth="60" MaxWidth="300">
+                        <DataGridTextColumn Header="备注" Binding="{Binding Remark,UpdateSourceTrigger=LostFocus}" Width="Auto" MinWidth="40" MaxWidth="200">
                             <DataGridTextColumn.ElementStyle>
                                 <Style TargetType="TextBlock" BasedOn="{StaticResource DataGridWrappingCellStyle}"/>
                             </DataGridTextColumn.ElementStyle>
@@ -243,7 +243,7 @@
                     </DataGrid.Columns>
                 </DataGrid>
             </Border>
-            <Border x:Name="EmptyState" Grid.Row="1" Style="{StaticResource EmptyStateStyle}" Visibility="Collapsed">
+            <Border x:Name="EmptyState" Grid.Row="1" Style="{StaticResource EmptyStateStyle}">
                 <StackPanel>
                     <ui:SymbolIcon Symbol="People24" Style="{StaticResource EmptyStateIconStyle}"/>
                     <TextBlock Text="暂无收件对象" Style="{StaticResource EmptyStateTextStyle}" Margin="0,0,0,4"/>

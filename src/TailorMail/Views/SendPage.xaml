@@ -9,7 +9,8 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <Border Grid.Row="0" Style="{StaticResource CardStyle}" Margin="0,0,0,16" Padding="16,12">
+        <Border Grid.Row="0" Style="{StaticResource CardStyle}" Margin="0,0,0,8" Padding="16,12">
+
             <StackPanel>
                 <Grid>
                     <Grid.ColumnDefinitions>

@@ -9,7 +9,7 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <Border Grid.Row="0" Style="{StaticResource CardStyle}" Margin="0,0,0,16" Padding="16,8">
+        <Border Grid.Row="0" Style="{StaticResource CardStyle}" Margin="0,0,0,8" Padding="16,8">
             <ui:TextBox x:Name="SubjectBox" Text="{Binding Subject,UpdateSourceTrigger=PropertyChanged}"
                         PlaceholderText="请输入邮件主题，支持 {变量名} 格式" FontSize="14"
                         FontFamily="{StaticResource UIFontFamily}"/>
