@@ -54,19 +54,16 @@ public partial class VariablesViewModel : ObservableObject
     }
 
     /// <summary>
-    /// 从数据服务刷新变量名称列表，收集所有收件人中出现的变量键名。
+    /// 从 VariableNames 表加载变量名称列表。
     /// </summary>
     private void RefreshVariableNames()
     {
-        var names = new HashSet<string>();
-        foreach (var r in _groups.SelectMany(g => g.Recipients))
-            foreach (var key in r.Variables.Keys)
-                names.Add(key);
-        VariableNames = new ObservableCollection<string>(names.OrderBy(n => n));
+        var names = _dataService.LoadVariableNames();
+        VariableNames = new ObservableCollection<string>(names);
     }
 
     /// <summary>
-    /// 添加新的自定义变量。会为所有收件人初始化该变量的空值。
+    /// 添加新的自定义变量。仅在 VariableNames 表中插入一行，不修改收件人数据。
     /// </summary>
     public void AddVariableAndSave()
     {
@@ -74,47 +71,32 @@ public partial class VariablesViewModel : ObservableObject
         if (VariableNames.Contains(NewVariableName)) return;
 
         var varName = NewVariableName;
+        _dataService.AddVariableName(varName);
         VariableNames.Add(varName);
 
-        // 为所有收件人添加该变量的空值条目（使用缓存的 _groups 避免重复加载）
-        foreach (var r in _groups.SelectMany(g => g.Recipients))
-        {
-            if (!r.Variables.ContainsKey(varName))
-                r.Variables[varName] = string.Empty;
-        }
-
-        // 同步更新界面上的收件人对象
+        // 为界面上已加载的收件人添加该变量的空值（代码层处理，无需写库）
         foreach (var r in SelectedRecipients)
         {
             if (!r.Variables.ContainsKey(varName))
                 r.Variables[varName] = string.Empty;
         }
 
-        _dataService.SaveRecipientGroups(_groups);
         NewVariableName = string.Empty;
     }
 
     /// <summary>
-    /// 重命名变量。会更新所有收件人中该变量的键名，同时更新邮件模板中的引用。
+    /// 重命名变量。通过数据服务批量更新数据库中的键名和模板引用。
     /// </summary>
     public void RenameVariableAndSave(string oldName, string newName)
     {
         if (!VariableNames.Contains(oldName) || VariableNames.Contains(newName)) return;
 
+        _dataService.RenameVariableName(oldName, newName);
+
         VariableNames.Remove(oldName);
         VariableNames.Add(newName);
 
-        // 使用缓存的 _groups 避免重复加载
-        foreach (var r in _groups.SelectMany(g => g.Recipients))
-        {
-            if (r.Variables.TryGetValue(oldName, out var value))
-            {
-                r.Variables.Remove(oldName);
-                r.Variables[newName] = value;
-            }
-        }
-        _dataService.SaveRecipientGroups(_groups);
-
+        // 同步更新内存中的收件人变量
         foreach (var r in SelectedRecipients)
         {
             if (r.Variables.TryGetValue(oldName, out var value))
@@ -138,19 +120,17 @@ public partial class VariablesViewModel : ObservableObject
     }
 
     /// <summary>
-    /// 删除指定的自定义变量。会从所有收件人中移除该变量。
+    /// 删除指定的自定义变量。通过数据服务批量从数据库中移除键名。
     /// </summary>
     /// <param name="name">要删除的变量名称。</param>
     public void DeleteVariableAndSave(string name)
     {
         if (!VariableNames.Contains(name)) return;
+
+        _dataService.DeleteVariableName(name);
         VariableNames.Remove(name);
 
-        // 使用缓存的 _groups 避免重复加载
-        foreach (var r in _groups.SelectMany(g => g.Recipients))
-            r.Variables.Remove(name);
-        _dataService.SaveRecipientGroups(_groups);
-
+        // 同步清理内存中收件人的变量
         foreach (var r in SelectedRecipients)
             r.Variables.Remove(name);
     }
@@ -182,9 +162,12 @@ public partial class VariablesViewModel : ObservableObject
             for (int col = 2; col <= colCount; col++)
                 headers.Add(ws.Cells[1, col].Text?.Trim() ?? "");
 
-            // 将新变量名添加到变量列表
+            // 将新变量名注册到 VariableNames 表
             foreach (var h in headers.Where(h => !string.IsNullOrEmpty(h) && !VariableNames.Contains(h)))
+            {
+                _dataService.AddVariableName(h);
                 VariableNames.Add(h);
+            }
 
             // 按行读取数据，按名称匹配收件人并写入变量值
             // M-05: Pre-build dictionary for O(1) name lookup
@@ -337,6 +320,7 @@ public partial class VariablesViewModel : ObservableObject
 
     /// <summary>
     /// 将选中收件人的变量数据保存到数据服务。
+    /// 使用单行 UPDATE 只写入被修改的收件人。
     /// </summary>
     public void SaveAll()
     {

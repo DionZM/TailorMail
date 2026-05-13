@@ -7,9 +7,9 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="Auto" MinWidth="180" MaxWidth="260"/>
-            <ColumnDefinition Width="8"/>
-            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="Auto" MinWidth="180" MaxWidth="400"/>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="*" MinWidth="320"/>
         </Grid.ColumnDefinitions>
 
         <Border Grid.Row="0" Grid.Column="0" Style="{StaticResource CardStyle}" Margin="0,0,0,0"
@@ -17,31 +17,67 @@
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="*"/>
                     <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
-                <StackPanel Grid.Row="0">
-                    <ui:TextBox x:Name="SearchBox" PlaceholderText="搜索名称或邮箱..." Margin="0,0,0,8"
-                                TextChanged="OnSearchTextChanged" Icon="{ui:SymbolIcon Search24}"/>
-                    <ListBox Grid.Row="1" x:Name="ListGroups" DisplayMemberPath="Name"
-                             BorderThickness="0" Background="Transparent"
-                             FontFamily="{StaticResource UIFontFamily}"
-                             VirtualizingPanel.IsVirtualizing="True"
-                             VirtualizingPanel.VirtualizationMode="Recycling"
-                             SelectionChanged="OnGroupSelected"/>
-                </StackPanel>
-                <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,8,0,0">
-                    <Button x:Name="BtnPrevRecipient" Click="BtnPrevRecipient_Click" Padding="8,4" ToolTip="上一个 (←)">
-                        <ui:SymbolIcon Symbol="ChevronLeft24"/>
-                    </Button>
-                    <TextBlock x:Name="TxtRecipientCounter" Text="" VerticalAlignment="Center" Margin="8,0"
-                               Style="{StaticResource CaptionTextStyle}" Foreground="{StaticResource TextTertiaryBrush}"/>
-                    <Button x:Name="BtnNextRecipient" Click="BtnNextRecipient_Click" Padding="8,4" ToolTip="下一个 (→)">
-                        <ui:SymbolIcon Symbol="ChevronRight24"/>
-                    </Button>
-                </StackPanel>
+                <!-- 标题 + 导航按钮 -->
+                <Grid Grid.Row="0" Margin="0,0,0,8">
+                    <TextBlock Text="收件对象" FontWeight="SemiBold" FontSize="14" VerticalAlignment="Center"
+                               Foreground="{StaticResource TextPrimaryBrush}"/>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                        <Button x:Name="BtnPrevRecipient" Click="BtnPrevRecipient_Click" Padding="6,4" ToolTip="上一个 (↑)">
+                            <ui:SymbolIcon Symbol="ChevronUp24"/>
+                        </Button>
+                        <TextBlock x:Name="TxtRecipientCounter" Text="" VerticalAlignment="Center" Margin="4,0"
+                                   Style="{StaticResource CaptionTextStyle}" Foreground="{StaticResource TextTertiaryBrush}"/>
+                        <Button x:Name="BtnNextRecipient" Click="BtnNextRecipient_Click" Padding="6,4" ToolTip="下一个 (↓)">
+                            <ui:SymbolIcon Symbol="ChevronDown24"/>
+                        </Button>
+                    </StackPanel>
+                </Grid>
+                <ui:TextBox Grid.Row="1" x:Name="SearchBox" PlaceholderText="搜索名称或邮箱..." Margin="0,0,0,8"
+                            TextChanged="OnSearchTextChanged" Icon="{ui:SymbolIcon Search24}"/>
+                <ListBox Grid.Row="2" x:Name="ListGroups" DisplayMemberPath="Name"
+                         BorderThickness="0" Background="Transparent"
+                         FontFamily="{StaticResource UIFontFamily}"
+                         VirtualizingPanel.IsVirtualizing="True"
+                         VirtualizingPanel.VirtualizationMode="Recycling"
+                         SelectionChanged="OnGroupSelected">
+                    <ListBox.ItemContainerStyle>
+                        <Style TargetType="ListBoxItem">
+                            <Setter Property="Padding" Value="8,6"/>
+                            <Setter Property="Margin" Value="0,2"/>
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="ListBoxItem">
+                                        <Border CornerRadius="4" Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}">
+                                            <ContentPresenter/>
+                                        </Border>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                            <Style.Triggers>
+                                <Trigger Property="IsSelected" Value="True">
+                                    <Setter Property="Background" Value="{StaticResource AccentBrush}"/>
+                                    <Setter Property="Foreground" Value="White"/>
+                                </Trigger>
+                                <MultiTrigger>
+                                    <MultiTrigger.Conditions>
+                                        <Condition Property="IsSelected" Value="False"/>
+                                        <Condition Property="IsMouseOver" Value="True"/>
+                                    </MultiTrigger.Conditions>
+                                    <Setter Property="Background" Value="{StaticResource RowHoverBrush}"/>
+                                </MultiTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </ListBox.ItemContainerStyle>
+                </ListBox>
             </Grid>
         </Border>
+
+        <GridSplitter Grid.Column="1" Width="4" HorizontalAlignment="Center"
+                      VerticalAlignment="Stretch" Background="Transparent"
+                      Cursor="SizeWE"/>
 
         <Border Grid.Row="0" Grid.Column="2" Style="{StaticResource CardStyle}" Margin="0"
                 Effect="{StaticResource ShadowLG}">
@@ -57,25 +93,25 @@
                 </Grid.RowDefinitions>
 
                 <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,8">
-                    <TextBlock Text="主题：" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}"/>
-                    <TextBlock Text="{Binding PreviewSubject}" TextWrapping="Wrap" FontWeight="Medium"/>
+                    <TextBlock Text="主题：" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                    <TextBlock Text="{Binding PreviewSubject}" TextWrapping="Wrap"/>
                 </StackPanel>
 
                 <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,8">
-                    <TextBlock Text="收件人：" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}"/>
-                    <TextBlock Text="{Binding PreviewTo}" TextWrapping="Wrap" Foreground="{StaticResource AccentBrush}"/>
+                    <TextBlock Text="收件人：" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                    <TextBlock Text="{Binding PreviewTo}" TextWrapping="Wrap"/>
                 </StackPanel>
 
                 <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,0,0,8"
                             Visibility="{Binding PreviewCc, Converter={StaticResource NullToCollapsedConverter}}">
-                    <TextBlock Text="抄送：" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}"/>
-                    <TextBlock Text="{Binding PreviewCc}" TextWrapping="Wrap" Foreground="{StaticResource SuccessBrush}"/>
+                    <TextBlock Text="抄送：" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                    <TextBlock Text="{Binding PreviewCc}" TextWrapping="Wrap"/>
                 </StackPanel>
 
                 <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="0,0,0,12"
                             Visibility="{Binding PreviewBcc, Converter={StaticResource NullToCollapsedConverter}}">
-                    <TextBlock Text="密送：" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}"/>
-                    <TextBlock Text="{Binding PreviewBcc}" TextWrapping="Wrap" Foreground="{StaticResource WarningBrush}"/>
+                    <TextBlock Text="密送：" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                    <TextBlock Text="{Binding PreviewBcc}" TextWrapping="Wrap"/>
                 </StackPanel>
 
                 <Border Grid.Row="4" BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="1"
@@ -101,7 +137,7 @@
 
                 <StackPanel Grid.Row="6" Margin="0,8,0,0">
                     <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
-                        <TextBlock Text="附件：" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}"/>
+                        <TextBlock Text="附件：" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
                         <TextBlock x:Name="TxtAttachmentTotal" Text="" FontSize="12"
                                    Foreground="{StaticResource TextTertiaryBrush}" VerticalAlignment="Center"/>
                     </StackPanel>

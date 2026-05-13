@@ -28,6 +28,26 @@ public interface IDataService
     void SaveRecipientVariables(IEnumerable<Recipient> recipients);
 
     /// <summary>
+    /// 加载所有自定义变量名称列表。
+    /// </summary>
+    List<string> LoadVariableNames();
+
+    /// <summary>
+    /// 添加一个变量名称。
+    /// </summary>
+    void AddVariableName(string name);
+
+    /// <summary>
+    /// 删除一个变量名称，并从所有收件人的变量 JSON 中移除该键。
+    /// </summary>
+    void DeleteVariableName(string name);
+
+    /// <summary>
+    /// 重命名变量，并批量更新所有收件人的变量 JSON 中的键名。
+    /// </summary>
+    void RenameVariableName(string oldName, string newName);
+
+    /// <summary>
     /// 加载应用程序设置。
     /// </summary>
     AppSettings LoadSettings();

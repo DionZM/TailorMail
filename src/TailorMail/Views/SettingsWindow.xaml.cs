@@ -109,15 +109,15 @@ public partial class SettingsWindow
 
     private void OnPresetChanged(object sender, SelectionChangedEventArgs e)
     {
-        if (CmbPreset?.SelectedIndex <= 0) return;
+        if (CmbPreset?.SelectedIndex is not > 0) return;
 
-        var (server, port, ssl) = CmbPreset.SelectedIndex switch
+        var (server, port, ssl) = (int)CmbPreset.SelectedIndex switch
         {
             1 => ("smtp.qq.com", 465, true),
             2 => ("smtp.163.com", 465, true),
             3 => ("smtp.gmail.com", 587, false),
             4 => ("smtp-mail.outlook.com", 587, false),
-            _ => (null as string, 0, false)
+            _ => ((string?)null, 0, false)
         };
 
         if (server != null)

@@ -352,7 +352,9 @@ public partial class SendViewModel : ObservableObject
                     if (existing != null)
                     {
                         // H-06: Use BeginInvoke to avoid blocking concurrent threads
-                        _dispatcher.BeginInvoke(() => existing.Status = SendStatus.Sending);
+#pragma warning disable CS4014
+                        _dispatcher.BeginInvoke((Action)(() => existing.Status = SendStatus.Sending));
+#pragma warning restore CS4014
                     }
 
                     var result = await sender.SendAsync(subject, body, recipient, perRecipientAttachments, smtpPassword, settings.Smtp);
@@ -360,12 +362,14 @@ public partial class SendViewModel : ObservableObject
                     if (existing != null)
                     {
                         // H-06: Use BeginInvoke to avoid blocking concurrent threads
-                        _dispatcher.BeginInvoke(() =>
+#pragma warning disable CS4014
+                        _dispatcher.BeginInvoke((Action)(() =>
                         {
                             existing.Status = result.Status;
                             existing.ErrorMessage = result.ErrorMessage;
                             existing.SendTime = result.SendTime;
-                        });
+                        }));
+#pragma warning restore CS4014
                     }
 
                     lock (lockObj)

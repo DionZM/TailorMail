@@ -68,6 +68,11 @@ public class SqliteDataService : IDataService
 
             CREATE INDEX IF NOT EXISTS IX_Recipients_GroupId ON Recipients(GroupId);
 
+            CREATE TABLE IF NOT EXISTS VariableNames (
+                Name TEXT PRIMARY KEY,
+                SortOrder INTEGER NOT NULL DEFAULT 0
+            );
+
             CREATE TABLE IF NOT EXISTS AppSettings (
                 Id INTEGER PRIMARY KEY CHECK (Id = 1),
                 SettingsJson TEXT NOT NULL DEFAULT '{}'
@@ -547,6 +552,219 @@ public class SqliteDataService : IDataService
         {
             tx.Rollback();
             throw;
+        }
+    }
+
+    public List<string> LoadVariableNames()
+    {
+        using var conn = CreateConnection();
+        conn.Open();
+
+        var names = new List<string>();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "SELECT Name FROM VariableNames ORDER BY SortOrder, Name";
+        using var reader = cmd.ExecuteReader();
+        while (reader.Read())
+            names.Add(reader.GetString(0));
+
+        // Migration: if table is empty, populate from existing recipient JSON
+        if (names.Count == 0)
+        {
+            names = MigrateVariableNamesFromJson(conn);
+        }
+
+        return names;
+    }
+
+    private List<string> MigrateVariableNamesFromJson(SqliteConnection conn)
+    {
+        var names = new HashSet<string>();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "SELECT VariablesJson FROM Recipients WHERE VariablesJson != '{}'";
+        using var reader = cmd.ExecuteReader();
+        while (reader.Read())
+        {
+            var json = reader.GetString(0);
+            if (string.IsNullOrEmpty(json)) continue;
+            try
+            {
+                var dict = JsonSerializer.Deserialize<Dictionary<string, string>>(json, _jsonOptions);
+                if (dict != null)
+                    foreach (var key in dict.Keys)
+                        names.Add(key);
+            }
+            catch { }
+        }
+
+        if (names.Count > 0)
+        {
+            using var insertCmd = conn.CreateCommand();
+            insertCmd.CommandText = "INSERT OR IGNORE INTO VariableNames (Name, SortOrder) VALUES (@name, @sort)";
+            var nameParam = insertCmd.Parameters.Add("@name", SqliteType.Text);
+            var sortParam = insertCmd.Parameters.Add("@sort", SqliteType.Integer);
+            int i = 0;
+            foreach (var name in names.OrderBy(n => n))
+            {
+                nameParam.Value = name;
+                sortParam.Value = i++;
+                insertCmd.ExecuteNonQuery();
+            }
+        }
+
+        return names.OrderBy(n => n).ToList();
+    }
+
+    public void AddVariableName(string name)
+    {
+        using var conn = CreateConnection();
+        conn.Open();
+
+        // Get max SortOrder
+        using var maxCmd = conn.CreateCommand();
+        maxCmd.CommandText = "SELECT COALESCE(MAX(SortOrder), -1) + 1 FROM VariableNames";
+        var sortOrder = (long)maxCmd.ExecuteScalar()!;
+
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "INSERT OR IGNORE INTO VariableNames (Name, SortOrder) VALUES (@name, @sort)";
+        cmd.Parameters.AddWithValue("@name", name);
+        cmd.Parameters.AddWithValue("@sort", sortOrder);
+        cmd.ExecuteNonQuery();
+    }
+
+    public void DeleteVariableName(string name)
+    {
+        using var conn = CreateConnection();
+        conn.Open();
+        using var tx = conn.BeginTransaction();
+
+        try
+        {
+            // Remove from VariableNames table
+            using (var cmd = conn.CreateCommand())
+            {
+                cmd.Transaction = tx;
+                cmd.CommandText = "DELETE FROM VariableNames WHERE Name = @name";
+                cmd.Parameters.AddWithValue("@name", name);
+                cmd.ExecuteNonQuery();
+            }
+
+            // Remove key from all recipients' VariablesJson
+            RemoveVariableKeyFromAllRecipients(conn, tx, name);
+
+            tx.Commit();
+        }
+        catch
+        {
+            tx.Rollback();
+            throw;
+        }
+    }
+
+    public void RenameVariableName(string oldName, string newName)
+    {
+        using var conn = CreateConnection();
+        conn.Open();
+        using var tx = conn.BeginTransaction();
+
+        try
+        {
+            // Update VariableNames table
+            using (var cmd = conn.CreateCommand())
+            {
+                cmd.Transaction = tx;
+                cmd.CommandText = "UPDATE VariableNames SET Name = @newName WHERE Name = @oldName";
+                cmd.Parameters.AddWithValue("@oldName", oldName);
+                cmd.Parameters.AddWithValue("@newName", newName);
+                cmd.ExecuteNonQuery();
+            }
+
+            // Rename key in all recipients' VariablesJson
+            RenameVariableKeyInAllRecipients(conn, tx, oldName, newName);
+
+            tx.Commit();
+        }
+        catch
+        {
+            tx.Rollback();
+            throw;
+        }
+    }
+
+    private void RemoveVariableKeyFromAllRecipients(SqliteConnection conn, SqliteTransaction tx, string key)
+    {
+        using var selectCmd = conn.CreateCommand();
+        selectCmd.Transaction = tx;
+        selectCmd.CommandText = "SELECT Id, VariablesJson FROM Recipients WHERE VariablesJson != '{}'";
+        using var reader = selectCmd.ExecuteReader();
+
+        var updates = new List<(string id, string json)>();
+        while (reader.Read())
+        {
+            var id = reader.GetString(0);
+            var json = reader.GetString(1);
+            try
+            {
+                var dict = JsonSerializer.Deserialize<Dictionary<string, string>>(json, _jsonOptions);
+                if (dict != null && dict.Remove(key))
+                    updates.Add((id, JsonSerializer.Serialize(dict, _jsonOptions)));
+            }
+            catch { }
+        }
+        reader.Close();
+
+        if (updates.Count == 0) return;
+
+        using var updateCmd = conn.CreateCommand();
+        updateCmd.Transaction = tx;
+        updateCmd.CommandText = "UPDATE Recipients SET VariablesJson = @json WHERE Id = @id";
+        var idParam = updateCmd.Parameters.Add("@id", SqliteType.Text);
+        var jsonParam = updateCmd.Parameters.Add("@json", SqliteType.Text);
+        foreach (var (id, json) in updates)
+        {
+            idParam.Value = id;
+            jsonParam.Value = json;
+            updateCmd.ExecuteNonQuery();
+        }
+    }
+
+    private void RenameVariableKeyInAllRecipients(SqliteConnection conn, SqliteTransaction tx, string oldKey, string newKey)
+    {
+        using var selectCmd = conn.CreateCommand();
+        selectCmd.Transaction = tx;
+        selectCmd.CommandText = "SELECT Id, VariablesJson FROM Recipients WHERE VariablesJson != '{}'";
+        using var reader = selectCmd.ExecuteReader();
+
+        var updates = new List<(string id, string json)>();
+        while (reader.Read())
+        {
+            var id = reader.GetString(0);
+            var json = reader.GetString(1);
+            try
+            {
+                var dict = JsonSerializer.Deserialize<Dictionary<string, string>>(json, _jsonOptions);
+                if (dict != null && dict.TryGetValue(oldKey, out var value))
+                {
+                    dict.Remove(oldKey);
+                    dict[newKey] = value;
+                    updates.Add((id, JsonSerializer.Serialize(dict, _jsonOptions)));
+                }
+            }
+            catch { }
+        }
+        reader.Close();
+
+        if (updates.Count == 0) return;
+
+        using var updateCmd = conn.CreateCommand();
+        updateCmd.Transaction = tx;
+        updateCmd.CommandText = "UPDATE Recipients SET VariablesJson = @json WHERE Id = @id";
+        var idParam = updateCmd.Parameters.Add("@id", SqliteType.Text);
+        var jsonParam = updateCmd.Parameters.Add("@json", SqliteType.Text);
+        foreach (var (id, json) in updates)
+        {
+            idParam.Value = id;
+            jsonParam.Value = json;
+            updateCmd.ExecuteNonQuery();
         }
     }
 

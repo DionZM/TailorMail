@@ -180,6 +180,7 @@ public class SmtpEmailSender : IEmailSender, IDisposable
     {
         try
         {
+            if (source.Content == null) return null;
             var ms = new System.IO.MemoryStream();
             await source.Content.DecodeToAsync(ms);
             ms.Position = 0;

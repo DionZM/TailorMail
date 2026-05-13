@@ -158,7 +158,7 @@ public partial class RecipientsPage : UserControl, IRefreshable, IDynamicStepDes
     private void UpdateDeleteButton()
     {
         var count = _vm.CurrentRecipients.Count(r => r.IsSelected);
-        BtnDeleteSelected.Content = count > 0 ? $"删除已选 ({count})" : "删除已选";
+        DeleteSelectedText.Text = count > 0 ? $"删除已选 ({count})" : "删除已选";
     }
 
     private void BtnDeleteSelected_Click(object sender, RoutedEventArgs e)

@@ -68,6 +68,20 @@ public class JsonDataService : IDataService
         SaveRecipientGroups(groups);
     }
 
+    public List<string> LoadVariableNames()
+    {
+        var groups = LoadRecipientGroups();
+        var names = new HashSet<string>();
+        foreach (var r in groups.SelectMany(g => g.Recipients))
+            foreach (var key in r.Variables.Keys)
+                names.Add(key);
+        return names.OrderBy(n => n).ToList();
+    }
+
+    public void AddVariableName(string name) { }
+    public void DeleteVariableName(string name) { }
+    public void RenameVariableName(string oldName, string newName) { }
+
     /// <inheritdoc/>
     /// <remarks>
     /// 从 data/settings.json 文件加载。若文件不存在或反序列化失败，返回默认的 <see cref="AppSettings"/> 实例。

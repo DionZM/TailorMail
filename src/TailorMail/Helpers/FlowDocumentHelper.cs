@@ -23,14 +23,11 @@ public static class FlowDocumentHelper
     /// 邮件 HTML 容器的基础内联 CSS，基于极简主义设计规范。
     /// </summary>
     private const string EmailBaseStyle = @"
-        background:#FFFFFF;
         font-family:'Helvetica Neue','PingFang SC','Microsoft YaHei UI','SF Pro Display',sans-serif;
         font-size:15px;
         line-height:1.75;
         color:#2F3437;
-        max-width:640px;
-        margin:0 auto;
-        padding:40px 32px;";
+        padding:0;";
 
     /// <summary>
     /// 段落样式：底部间距 16px。
@@ -575,7 +572,7 @@ public static class FlowDocumentHelper
         sb.Append("<meta http-equiv=\"X-UA-Compatible\" content=\"IE=edge\">");
         sb.Append("<meta name=\"viewport\" content=\"width=device-width,initial-scale=1.0\">");
         sb.Append("<style>");
-        sb.Append("body{background:#F7F6F3;margin:0;padding:24px;}");
+        sb.Append("body{margin:0;padding:0;}");
         sb.Append("a{color:#1F6C9F;text-decoration:underline;}");
         sb.Append("img{max-width:100%;height:auto;}");
         sb.Append("</style>");

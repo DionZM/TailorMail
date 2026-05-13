@@ -37,7 +37,7 @@ public partial class MainWindow
         "确认后开始批量发送"
     ];
 
-    private static readonly string[] StepShortcuts = ["Ctrl+F 搜索", "", "Ctrl+B 粗体 · Ctrl+I 斜体", "", "Ctrl+F 搜索 · ← → 切换", ""];
+    private static readonly string[] StepShortcuts = ["Ctrl+F 搜索", "", "Ctrl+B 粗体 · Ctrl+I 斜体", "", "Ctrl+F 搜索 · ↑ ↓ 切换", ""];
 
     private static string ShortcutHintForStep(int step)
     {
@@ -227,7 +227,7 @@ public partial class MainWindow
         {
             switch (step)
             {
-                case 0: _step1 ??= new RecipientsPage(); MainContent.Content = _step1; break;
+                case 0: _step1 ??= new RecipientsPage(); _step1.RefreshData(); MainContent.Content = _step1; break;
                 case 1: _step2 ??= new VariablesPage(); _step2.RefreshData(); MainContent.Content = _step2; break;
                 case 2: _step3 ??= new MailComposePage(); _step3.RefreshData(); MainContent.Content = _step3; break;
                 case 3: _step4 ??= new AttachmentPage(); _step4.RefreshData(); MainContent.Content = _step4; break;
@@ -347,9 +347,7 @@ public partial class MainWindow
         else
         {
             BtnNext.Content = "下一步";
-            BtnNext.Appearance = _currentStep == 0
-                ? Wpf.Ui.Controls.ControlAppearance.Secondary
-                : Wpf.Ui.Controls.ControlAppearance.Primary;
+            BtnNext.Appearance = Wpf.Ui.Controls.ControlAppearance.Primary;
             BtnNext.IsEnabled = true;
         }
     }

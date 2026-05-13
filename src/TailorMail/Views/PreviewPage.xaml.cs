@@ -34,12 +34,12 @@ public partial class PreviewPage : UserControl, IRefreshable
 
     private void OnPreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
     {
-        if (e.Key == System.Windows.Input.Key.Left && Keyboard.Modifiers == ModifierKeys.None)
+        if (e.Key == Key.Up && Keyboard.Modifiers == ModifierKeys.None)
         {
             NavigateToPreviousRecipient();
             e.Handled = true;
         }
-        else if (e.Key == System.Windows.Input.Key.Right && Keyboard.Modifiers == ModifierKeys.None)
+        else if (e.Key == Key.Down && Keyboard.Modifiers == ModifierKeys.None)
         {
             NavigateToNextRecipient();
             e.Handled = true;

@@ -87,7 +87,7 @@
                                                         <Style.Triggers>
                                                             <DataTrigger Binding="{Binding State}" Value="Current">
                                                                 <Setter Property="Foreground" Value="White"/>
-                                                                <Setter Property="FontWeight" Value="SemiBold"/>
+                                                                <Setter Property="FontWeight" Value="Medium"/>
                                                             </DataTrigger>
                                                             <DataTrigger Binding="{Binding State}" Value="Completed">
                                                                 <Setter Property="Foreground" Value="{StaticResource AccentBrush}"/>

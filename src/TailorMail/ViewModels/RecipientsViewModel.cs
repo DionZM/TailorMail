@@ -13,6 +13,7 @@ public partial class RecipientsViewModel : ObservableObject
     private readonly IDataService _dataService;
     private DispatcherTimer? _saveTimer;
     private bool _hasUnsavedChanges;
+    private bool _skipDeselectOnGroupChange;
 
     [ObservableProperty]
     private ObservableCollection<RecipientGroup> _groups = [];
@@ -42,15 +43,30 @@ public partial class RecipientsViewModel : ObservableObject
 
     public void LoadGroups()
     {
+        var previousGroupId = SelectedGroup?.Id;
+        _skipDeselectOnGroupChange = true;
         var groups = _dataService.LoadRecipientGroups();
         Groups = new ObservableCollection<RecipientGroup>(groups);
-        if (Groups.Count > 0)
+        if (previousGroupId != null)
+        {
+            var match = Groups.FirstOrDefault(g => g.Id == previousGroupId);
+            SelectedGroup = match ?? Groups.FirstOrDefault();
+        }
+        else if (Groups.Count > 0)
+        {
             SelectedGroup = Groups[0];
+        }
+        _skipDeselectOnGroupChange = false;
     }
 
     partial void OnSelectedGroupChanging(RecipientGroup? value)
     {
         FlushSave();
+        if (!_skipDeselectOnGroupChange && SelectedGroup != null)
+        {
+            foreach (var r in SelectedGroup.Recipients)
+                r.IsSelected = false;
+        }
     }
 
     partial void OnSelectedGroupChanged(RecipientGroup? value)
@@ -175,14 +191,7 @@ public partial class RecipientsViewModel : ObservableObject
     public void SyncRecipientsToGroup()
     {
         if (SelectedGroup == null) return;
-        SelectedGroup.Recipients = CurrentRecipients
-            .Where(r => !string.IsNullOrEmpty(r.Name) ||
-                        !string.IsNullOrEmpty(r.ShortName) ||
-                        !string.IsNullOrEmpty(r.ToEmails) ||
-                        !string.IsNullOrEmpty(r.CcEmails) ||
-                        !string.IsNullOrEmpty(r.BccEmails) ||
-                        !string.IsNullOrEmpty(r.Remark))
-            .ToList();
+        SelectedGroup.Recipients = CurrentRecipients.ToList();
     }
 
     public void RemoveEmptyRows()
