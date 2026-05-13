@@ -3,6 +3,7 @@ using System.Windows.Controls;
 using System.Windows.Data;
 using TailorMail.Helpers;
 using TailorMail.Models;
+using TailorMail.Services;
 using TailorMail.ViewModels;
 
 namespace TailorMail.Views;
@@ -116,6 +117,19 @@ public partial class SendPage : UserControl, IRefreshable, IDynamicStepDesc
     }
 
     private async void OnStartOrContinue()
+    {
+        try
+        {
+            await OnStartOrContinueCore();
+        }
+        catch (Exception ex)
+        {
+            AppLogger.Error("OnStartOrContinue 未处理异常", ex);
+            try { App.ShowError($"发送出错：{ex.Message}"); } catch { }
+        }
+    }
+
+    private async Task OnStartOrContinueCore()
     {
         if (_viewModel.SendMethod == SendMethod.Smtp && _smtpPassword == null)
         {

@@ -3,52 +3,59 @@
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml">
     <Grid Margin="0">
-        <Border Style="{StaticResource CardStyle}" Padding="32,40" HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="600">
+        <Border Style="{StaticResource CardStyle}" Padding="40,48" HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="640">
             <StackPanel>
-                <ui:SymbolIcon Symbol="Mail24" FontSize="48" Foreground="{StaticResource AccentBrush}" HorizontalAlignment="Center" Margin="0,0,0,16"/>
-                <TextBlock Text="欢迎使用千函 TailorMail" FontSize="{StaticResource FontSizeMD}" FontWeight="Bold"
-                           HorizontalAlignment="Center" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,8"
-                           FontFamily="{StaticResource DisplayFontFamily}"/>
-                <TextBlock Text="高效、专业的邮件群发工具" FontSize="{StaticResource FontSizeSM}"
-                           HorizontalAlignment="Center" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,24"
-                           FontFamily="{StaticResource UIFontFamily}"/>
+                <!-- Logo + 标题 -->
+                <StackPanel HorizontalAlignment="Center" Margin="0,0,0,8">
+                    <Border Background="{StaticResource AccentLightBrush}" CornerRadius="16" Padding="10" HorizontalAlignment="Center" Margin="0,0,0,16">
+                        <Image Source="pack://application:,,,/logo_256.png" Width="72" Height="72" RenderOptions.BitmapScalingMode="HighQuality"/>
+                    </Border>
+                    <TextBlock Text="千函" FontSize="28" FontWeight="Bold" HorizontalAlignment="Center"
+                               Foreground="{StaticResource TextPrimaryBrush}" FontFamily="{StaticResource DisplayFontFamily}"/>
+                    <TextBlock Text="TailorMail" FontSize="15" HorizontalAlignment="Center"
+                               Foreground="{StaticResource TextTertiaryBrush}" Margin="0,2,0,0"/>
+                </StackPanel>
+                <TextBlock Text="高效、专业的个性化邮件群发工具" FontSize="14"
+                           HorizontalAlignment="Center" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,28"/>
 
+                <!-- 操作流程 -->
                 <Border Background="{StaticResource AccentLightBrush}" CornerRadius="{StaticResource CornerRadiusMD}"
-                        Padding="16" Margin="0,0,0,20">
-                    <StackPanel>
-                        <TextBlock Text="📋 操作流程" FontWeight="SemiBold" FontSize="14" Foreground="{StaticResource AccentBrush}" Margin="0,0,0,8"/>
-                        <TextBlock TextWrapping="Wrap" Style="{StaticResource CaptionTextStyle}" Foreground="{StaticResource TextSecondaryBrush}">
-                            1. 选择收件人 → 2. 配置变量 → 3. 撰写邮件 → 4. 匹配附件 → 5. 预览效果 → 6. 批量发送
-                            <LineBreak/><LineBreak/>
-                            顶部步骤条可随时切换，支持 Ctrl+N 新建、Ctrl+S 保存
+                        Padding="20,16" Margin="0,0,0,20">
+                    <TextBlock TextWrapping="Wrap" FontSize="13" LineHeight="22" Foreground="{StaticResource TextSecondaryBrush}">
+                        <Run FontWeight="SemiBold" Foreground="{StaticResource AccentBrush}">操作流程</Run>
+                        <LineBreak/>
+                        <Run>选择收件人 → 配置变量 → 撰写邮件 → 匹配附件 → 预览效果 → 批量发送</Run>
+                        <LineBreak/>
+                        <Run Foreground="{StaticResource TextTertiaryBrush}">顶部步骤条随时切换 · Ctrl+N 新建 · Ctrl+S 保存</Run>
+                    </TextBlock>
+                </Border>
+
+                <!-- 开始按钮 -->
+                <ui:Button x:Name="BtnStart" Content="开始使用" Click="BtnStart_Click"
+                           Padding="32,10" Appearance="Primary" MinWidth="160" FontSize="15"
+                           HorizontalAlignment="Center" Margin="0,0,0,28"/>
+
+                <!-- 底部信息：项目地址 + 授权 -->
+                <StackPanel Margin="0,0,0,8" HorizontalAlignment="Center">
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,4" HorizontalAlignment="Center">
+                        <TextBlock Text="项目地址" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                        <TextBlock FontSize="12" VerticalAlignment="Center">
+                            <Hyperlink NavigateUri="https://github.com/DionZM/TailorMail"
+                                       Foreground="{StaticResource AccentBrush}" TextDecorations="None"
+                                       RequestNavigate="OnLinkClick">
+                                github.com/DionZM/TailorMail
+                            </Hyperlink>
                         </TextBlock>
                     </StackPanel>
-                </Border>
-
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                    <ui:Button x:Name="BtnStart" Content="开始使用" Click="BtnStart_Click" Padding="24,8" Appearance="Primary" MinWidth="120"/>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                        <TextBlock Text="开源授权" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                        <TextBlock Text="Apache License 2.0" FontSize="12" Foreground="{StaticResource TextTertiaryBrush}" VerticalAlignment="Center"/>
+                    </StackPanel>
                 </StackPanel>
 
-                <!-- UI-57: Statistics -->
-                <Border x:Name="StatsPanel" Background="{StaticResource SurfaceBrush}" CornerRadius="{StaticResource CornerRadiusMD}"
-                        Padding="16" Margin="0,20,0,0" Visibility="Collapsed">
-                    <StackPanel>
-                        <TextBlock Text="数据概览" FontWeight="SemiBold" FontSize="13" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,8"/>
-                        <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
-                            <TextBlock Text="收件人分组：" FontSize="12" Foreground="{StaticResource TextTertiaryBrush}"/>
-                            <TextBlock x:Name="TxtGroupCount" Text="0" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource AccentBrush}"/>
-                        </StackPanel>
-                        <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
-                            <TextBlock Text="已选收件人：" FontSize="12" Foreground="{StaticResource TextTertiaryBrush}"/>
-                            <TextBlock x:Name="TxtRecipientCount" Text="0" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource AccentBrush}"/>
-                        </StackPanel>
-                    </StackPanel>
-                </Border>
-
-                <!-- UI-58: Version -->
+                <!-- 版本号 -->
                 <TextBlock x:Name="TxtVersion" Text="" FontSize="11"
-                           HorizontalAlignment="Center" Foreground="{StaticResource TextTertiaryBrush}"
-                           Margin="0,16,0,0"/>
+                           HorizontalAlignment="Center" Foreground="{StaticResource TextTertiaryBrush}"/>
             </StackPanel>
         </Border>
     </Grid>

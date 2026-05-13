@@ -66,6 +66,20 @@ public static class AppLogger
         Write("ERROR", sb.ToString());
     }
 
+    /// <summary>
+    /// Write directly to file, bypassing the async queue.
+    /// Use only for crash/fatal scenarios where the process is about to terminate.
+    /// </summary>
+    public static void FlushSync(string message)
+    {
+        try
+        {
+            var line = $"[{DateTime.Now:HH:mm:ss.fff}] [FATAL] {message}{Environment.NewLine}";
+            System.IO.File.AppendAllText(LogFile, line);
+        }
+        catch { }
+    }
+
     private static void Write(string level, string message)
     {
         try
@@ -108,10 +122,25 @@ public static class AppLogger
 
                 batch.Clear();
             }
+
+            // Channel closed — flush any remaining items
+            _flushCompletion.TrySetResult();
         }
-        catch (ChannelClosedException) { }
-        catch (OperationCanceledException) { }
+        catch (ChannelClosedException) { _flushCompletion.TrySetResult(); }
+        catch (OperationCanceledException) { _flushCompletion.TrySetResult(); }
     }
+
+    public static void Flush(int timeoutMs = 2000)
+    {
+        try
+        {
+            _logChannel.Writer.TryComplete();
+            _flushCompletion.Task.Wait(timeoutMs);
+        }
+        catch { }
+    }
+
+    private static readonly TaskCompletionSource _flushCompletion = new();
 
     private static void CleanupOldLogs()
     {

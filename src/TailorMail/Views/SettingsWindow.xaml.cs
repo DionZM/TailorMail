@@ -64,6 +64,7 @@ public partial class SettingsWindow
                 : _vm.SmtpUserName;
             TxtPassword.Password = _vm.StoredPassword;
             TxtSendInterval.Value = _vm.SendIntervalMs / 1000.0;
+            TxtSmtpConcurrency.Value = _vm.SmtpConcurrency;
             TxtSignature.Text = _vm.Signature;
         }
         finally
@@ -89,16 +90,21 @@ public partial class SettingsWindow
 
     private void UpdateSmtpExpander()
     {
-        if (CmbChannel.SelectedIndex == 1)
+        var isSmtp = CmbChannel.SelectedIndex == 1;
+        if (isSmtp)
         {
             SmtpExpander.IsEnabled = true;
-            SmtpExpander.Header = "SMTP 配置（点击展开）";
+            SmtpExpander.Header = "SMTP 服务器";
+            SmtpExpander.IsExpanded = true;
         }
         else
         {
             SmtpExpander.IsEnabled = false;
-            SmtpExpander.Header = "SMTP 配置（切换到 SMTP 模式后可用）";
+            SmtpExpander.Header = "SMTP 服务器（切换到 SMTP 模式后可用）";
+            SmtpExpander.IsExpanded = false;
         }
+        SmtpConcurrencySection.Visibility = isSmtp ? Visibility.Visible : Visibility.Collapsed;
+        SmtpConcurrencyWarning.Visibility = isSmtp ? Visibility.Visible : Visibility.Collapsed;
     }
 
     private void OnPresetChanged(object sender, SelectionChangedEventArgs e)
@@ -299,6 +305,7 @@ public partial class SettingsWindow
         _vm.SmtpSenderEmail = TxtSenderEmail.Text;
         _vm.SmtpPassword = TxtPassword.Password?.Trim() ?? "";
         _vm.SendIntervalMs = (int)((TxtSendInterval.Value ?? 1) * 1000);
+        _vm.SmtpConcurrency = (int)(TxtSmtpConcurrency.Value ?? 1);
         _vm.Signature = TxtSignature.Text;
         _vm.SaveCommand.Execute(null);
         Close();

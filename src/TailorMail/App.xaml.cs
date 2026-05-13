@@ -85,6 +85,7 @@ public partial class App : System.Windows.Application
         // UI 线程未处理异常：记录日志并显示错误对话框，防止应用崩溃
         DispatcherUnhandledException += (s, args) =>
         {
+            AppLogger.FlushSync($"UI线程未处理异常: {args.Exception}");
             AppLogger.Error("UI线程未处理异常", args.Exception);
             MessageBox.Show($"未处理的异常: {args.Exception.Message}\n\n详细信息已记录到日志", "错误",
                 MessageBoxButton.OK, MessageBoxImage.Error);
@@ -96,15 +97,21 @@ public partial class App : System.Windows.Application
         {
             if (args.ExceptionObject is Exception ex)
             {
+                AppLogger.FlushSync($"非UI线程未处理异常: {ex}");
                 AppLogger.Error("非UI线程未处理异常", ex);
                 MessageBox.Show($"致命错误: {ex.Message}\n\n详细信息已记录到日志", "错误",
                     MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            else
+            {
+                AppLogger.FlushSync($"非UI线程未处理异常(非Exception): {args.ExceptionObject}");
             }
         };
 
         // Task 未观察异常：记录日志并标记为已观察，防止进程终止
         TaskScheduler.UnobservedTaskException += (s, args) =>
         {
+            AppLogger.FlushSync($"Task未观察异常: {args.Exception}");
             AppLogger.Error("Task未观察异常", args.Exception);
             args.SetObserved();
         };

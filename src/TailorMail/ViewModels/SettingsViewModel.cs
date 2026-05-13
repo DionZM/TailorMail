@@ -71,6 +71,9 @@ public partial class SettingsViewModel : ObservableObject
     [ObservableProperty]
     private int _sendIntervalMs = 1000;
 
+    [ObservableProperty]
+    private int _smtpConcurrency = 1;
+
     private string? _cachedPassword;
 
     public string StoredPassword => _cachedPassword ??= CredentialHelper.Unprotect(SmtpPassword);
@@ -97,6 +100,7 @@ public partial class SettingsViewModel : ObservableObject
         SmtpSenderEmail = settings.Smtp.SenderEmail;
         SmtpPassword = settings.Smtp.EncryptedPassword;
         SendIntervalMs = settings.SendIntervalMs;
+        SmtpConcurrency = settings.SmtpConcurrency;
         Signature = settings.Signature;
     }
 
@@ -142,6 +146,7 @@ public partial class SettingsViewModel : ObservableObject
                 ? string.Empty
                 : CredentialHelper.Protect(SmtpPassword);
             settings.SendIntervalMs = SendIntervalMs;
+            settings.SmtpConcurrency = SmtpConcurrency;
             settings.Signature = Signature;
             _dataService.SaveSettings(settings);
         }

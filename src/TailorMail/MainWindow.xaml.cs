@@ -566,8 +566,7 @@ public partial class MainWindow
 
     private void BtnAbout_Click(object sender, RoutedEventArgs e)
     {
-        var win = new AboutWindow { Owner = this };
-        win.ShowDialog();
+        ShowWelcome();
     }
 
     private void SaveCurrentStep()

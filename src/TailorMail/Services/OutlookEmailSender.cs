@@ -1,5 +1,7 @@
 using System.Collections.Generic;
+using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Threading;
 using TailorMail.Models;
 
 namespace TailorMail.Services;
@@ -12,41 +14,16 @@ public class OutlookEmailSender : IEmailSender, IDisposable
         catch { return null; }
     });
 
-    // Bulk send: reuse single Outlook Application instance
-    private dynamic? _bulkOutlookApp;
-    private bool _isBulkMode;
+    private const BindingFlags InvokeMethod = BindingFlags.InvokeMethod | BindingFlags.Instance | BindingFlags.Public;
+    private const BindingFlags SetProperty = BindingFlags.SetProperty | BindingFlags.Instance | BindingFlags.Public;
+    private const BindingFlags GetProperty = BindingFlags.GetProperty | BindingFlags.Instance | BindingFlags.Public;
 
     public string Name => "Outlook";
 
-    /// <summary>
-    /// Create and cache a single Outlook Application instance for bulk sending.
-    /// </summary>
-    public void PrepareForBulkSend()
-    {
-        // H-09: Release previous COM object if PrepareForBulkSend called twice
-        CleanupBulkSend();
-        var outlookType = _outlookType.Value
-            ?? throw new InvalidOperationException("未检测到 Outlook，请确认已安装 Microsoft Outlook。");
-        _bulkOutlookApp = Activator.CreateInstance(outlookType)!;
-        _isBulkMode = true;
-    }
+    public void PrepareForBulkSend() { }
+    public void CleanupBulkSend() { }
 
-    /// <summary>
-    /// Release the cached Outlook Application instance after bulk sending.
-    /// </summary>
-    public void CleanupBulkSend()
-    {
-        if (_bulkOutlookApp != null)
-        {
-            // R-01: Use FinalReleaseComObject to ensure full release
-            try { Marshal.FinalReleaseComObject(_bulkOutlookApp); }
-            catch (Exception ex) { AppLogger.Warning($"Outlook COM释放警告: {ex.Message}"); }
-            _bulkOutlookApp = null;
-        }
-        _isBulkMode = false;
-    }
-
-    public async Task<SendResult> SendAsync(
+    public Task<SendResult> SendAsync(
         string subject,
         string body,
         Recipient recipient,
@@ -61,115 +38,104 @@ public class OutlookEmailSender : IEmailSender, IDisposable
             Status = SendStatus.Sending
         };
 
-        try
+        var capturedSubject = subject;
+        var capturedBody = body;
+        var capturedAttachments = attachments.ToArray();
+        var capturedToList = recipient.GetToList();
+        var capturedCcList = recipient.GetCcList();
+        var capturedBccList = recipient.GetBccList();
+        var capturedName = recipient.Name;
+
+        Exception? capturedEx = null;
+
+        var staThread = new Thread(() =>
         {
-            await Task.Run(() =>
-            {
-                dynamic? mailItem = null;
-                dynamic? localApp = null;
-                try
-                {
-                    dynamic outlookApp;
-                    if (_isBulkMode && _bulkOutlookApp != null)
-                    {
-                        outlookApp = _bulkOutlookApp!;
-                    }
-                    else
-                    {
-                        var outlookType = _outlookType.Value
-                            ?? throw new InvalidOperationException("未检测到 Outlook，请确认已安装 Microsoft Outlook。");
-                        outlookApp = Activator.CreateInstance(outlookType)!;
-                        localApp = outlookApp;
-                    }
-
-                    mailItem = outlookApp.CreateItem(0); // 0 = olMailItem
-
-                    mailItem.Subject = subject;
-                    mailItem.HTMLBody = body;
-
-                    var toList = recipient.GetToList();
-                    var ccList = recipient.GetCcList();
-                    var bccList = recipient.GetBccList();
-
-                    if (toList.Count > 0) mailItem.To = string.Join(";", toList);
-                    if (ccList.Count > 0) mailItem.CC = string.Join(";", ccList);
-                    if (bccList.Count > 0) mailItem.BCC = string.Join(";", bccList);
-
-                    foreach (var filePath in attachments)
-                    {
-                        if (System.IO.File.Exists(filePath))
-                            mailItem.Attachments.Add(filePath, 1);
-                    }
-
-                    mailItem.Send();
-                }
-                finally
-                {
-                    // R-01: Use FinalReleaseComObject for thorough cleanup
-                    if (mailItem != null) try { Marshal.FinalReleaseComObject(mailItem); } catch (Exception ex) { AppLogger.Warning($"Outlook mailItem释放警告: {ex.Message}"); }
-                    if (localApp != null) try { Marshal.FinalReleaseComObject(localApp); } catch (Exception ex) { AppLogger.Warning($"Outlook localApp释放警告: {ex.Message}"); }
-                }
-            });
-
-            result.Status = SendStatus.Success;
-            result.SendTime = DateTime.Now;
-        }
-        catch (Exception ex)
-        {
-            AppLogger.Error($"Outlook发送失败 - {recipient.Name}", ex);
-            result.Status = SendStatus.Failed;
-            result.ErrorMessage = ex.Message;
-        }
-
-        return result;
-    }
-
-    /// <summary>
-    /// H-10: SendTest now includes attachments.
-    /// </summary>
-    public bool SendTest(string fromAddress, string toAddress, string subject, string bodyHtml, string[] attachments, out string error)
-    {
-        try
-        {
-            var outlookType = _outlookType.Value
-                ?? throw new InvalidOperationException("未检测到 Outlook，请确认已安装 Microsoft Outlook。");
-
-            dynamic? outlookApp = null;
-            dynamic? mailItem = null;
+            object? outlookApp = null;
+            object? mailItem = null;
             try
             {
-                outlookApp = Activator.CreateInstance(outlookType)!;
-                mailItem = outlookApp.CreateItem(0);
-                mailItem.Subject = subject;
-                mailItem.HTMLBody = bodyHtml;
-                mailItem.To = toAddress;
+                var outlookType = _outlookType.Value
+                    ?? throw new InvalidOperationException("未检测到 Outlook，请确认已安装 Microsoft Outlook。");
 
-                foreach (var filePath in attachments)
+                FlushSync($"Outlook: 创建实例 for {capturedName}");
+
+                outlookApp = Activator.CreateInstance(outlookType)!;
+
+                FlushSync($"Outlook: CreateItem for {capturedName}");
+
+                mailItem = outlookType.InvokeMember("CreateItem", InvokeMethod, null, outlookApp, new object[] { 0 })!;
+
+                FlushSync($"Outlook: 设置属性 for {capturedName}");
+
+                mailItem.GetType().InvokeMember("Subject", SetProperty, null, mailItem, new object[] { capturedSubject });
+                mailItem.GetType().InvokeMember("HTMLBody", SetProperty, null, mailItem, new object[] { capturedBody });
+
+                if (capturedToList.Count > 0)
+                    mailItem.GetType().InvokeMember("To", SetProperty, null, mailItem, new object[] { string.Join(";", capturedToList) });
+                if (capturedCcList.Count > 0)
+                    mailItem.GetType().InvokeMember("CC", SetProperty, null, mailItem, new object[] { string.Join(";", capturedCcList) });
+                if (capturedBccList.Count > 0)
+                    mailItem.GetType().InvokeMember("BCC", SetProperty, null, mailItem, new object[] { string.Join(";", capturedBccList) });
+
+                FlushSync($"Outlook: 添加附件 for {capturedName}, 数量={capturedAttachments.Length}");
+
+                foreach (var filePath in capturedAttachments)
                 {
-                    if (!string.IsNullOrEmpty(filePath) && System.IO.File.Exists(filePath))
-                        mailItem.Attachments.Add(filePath, 1);
+                    if (System.IO.File.Exists(filePath))
+                    {
+                        var attachmentsProp = mailItem.GetType().InvokeMember("Attachments", GetProperty, null, mailItem, null)!;
+                        attachmentsProp.GetType().InvokeMember("Add", InvokeMethod, null, attachmentsProp, new object[] { filePath, 1 });
+                    }
                 }
 
-                mailItem.Send();
+                FlushSync($"Outlook: Send for {capturedName}");
+
+                mailItem.GetType().InvokeMember("Send", InvokeMethod, null, mailItem, null);
+
+                FlushSync($"Outlook: Send 成功 for {capturedName}");
+
+                result.Status = SendStatus.Success;
+                result.SendTime = DateTime.Now;
+            }
+            catch (Exception ex)
+            {
+                var msg = ex.InnerException?.Message ?? ex.Message;
+                FlushSync($"Outlook: 异常 for {capturedName}: {msg}");
+                capturedEx = new Exception(msg, ex);
             }
             finally
             {
-                if (mailItem != null) try { Marshal.FinalReleaseComObject(mailItem); } catch (Exception ex) { AppLogger.Warning($"Outlook mailItem释放警告: {ex.Message}"); }
-                if (outlookApp != null) try { Marshal.FinalReleaseComObject(outlookApp); } catch (Exception ex) { AppLogger.Warning($"Outlook app释放警告: {ex.Message}"); }
+                if (mailItem != null) try { Marshal.FinalReleaseComObject(mailItem); } catch { }
+                if (outlookApp != null) try { Marshal.FinalReleaseComObject(outlookApp); } catch { }
             }
+        });
 
-            error = string.Empty;
-            return true;
-        }
-        catch (Exception ex)
+        staThread.SetApartmentState(ApartmentState.STA);
+        staThread.IsBackground = false;
+        staThread.Start();
+        staThread.Join();
+
+        if (capturedEx != null)
         {
-            error = ex.Message;
-            return false;
+            AppLogger.Error($"Outlook发送失败 - {capturedName}", capturedEx);
+            result.Status = SendStatus.Failed;
+            result.ErrorMessage = capturedEx.Message;
         }
+
+        return Task.FromResult(result);
     }
 
-    public void Dispose()
+    private static void FlushSync(string message)
     {
-        CleanupBulkSend();
+        try
+        {
+            var line = $"[{DateTime.Now:HH:mm:ss.fff}] [INFO] {message}{Environment.NewLine}";
+            var logDir = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Logs");
+            var logFile = System.IO.Path.Combine(logDir, $"log_{DateTime.Now:yyyyMMdd}.txt");
+            System.IO.File.AppendAllText(logFile, line);
+        }
+        catch { }
     }
+
+    public void Dispose() { }
 }

@@ -96,6 +96,7 @@
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
 
                     <StackPanel Grid.Row="0" Margin="0,0,0,8">
@@ -130,9 +131,6 @@
                                        Style="{StaticResource CaptionTextStyle}" Margin="8,0,0,0"
                                        Visibility="Collapsed"/>
                         </StackPanel>
-                        <TextBlock Text="自动匹配规则：按收件人「名称」或「简称」匹配文件名（不含扩展名）"
-                                   Style="{StaticResource CaptionTextStyle}" Margin="0,4,0,0"
-                                   Foreground="{StaticResource TextTertiaryBrush}" TextWrapping="Wrap"/>
                     </StackPanel>
 
                     <Grid Grid.Row="1">
@@ -210,6 +208,9 @@
                             </StackPanel>
                         </Border>
                     </Grid>
+                    <TextBlock Grid.Row="2" Text="自动匹配规则：按收件人「名称」或「简称」匹配文件名（不含扩展名）"
+                               Style="{StaticResource CaptionTextStyle}" Margin="0,8,0,0"
+                               Foreground="{StaticResource TextTertiaryBrush}" TextWrapping="Wrap"/>
                 </Grid>
             </Border>
         </Grid>

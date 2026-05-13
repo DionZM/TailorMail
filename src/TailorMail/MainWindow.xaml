@@ -20,10 +20,15 @@
                      HorizontalAlignment="Stretch"
                      ShowMaximize="True" ShowMinimize="True" ShowClose="True">
             <ui:TitleBar.Icon>
-                <ui:ImageIcon Source="pack://application:,,,/logo_64.png" Width="16" Height="16"/>
+                <ui:ImageIcon Source="pack://application:,,,/logo_256.png" Width="20" Height="20"/>
             </ui:TitleBar.Icon>
             <ui:TitleBar.CenterContent>
-                <Border x:Name="PillStepper" Background="{StaticResource SurfaceBrush}"
+                <Grid HorizontalAlignment="Center">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="千函" FontWeight="SemiBold" FontSize="13"
+                                   Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"
+                                   Margin="0,0,16,0"/>
+                        <Border x:Name="PillStepper" Background="{StaticResource SurfaceBrush}"
                     CornerRadius="20" Padding="4" Margin="0,2,0,0">
                     <ItemsControl x:Name="StepItems">
                         <ItemsControl.ItemsPanel>
@@ -103,6 +108,8 @@
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
                 </Border>
+                    </StackPanel>
+                </Grid>
             </ui:TitleBar.CenterContent>
         </ui:TitleBar>
 

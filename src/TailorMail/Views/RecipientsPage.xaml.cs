@@ -44,6 +44,7 @@ public partial class RecipientsPage : UserControl, IRefreshable, IDynamicStepDes
         _searchTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(300) };
         _searchTimer.Tick += OnSearchTimerTick;
         RestorePanelWidth();
+        UpdateEmptyState();
         System.ComponentModel.DependencyPropertyDescriptor.FromProperty(ColumnDefinition.WidthProperty, typeof(ColumnDefinition))
             ?.AddValueChanged(LeftPanelColumn, (_, _) => SavePanelWidth());
     }
@@ -132,7 +133,8 @@ public partial class RecipientsPage : UserControl, IRefreshable, IDynamicStepDes
 
     private void UpdateEmptyState()
     {
-        EmptyState.Visibility = _vm.CurrentRecipients.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+        var isEmpty = _vm.CurrentRecipients.Count == 0;
+        EmptyState.Visibility = isEmpty ? Visibility.Visible : Visibility.Collapsed;
     }
 
     private void OnHeaderCheckBoxClick(object sender, RoutedEventArgs e)
@@ -172,6 +174,7 @@ public partial class RecipientsPage : UserControl, IRefreshable, IDynamicStepDes
         if (dlg.ShowDialog() != true) return;
 
         _vm.DeleteSelectedRecipientsCommand.Execute(null);
+        UpdateEmptyState();
     }
 
     private void UpdateHeaderCheckBox()
@@ -556,6 +559,7 @@ public partial class RecipientsPage : UserControl, IRefreshable, IDynamicStepDes
         {
             _vm.DeleteRecipientCommand.Execute(r);
             UpdateHeaderCheckBox();
+            UpdateEmptyState();
         }
     }
 
@@ -565,6 +569,7 @@ public partial class RecipientsPage : UserControl, IRefreshable, IDynamicStepDes
         {
             _vm.DeleteRecipientCommand.Execute(r);
             UpdateHeaderCheckBox();
+            UpdateEmptyState();
         }
     }
 

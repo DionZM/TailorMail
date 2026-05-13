@@ -41,6 +41,8 @@ public class AppSettings
 
     public int SendIntervalMs { get; set; } = 1000;
 
+    public int SmtpConcurrency { get; set; } = 1;
+
     public double? WindowLeft { get; set; }
     public double? WindowTop { get; set; }
     public double? WindowWidth { get; set; }

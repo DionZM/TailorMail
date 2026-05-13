@@ -289,47 +289,4 @@ public partial class PreviewPage : UserControl, IRefreshable
     {
         SearchBox?.Focus();
     }
-
-    private async void BtnSendTest_Click(object sender, RoutedEventArgs e)
-    {
-        if (_viewModel.SelectedRecipient == null)
-        {
-            App.ShowNotification("请先选择一个收件人");
-            return;
-        }
-
-        var settings = App.DataService.LoadSettings();
-        if (settings.SendMethod == SendMethod.Smtp)
-        {
-            var smtp = settings.Smtp;
-            if (string.IsNullOrWhiteSpace(smtp.SenderEmail) && string.IsNullOrWhiteSpace(smtp.UserName))
-            {
-                App.ShowWarning("请先在设置中配置 SMTP 发件人邮箱");
-                return;
-            }
-        }
-
-        BtnSendTest.IsEnabled = false;
-        BtnSendTest.Content = "发送中...";
-
-        try
-        {
-            var senderEmail = settings.SendMethod == SendMethod.Smtp
-                ? (string.IsNullOrWhiteSpace(settings.Smtp.SenderEmail) ? settings.Smtp.UserName : settings.Smtp.SenderEmail)
-                : "";
-
-            // S-04: Use async method directly
-            var result = await _viewModel.SendTestEmailAsync(settings, senderEmail);
-
-            if (result.success)
-                App.ShowNotification($"测试邮件已发送至 {senderEmail}");
-            else
-                App.ShowError($"发送失败：{result.error}");
-        }
-        finally
-        {
-            BtnSendTest.IsEnabled = true;
-            BtnSendTest.Content = "发送测试邮件给自己";
-        }
-    }
 }

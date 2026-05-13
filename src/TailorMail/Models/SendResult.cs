@@ -24,7 +24,7 @@ public partial class SendResult : ObservableObject
         SendStatus.Pending => "等待中",
         SendStatus.Sending => "发送中...",
         SendStatus.Success => "已发送",
-        SendStatus.Failed => GetFriendlyError(),
+        SendStatus.Failed => "发送失败",
         _ => ""
     };
 

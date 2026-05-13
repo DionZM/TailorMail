@@ -74,6 +74,28 @@ public partial class SendViewModel : ObservableObject
     {
         IsSending = true;
 
+        try
+        {
+            await ExecuteSendCore(selectedRecipients, smtpPassword, append);
+        }
+        catch (Exception ex)
+        {
+            AppLogger.Error("ExecuteSend 未处理异常", ex);
+            StatusText = $"发送出错：{ex.Message}";
+        }
+        finally
+        {
+            IsSending = false;
+            _cts?.Dispose();
+            _cts = null;
+            _cachedSelectedRecipients = null;
+        }
+    }
+
+    private async Task ExecuteSendCore(List<Recipient> selectedRecipients, string? smtpPassword, bool append)
+    {
+        AppLogger.Info($"ExecuteSendCore 开始: {selectedRecipients.Count} 个收件人, 方式={SendMethod}, append={append}");
+
         // --- Build result map for O(1) lookup ---
         var resultMap = new Dictionary<string, SendResult>(selectedRecipients.Count);
 
@@ -120,21 +142,24 @@ public partial class SendViewModel : ObservableObject
         // --- Resolve sender and prepare for bulk send ---
         IEmailSender sender;
         SmtpEmailSender? smtpForCleanup = null;
-        var useConcurrentSmtp = SendMethod == SendMethod.Smtp && selectedRecipients.Count > 1;
+        var useConcurrentSmtp = SendMethod == SendMethod.Smtp && selectedRecipients.Count > 1 && settings.SmtpConcurrency > 1;
 
         if (SendMethod == SendMethod.Outlook)
         {
+            AppLogger.Info("发送方式: Outlook, 准备批量发送");
             var outlook = App.Services.GetRequiredService<OutlookEmailSender>();
             outlook.PrepareForBulkSend();
             sender = outlook;
         }
         else if (useConcurrentSmtp)
         {
+            AppLogger.Info($"发送方式: SMTP 并发, {selectedRecipients.Count} 个收件人");
             // C-03: Concurrent path creates its own senders; no need to prepare here
             sender = null!; // not used in concurrent path
         }
         else
         {
+            AppLogger.Info("发送方式: SMTP 单线程");
             var smtp = App.Services.GetRequiredService<SmtpEmailSender>();
             smtpForCleanup = smtp;
             await smtp.PrepareForBulkSend(
@@ -203,13 +228,11 @@ public partial class SendViewModel : ObservableObject
                 sender, settings, htmlBody, smtpPassword, lastProgressUpdate, progressUpdateInterval);
         }
 
+        AppLogger.Info($"发送循环结束: 成功={SuccessCount}, 失败={FailedCount}");
+
         StatusText = _cts.IsCancellationRequested
             ? $"已取消: 成功 {SuccessCount} 封, 失败 {FailedCount} 封"
             : $"发送完成: 成功 {SuccessCount} 封, 失败 {FailedCount} 封";
-        IsSending = false;
-        _cts?.Dispose();
-        _cts = null;
-        _cachedSelectedRecipients = null;
 
         // R-03: Properly dispose sender
         if (smtpForCleanup != null)
@@ -243,7 +266,9 @@ public partial class SendViewModel : ObservableObject
             var existing = resultMap.GetValueOrDefault(recipient.Id);
             if (existing != null) existing.Status = SendStatus.Sending;
 
+            AppLogger.Info($"正在发送第 {i + 1}/{recipients.Count} 封: {recipient.Name}");
             var result = await sender.SendAsync(subject, body, recipient, perRecipientAttachments, smtpPassword, settings.Smtp);
+            AppLogger.Info($"发送结果: {recipient.Name} => {result.Status}");
 
             // T-01/T-03: Update UI-bound properties on UI thread
             if (existing != null)
@@ -278,10 +303,12 @@ public partial class SendViewModel : ObservableObject
         TimeSpan progressUpdateInterval,
         List<string> commonAttachments)
     {
-        const int concurrency = 10;
+        var concurrency = Math.Max(1, settings.SmtpConcurrency);
         var semaphore = new SemaphoreSlim(concurrency, concurrency);
         var completedCount = 0;
         var lockObj = new object();
+
+        AppLogger.Info($"SMTP 并发发送开始: {recipients.Count} 个收件人, 并发数={concurrency}");
 
         // P-05: Each sender gets its own connection (no shared MimePart with FileStream)
         var senders = new SmtpEmailSender[concurrency];

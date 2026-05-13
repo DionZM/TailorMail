@@ -1,5 +1,6 @@
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Navigation;
 
 namespace TailorMail.Views;
 
@@ -15,23 +16,7 @@ public partial class WelcomePage : UserControl
 
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
-        // UI-57: Load statistics
-        try
-        {
-            var groups = App.DataService.LoadRecipientGroups();
-            var groupCount = groups.Count;
-            var recipientCount = groups.SelectMany(g => g.Recipients).Count(r => r.IsSelected);
-
-            if (groupCount > 0 || recipientCount > 0)
-            {
-                TxtGroupCount.Text = groupCount.ToString();
-                TxtRecipientCount.Text = recipientCount.ToString();
-                StatsPanel.Visibility = Visibility.Visible;
-            }
-        }
-        catch { }
-
-        // UI-58: Show version
+        // Version
         try
         {
             var version = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
@@ -44,5 +29,14 @@ public partial class WelcomePage : UserControl
     private void BtnStart_Click(object sender, RoutedEventArgs e)
     {
         StartClicked?.Invoke();
+    }
+
+    private void OnLinkClick(object sender, RequestNavigateEventArgs e)
+    {
+        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(e.Uri.AbsoluteUri)
+        {
+            UseShellExecute = true
+        });
+        e.Handled = true;
     }
 }

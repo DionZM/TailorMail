@@ -57,18 +57,8 @@
                 </Grid.RowDefinitions>
 
                 <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,8">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-                        <StackPanel Grid.Column="0" Orientation="Horizontal">
-                            <TextBlock Text="主题：" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}"/>
-                            <TextBlock Text="{Binding PreviewSubject}" TextWrapping="Wrap" FontWeight="Medium"/>
-                        </StackPanel>
-                        <Button Grid.Column="1" x:Name="BtnSendTest" Content="发送测试邮件给自己" Click="BtnSendTest_Click"
-                                Padding="12,4" FontSize="12" ToolTip="发送一封测试邮件到您的发件人邮箱，验证实际效果"/>
-                    </Grid>
+                    <TextBlock Text="主题：" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}"/>
+                    <TextBlock Text="{Binding PreviewSubject}" TextWrapping="Wrap" FontWeight="Medium"/>
                 </StackPanel>
 
                 <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,8">
@@ -96,16 +86,18 @@
                 </Border>
 
                 <!-- UI-39: Zoom slider -->
-                <StackPanel Grid.Row="5" Orientation="Horizontal" Margin="0,8,0,0" VerticalAlignment="Center">
-                    <TextBlock Text="缩放：" VerticalAlignment="Center" FontSize="12"
-                               Foreground="{StaticResource TextTertiaryBrush}" Margin="0,0,8,0"/>
-                    <Slider x:Name="ZoomSlider" Minimum="50" Maximum="200" Value="100"
-                            Width="120" VerticalAlignment="Center" TickFrequency="25"
-                            IsSnapToTickEnabled="True" ValueChanged="OnZoomChanged"/>
-                    <TextBlock x:Name="TxtZoom" Text="100%" VerticalAlignment="Center" FontSize="12"
-                               Foreground="{StaticResource TextTertiaryBrush}" Margin="8,0,0,0"
-                               MinWidth="36"/>
-                </StackPanel>
+                <Grid Grid.Row="5" Margin="0,8,0,0">
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                        <TextBlock Text="缩放：" VerticalAlignment="Center" FontSize="12"
+                                   Foreground="{StaticResource TextTertiaryBrush}" Margin="0,0,8,0"/>
+                        <Slider x:Name="ZoomSlider" Minimum="50" Maximum="200" Value="100"
+                                Width="120" VerticalAlignment="Center" TickFrequency="25"
+                                IsSnapToTickEnabled="True" ValueChanged="OnZoomChanged"/>
+                        <TextBlock x:Name="TxtZoom" Text="100%" VerticalAlignment="Center" FontSize="12"
+                                   Foreground="{StaticResource TextTertiaryBrush}" Margin="8,0,0,0"
+                                   MinWidth="36"/>
+                    </StackPanel>
+                </Grid>
 
                 <StackPanel Grid.Row="6" Margin="0,8,0,0">
                     <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
