@@ -18,9 +18,11 @@
             <Color x:Key="AccentColor">#1D6FB5</Color>
             <Color x:Key="AccentHoverColor">#185A94</Color>
             <Color x:Key="AccentLightColor">#E0F0FF</Color>
+            <Color x:Key="AccentMidColor">#4DA6E8</Color>
             <Color x:Key="SurfaceColor">#F2F5F9</Color>
             <Color x:Key="SurfaceElevatedColor">#FFFFFF</Color>
             <Color x:Key="BorderSubtleColor">#DDE2E9</Color>
+            <Color x:Key="SkeletonColor">#E8ECF0</Color>
             <Color x:Key="TextPrimaryColor">#1A2332</Color>
             <Color x:Key="TextSecondaryColor">#5A6A7E</Color>
             <Color x:Key="TextTertiaryColor">#626F82</Color>
@@ -33,9 +35,11 @@
             <SolidColorBrush x:Key="AccentBrush" Color="{StaticResource AccentColor}"/>
             <SolidColorBrush x:Key="AccentHoverBrush" Color="{StaticResource AccentHoverColor}"/>
             <SolidColorBrush x:Key="AccentLightBrush" Color="{StaticResource AccentLightColor}"/>
+            <SolidColorBrush x:Key="AccentMidBrush" Color="{StaticResource AccentMidColor}"/>
             <SolidColorBrush x:Key="SurfaceBrush" Color="{StaticResource SurfaceColor}"/>
             <SolidColorBrush x:Key="SurfaceElevatedBrush" Color="{StaticResource SurfaceElevatedColor}"/>
             <SolidColorBrush x:Key="BorderSubtleBrush" Color="{StaticResource BorderSubtleColor}"/>
+            <SolidColorBrush x:Key="SkeletonBrush" Color="{StaticResource SkeletonColor}"/>
             <SolidColorBrush x:Key="TextPrimaryBrush" Color="{StaticResource TextPrimaryColor}"/>
             <SolidColorBrush x:Key="TextSecondaryBrush" Color="{StaticResource TextSecondaryColor}"/>
             <SolidColorBrush x:Key="TextTertiaryBrush" Color="{StaticResource TextTertiaryColor}"/>
@@ -226,8 +230,8 @@
             </Style>
 
             <Style TargetType="Border" x:Key="SkeletonLineStyle">
-                <Setter Property="Background" Value="#E8ECF0"/>
-                <Setter Property="CornerRadius" Value="4"/>
+                <Setter Property="Background" Value="{StaticResource SkeletonBrush}"/>
+                <Setter Property="CornerRadius" Value="{StaticResource CornerRadiusSM}"/>
                 <Setter Property="Height" Value="14"/>
             </Style>
 
@@ -248,6 +252,41 @@
                 <Setter Property="FontWeight" Value="Regular"/>
                 <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
                 <Setter Property="LineHeight" Value="24"/>
+            </Style>
+
+            <!-- Shared sidebar list item style (RecipientsPage groups, PreviewPage recipients, AttachmentPage common files) -->
+            <Style TargetType="ListBoxItem" x:Key="SidebarListItemStyle">
+                <Setter Property="Padding" Value="8,6"/>
+                <Setter Property="Margin" Value="0,2"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="ListBoxItem">
+                            <Border x:Name="Bd" CornerRadius="{StaticResource CornerRadiusSM}" Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}"
+                                    SnapsToDevicePixels="True">
+                                <ContentPresenter/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsSelected" Value="True">
+                                    <Setter TargetName="Bd" Property="Background" Value="{StaticResource AccentBrush}"/>
+                                    <Setter Property="Foreground" Value="White"/>
+                                </Trigger>
+                                <MultiTrigger>
+                                    <MultiTrigger.Conditions>
+                                        <Condition Property="IsSelected" Value="False"/>
+                                        <Condition Property="IsMouseOver" Value="True"/>
+                                    </MultiTrigger.Conditions>
+                                    <Setter TargetName="Bd" Property="Background" Value="{StaticResource RowHoverBrush}"/>
+                                </MultiTrigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <!-- Shared toolbar card style (reduced padding for action bars) -->
+            <Style TargetType="Border" x:Key="ToolbarCardStyle" BasedOn="{StaticResource CardStyle}">
+                <Setter Property="Padding" Value="16,8"/>
+                <Setter Property="Margin" Value="0,0,0,8"/>
             </Style>
 
             <converters:EnumToBoolConverter x:Key="EnumToBoolConverter"/>

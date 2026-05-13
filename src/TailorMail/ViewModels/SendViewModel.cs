@@ -136,6 +136,7 @@ public partial class SendViewModel : ObservableObject
         // --- Load settings and dependencies once ---
         var settings = _dataService.LoadSettings();
         var attachConfig = _dataService.LoadAttachmentConfig();
+        var variableNames = _dataService.LoadVariableNames();
         var recipientAttachMap = attachConfig.RecipientAttachments
             .ToDictionary(ua => ua.RecipientId);
 
@@ -219,13 +220,13 @@ public partial class SendViewModel : ObservableObject
             // Concurrent SMTP sending
             await SendConcurrentSmtp(selectedRecipients, resultMap, recipientAttachMap,
                 settings, htmlBody, smtpPassword, lastProgressUpdate, progressUpdateInterval,
-                attachConfig.CommonAttachments);
+                attachConfig.CommonAttachments, variableNames);
         }
         else
         {
             // Sequential sending (Outlook or single recipient)
             await SendSequential(selectedRecipients, resultMap, recipientAttachMap,
-                sender, settings, htmlBody, smtpPassword, lastProgressUpdate, progressUpdateInterval);
+                sender, settings, htmlBody, smtpPassword, lastProgressUpdate, progressUpdateInterval, variableNames);
         }
 
         AppLogger.Info($"发送循环结束: 成功={SuccessCount}, 失败={FailedCount}");
@@ -250,7 +251,8 @@ public partial class SendViewModel : ObservableObject
         string htmlBody,
         string? smtpPassword,
         DateTime lastProgressUpdate,
-        TimeSpan progressUpdateInterval)
+        TimeSpan progressUpdateInterval,
+        List<string> variableNames)
     {
         for (int i = 0; i < recipients.Count; i++)
         {
@@ -260,8 +262,8 @@ public partial class SendViewModel : ObservableObject
             StatusText = $"正在发送: {recipient.Name} ({i + 1}/{recipients.Count})...";
 
             var perRecipientAttachments = GetPerRecipientAttachments(recipient.Id, recipientAttachMap);
-            var subject = VariablesViewModel.ProcessBodyFast(settings.LastSubject, recipient);
-            var body = VariablesViewModel.ProcessBodyFast(htmlBody, recipient);
+            var subject = VariablesViewModel.ProcessBodyFast(settings.LastSubject, recipient, variableNames);
+            var body = VariablesViewModel.ProcessBodyFast(htmlBody, recipient, variableNames);
 
             var existing = resultMap.GetValueOrDefault(recipient.Id);
             if (existing != null) existing.Status = SendStatus.Sending;
@@ -301,7 +303,8 @@ public partial class SendViewModel : ObservableObject
         string? smtpPassword,
         DateTime lastProgressUpdate,
         TimeSpan progressUpdateInterval,
-        List<string> commonAttachments)
+        List<string> commonAttachments,
+        List<string> variableNames)
     {
         var concurrency = Math.Max(1, settings.SmtpConcurrency);
         var semaphore = new SemaphoreSlim(concurrency, concurrency);
@@ -345,8 +348,8 @@ public partial class SendViewModel : ObservableObject
                 try
                 {
                     var perRecipientAttachments = GetPerRecipientAttachments(recipient.Id, recipientAttachMap);
-                    var subject = VariablesViewModel.ProcessBodyFast(settings.LastSubject, recipient);
-                    var body = VariablesViewModel.ProcessBodyFast(htmlBody, recipient);
+                    var subject = VariablesViewModel.ProcessBodyFast(settings.LastSubject, recipient, variableNames);
+                    var body = VariablesViewModel.ProcessBodyFast(htmlBody, recipient, variableNames);
 
                     var existing = resultMap.GetValueOrDefault(recipient.Id);
                     if (existing != null)

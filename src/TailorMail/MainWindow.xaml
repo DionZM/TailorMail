@@ -117,7 +117,7 @@
             <Border.Background>
                 <LinearGradientBrush StartPoint="0,0.5" EndPoint="1,0.5">
                     <GradientStop Color="{StaticResource AccentColor}" Offset="0"/>
-                    <GradientStop Color="#4DA6E8" Offset="0.3"/>
+                    <GradientStop Color="{StaticResource AccentMidColor}" Offset="0.3"/>
                     <GradientStop Color="Transparent" Offset="0.6"/>
                 </LinearGradientBrush>
             </Border.Background>

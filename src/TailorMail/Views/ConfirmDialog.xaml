@@ -19,7 +19,7 @@
                    TextWrapping="Wrap" MaxHeight="200"/>
 
         <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right">
-            <Button x:Name="BtnNo" Content="否" Click="BtnNo_Click" Padding="16,6" Margin="0,0,8,0"/>
+            <ui:Button x:Name="BtnNo" Content="否" Click="BtnNo_Click" Padding="16,6" Margin="0,0,8,0"/>
             <ui:Button x:Name="BtnYes" Content="是" Click="BtnYes_Click" Padding="16,6" Appearance="Primary"/>
         </StackPanel>
     </Grid>

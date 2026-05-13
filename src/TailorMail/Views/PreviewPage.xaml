@@ -7,13 +7,12 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="Auto" MinWidth="180" MaxWidth="400"/>
+            <ColumnDefinition Width="220" MinWidth="180" MaxWidth="400"/>
             <ColumnDefinition Width="Auto"/>
             <ColumnDefinition Width="*" MinWidth="320"/>
         </Grid.ColumnDefinitions>
 
-        <Border Grid.Row="0" Grid.Column="0" Style="{StaticResource CardStyle}" Margin="0,0,0,0"
-                Effect="{StaticResource ShadowSM}">
+        <Border Grid.Row="0" Grid.Column="0" Style="{StaticResource CardStyle}" Margin="0,0,0,0">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
@@ -25,14 +24,14 @@
                     <TextBlock Text="收件对象" FontWeight="SemiBold" FontSize="14" VerticalAlignment="Center"
                                Foreground="{StaticResource TextPrimaryBrush}"/>
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
-                        <Button x:Name="BtnPrevRecipient" Click="BtnPrevRecipient_Click" Padding="6,4" ToolTip="上一个 (↑)">
+                        <ui:Button x:Name="BtnPrevRecipient" Click="BtnPrevRecipient_Click" Padding="6,4" ToolTip="上一个 (↑)">
                             <ui:SymbolIcon Symbol="ChevronUp24"/>
-                        </Button>
+                        </ui:Button>
                         <TextBlock x:Name="TxtRecipientCounter" Text="" VerticalAlignment="Center" Margin="4,0"
                                    Style="{StaticResource CaptionTextStyle}" Foreground="{StaticResource TextTertiaryBrush}"/>
-                        <Button x:Name="BtnNextRecipient" Click="BtnNextRecipient_Click" Padding="6,4" ToolTip="下一个 (↓)">
+                        <ui:Button x:Name="BtnNextRecipient" Click="BtnNextRecipient_Click" Padding="6,4" ToolTip="下一个 (↓)">
                             <ui:SymbolIcon Symbol="ChevronDown24"/>
-                        </Button>
+                        </ui:Button>
                     </StackPanel>
                 </Grid>
                 <ui:TextBox Grid.Row="1" x:Name="SearchBox" PlaceholderText="搜索名称或邮箱..." Margin="0,0,0,8"
@@ -42,35 +41,8 @@
                          FontFamily="{StaticResource UIFontFamily}"
                          VirtualizingPanel.IsVirtualizing="True"
                          VirtualizingPanel.VirtualizationMode="Recycling"
-                         SelectionChanged="OnGroupSelected">
-                    <ListBox.ItemContainerStyle>
-                        <Style TargetType="ListBoxItem">
-                            <Setter Property="Padding" Value="8,6"/>
-                            <Setter Property="Margin" Value="0,2"/>
-                            <Setter Property="Template">
-                                <Setter.Value>
-                                    <ControlTemplate TargetType="ListBoxItem">
-                                        <Border CornerRadius="4" Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}">
-                                            <ContentPresenter/>
-                                        </Border>
-                                    </ControlTemplate>
-                                </Setter.Value>
-                            </Setter>
-                            <Style.Triggers>
-                                <Trigger Property="IsSelected" Value="True">
-                                    <Setter Property="Background" Value="{StaticResource AccentBrush}"/>
-                                    <Setter Property="Foreground" Value="White"/>
-                                </Trigger>
-                                <MultiTrigger>
-                                    <MultiTrigger.Conditions>
-                                        <Condition Property="IsSelected" Value="False"/>
-                                        <Condition Property="IsMouseOver" Value="True"/>
-                                    </MultiTrigger.Conditions>
-                                    <Setter Property="Background" Value="{StaticResource RowHoverBrush}"/>
-                                </MultiTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </ListBox.ItemContainerStyle>
+                         SelectionChanged="OnGroupSelected"
+                         ItemContainerStyle="{StaticResource SidebarListItemStyle}">
                 </ListBox>
             </Grid>
         </Border>
@@ -79,8 +51,7 @@
                       VerticalAlignment="Stretch" Background="Transparent"
                       Cursor="SizeWE"/>
 
-        <Border Grid.Row="0" Grid.Column="2" Style="{StaticResource CardStyle}" Margin="0"
-                Effect="{StaticResource ShadowLG}">
+        <Border Grid.Row="0" Grid.Column="2" Style="{StaticResource CardStyle}" Margin="0">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
@@ -124,12 +95,12 @@
                 <!-- UI-39: Zoom slider -->
                 <Grid Grid.Row="5" Margin="0,8,0,0">
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
-                        <TextBlock Text="缩放：" VerticalAlignment="Center" FontSize="12"
+                        <TextBlock Text="缩放：" VerticalAlignment="Center" FontSize="{StaticResource FontSizeSM}"
                                    Foreground="{StaticResource TextTertiaryBrush}" Margin="0,0,8,0"/>
                         <Slider x:Name="ZoomSlider" Minimum="50" Maximum="200" Value="100"
                                 Width="120" VerticalAlignment="Center" TickFrequency="25"
                                 IsSnapToTickEnabled="True" ValueChanged="OnZoomChanged"/>
-                        <TextBlock x:Name="TxtZoom" Text="100%" VerticalAlignment="Center" FontSize="12"
+                        <TextBlock x:Name="TxtZoom" Text="100%" VerticalAlignment="Center" FontSize="{StaticResource FontSizeSM}"
                                    Foreground="{StaticResource TextTertiaryBrush}" Margin="8,0,0,0"
                                    MinWidth="36"/>
                     </StackPanel>
@@ -138,7 +109,7 @@
                 <StackPanel Grid.Row="6" Margin="0,8,0,0">
                     <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
                         <TextBlock Text="附件：" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
-                        <TextBlock x:Name="TxtAttachmentTotal" Text="" FontSize="12"
+                        <TextBlock x:Name="TxtAttachmentTotal" Text="" FontSize="{StaticResource FontSizeSM}"
                                    Foreground="{StaticResource TextTertiaryBrush}" VerticalAlignment="Center"/>
                     </StackPanel>
                     <ItemsControl x:Name="PanelAttachments"/>

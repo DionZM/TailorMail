@@ -23,7 +23,7 @@
                     KeyDown="OnInputKeyDown"/>
 
         <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right">
-            <Button Content="取消" Click="BtnCancel_Click" Padding="16,6" Margin="0,0,8,0"/>
+            <ui:Button Content="取消" Click="BtnCancel_Click" Padding="16,6" Margin="0,0,8,0"/>
             <ui:Button x:Name="BtnOk" Content="确定" Click="BtnOk_Click" Padding="16,6" Appearance="Primary"/>
         </StackPanel>
     </Grid>

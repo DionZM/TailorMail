@@ -94,7 +94,8 @@ public partial class PreviewViewModel : ObservableObject
 
         var settings = CachedSettings;
         var varVm = CachedVarVm;
-        PreviewSubject = VariablesViewModel.ProcessBodyFast(settings.LastSubject, SelectedRecipient);
+        var varNames = varVm.VariableNames;
+        PreviewSubject = VariablesViewModel.ProcessBodyFast(settings.LastSubject, SelectedRecipient, varNames);
         PreviewTo = SelectedRecipient.ToEmails;
         PreviewCc = SelectedRecipient.CcEmails;
         PreviewBcc = SelectedRecipient.BccEmails;
@@ -127,6 +128,7 @@ public partial class PreviewViewModel : ObservableObject
 
         var settings = CachedSettings;
         var varVm = CachedVarVm;
+        var varNames = varVm.VariableNames;
 
         System.Windows.Documents.FlowDocument doc;
 
@@ -140,18 +142,18 @@ public partial class PreviewViewModel : ObservableObject
             catch (Exception ex)
             {
                 AppLogger.Error("预览文档加载失败", ex);
-                doc = CreatePlainTextDoc(VariablesViewModel.ProcessBodyFast(settings.LastBody, SelectedRecipient));
+                doc = CreatePlainTextDoc(VariablesViewModel.ProcessBodyFast(settings.LastBody, SelectedRecipient, varNames));
             }
         }
         else
         {
-            doc = CreatePlainTextDoc(VariablesViewModel.ProcessBodyFast(settings.LastBody, SelectedRecipient));
+            doc = CreatePlainTextDoc(VariablesViewModel.ProcessBodyFast(settings.LastBody, SelectedRecipient, varNames));
         }
 
         foreach (var run in GetAllRuns(doc).ToList())
         {
             if (!string.IsNullOrEmpty(run.Text))
-                run.Text = VariablesViewModel.ProcessBodyFast(run.Text, SelectedRecipient);
+                run.Text = VariablesViewModel.ProcessBodyFast(run.Text, SelectedRecipient, varNames);
         }
 
         return doc;

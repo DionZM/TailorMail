@@ -10,12 +10,12 @@
                     <Border Background="{StaticResource AccentLightBrush}" CornerRadius="16" Padding="10" HorizontalAlignment="Center" Margin="0,0,0,16">
                         <Image Source="pack://application:,,,/logo_256.png" Width="72" Height="72" RenderOptions.BitmapScalingMode="HighQuality"/>
                     </Border>
-                    <TextBlock Text="千函" FontSize="28" FontWeight="Bold" HorizontalAlignment="Center"
+                    <TextBlock Text="千函" FontSize="{StaticResource FontSizeLG}" FontWeight="Bold" HorizontalAlignment="Center"
                                Foreground="{StaticResource TextPrimaryBrush}" FontFamily="{StaticResource DisplayFontFamily}"/>
-                    <TextBlock Text="TailorMail" FontSize="15" HorizontalAlignment="Center"
+                    <TextBlock Text="TailorMail" FontSize="{StaticResource FontSizeBase}" HorizontalAlignment="Center"
                                Foreground="{StaticResource TextTertiaryBrush}" Margin="0,2,0,0"/>
                 </StackPanel>
-                <TextBlock Text="高效、专业的个性化邮件群发工具" FontSize="14"
+                <TextBlock Text="高效、专业的个性化邮件群发工具" FontSize="{StaticResource FontSizeSM}"
                            HorizontalAlignment="Center" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,28"/>
 
                 <!-- 操作流程 -->
@@ -32,14 +32,14 @@
 
                 <!-- 开始按钮 -->
                 <ui:Button x:Name="BtnStart" Content="开始使用" Click="BtnStart_Click"
-                           Padding="32,10" Appearance="Primary" MinWidth="160" FontSize="15"
+                           Padding="32,10" Appearance="Primary" MinWidth="160" FontSize="{StaticResource FontSizeBase}"
                            HorizontalAlignment="Center" Margin="0,0,0,28"/>
 
                 <!-- 底部信息：项目地址 + 授权 -->
                 <StackPanel Margin="0,0,0,8" HorizontalAlignment="Center">
                     <StackPanel Orientation="Horizontal" Margin="0,0,0,4" HorizontalAlignment="Center">
-                        <TextBlock Text="项目地址" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,8,0" VerticalAlignment="Center"/>
-                        <TextBlock FontSize="12" VerticalAlignment="Center">
+                        <TextBlock Text="项目地址" FontSize="{StaticResource FontSizeSM}" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                        <TextBlock FontSize="{StaticResource FontSizeSM}" VerticalAlignment="Center">
                             <Hyperlink NavigateUri="https://github.com/DionZM/TailorMail"
                                        Foreground="{StaticResource AccentBrush}" TextDecorations="None"
                                        RequestNavigate="OnLinkClick">
@@ -48,13 +48,13 @@
                         </TextBlock>
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                        <TextBlock Text="开源授权" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,8,0" VerticalAlignment="Center"/>
-                        <TextBlock Text="Apache License 2.0" FontSize="12" Foreground="{StaticResource TextTertiaryBrush}" VerticalAlignment="Center"/>
+                        <TextBlock Text="开源授权" FontSize="{StaticResource FontSizeSM}" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                        <TextBlock Text="Apache License 2.0" FontSize="{StaticResource FontSizeSM}" Foreground="{StaticResource TextTertiaryBrush}" VerticalAlignment="Center"/>
                     </StackPanel>
                 </StackPanel>
 
                 <!-- 版本号 -->
-                <TextBlock x:Name="TxtVersion" Text="" FontSize="11"
+                <TextBlock x:Name="TxtVersion" Text="" FontSize="{StaticResource FontSizeXS}"
                            HorizontalAlignment="Center" Foreground="{StaticResource TextTertiaryBrush}"/>
             </StackPanel>
         </Border>

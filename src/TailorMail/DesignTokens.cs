@@ -8,9 +8,11 @@ public static class DesignTokens
     public const string AccentColor = "#1D6FB5";
     public const string AccentHoverColor = "#185A94";
     public const string AccentLightColor = "#E0F0FF";
+    public const string AccentMidColor = "#4DA6E8";
     public const string SurfaceColor = "#F2F5F9";
     public const string SurfaceElevatedColor = "#FFFFFF";
     public const string BorderSubtleColor = "#DDE2E9";
+    public const string SkeletonColor = "#E8ECF0";
     public const string TextPrimaryColor = "#1A2332";
     public const string TextSecondaryColor = "#5A6A7E";
     public const string TextTertiaryColor = "#626F82";
@@ -54,5 +56,4 @@ public static class DesignTokens
     public const double DurationSlow = 500;
 
     public const double AnimationSlideOffset = 12;
-    public const double AnimationDuration = 250;
 }

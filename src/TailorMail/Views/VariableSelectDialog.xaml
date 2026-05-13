@@ -2,31 +2,29 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
-        Title="选择变量" Width="320" Height="400"
+        Title="选择变量" Width="320"
+        SizeToContent="Height"
         WindowStartupLocation="CenterOwner"
-        ResizeMode="NoResize"
+        ResizeMode="CanResizeWithGrip"
         FontFamily="{StaticResource UIFontFamily}"
         Background="{StaticResource SurfaceBrush}">
-    <Grid Margin="20">
+    <Grid Margin="24">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,12">
-            <Border Style="{StaticResource SectionTitleAccentStyle}"/>
-            <TextBlock x:Name="TitleText" Text="请勾选要删除的变量：" Style="{StaticResource SectionTitleStyle}"/>
-        </StackPanel>
+        <TextBlock x:Name="TitleText" Grid.Row="0" Text="请勾选要删除的变量：" Style="{StaticResource BodyTextStyle}" Margin="0,0,0,12"/>
 
         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
             <StackPanel x:Name="ItemsPanel"/>
         </ScrollViewer>
 
         <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
-            <ui:Button x:Name="BtnOk" Content="删除" Padding="20,6" Margin="0,0,8,0" FontWeight="SemiBold"
+            <ui:Button x:Name="BtnOk" Content="删除" Padding="16,6" Margin="0,0,8,0"
                        Appearance="Primary" Click="OnOk"/>
-            <ui:Button Content="取消" Padding="20,6" Appearance="Secondary" Click="OnCancel"/>
+            <ui:Button Content="取消" Padding="16,6" Click="OnCancel"/>
         </StackPanel>
     </Grid>
 </ui:FluentWindow>

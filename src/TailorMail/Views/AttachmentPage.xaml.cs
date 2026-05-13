@@ -316,5 +316,13 @@ public partial class AttachmentPage : UserControl, IRefreshable
         return null;
     }
 
+    private void OnCommonListClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
+    {
+        var hit = System.Windows.Media.VisualTreeHelper.HitTest(CommonList, e.GetPosition(CommonList));
+        if (hit == null) { CommonList.SelectedIndex = -1; return; }
+        var item = FindVisualParent<ListBoxItem>(hit.VisualHit);
+        if (item == null) CommonList.SelectedIndex = -1;
+    }
+
     #endregion
 }

@@ -11,7 +11,7 @@
 
         <Border Grid.Row="0" Style="{StaticResource CardStyle}" Margin="0,0,0,8" Padding="16,8">
             <ui:TextBox x:Name="SubjectBox" Text="{Binding Subject,UpdateSourceTrigger=PropertyChanged}"
-                        PlaceholderText="请输入邮件主题，支持 {变量名} 格式" FontSize="14"
+                        PlaceholderText="请输入邮件主题，支持 {变量名} 格式" FontSize="{StaticResource FontSizeSM}"
                         FontFamily="{StaticResource UIFontFamily}"/>
         </Border>
 
@@ -62,7 +62,7 @@
                         <Border Background="{StaticResource BorderSubtleBrush}" Width="1" Margin="8,2"/>
                         <ComboBox x:Name="FontSizeCombo" Width="64" Margin="8,0,0,0" Padding="4,4"
                                   SelectionChanged="OnFontSizeComboChanged" IsEditable="True"
-                                  KeyDown="OnFontSizeKeyDown" FontSize="12"
+                                  KeyDown="OnFontSizeKeyDown" FontSize="{StaticResource FontSizeXS}"
                                   PreviewTextInput="OnFontSizePreviewTextInput"/>
                         <TextBlock x:Name="FontSizeError" Text="" FontSize="10" Foreground="{StaticResource DangerBrush}"
                                    VerticalAlignment="Center" Margin="4,0,0,0" Visibility="Collapsed"/>
@@ -93,13 +93,13 @@
                                     <WrapPanel x:Name="RecentColorsPanel" Width="220" Orientation="Horizontal" Visibility="Collapsed" Margin="0,0,0,4"/>
                                     <Border Background="{StaticResource BorderSubtleBrush}" Height="1" Margin="0,8"/>
                                     <StackPanel Orientation="Horizontal">
-                                        <TextBlock Text="自定义颜色" VerticalAlignment="Center" FontSize="12"
+                                        <TextBlock Text="自定义颜色" VerticalAlignment="Center" FontSize="{StaticResource FontSizeXS}"
                                                    Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,8,0"/>
                                         <ui:TextBox x:Name="CustomColorInput" Width="100" PlaceholderText="#RRGGBB"
-                                                    FontFamily="{StaticResource MonoFontFamily}" FontSize="12" Padding="6,4"/>
-                                        <Button Content="应用" Click="OnApplyCustomColor" Margin="4,0,0,0" Padding="8,4" FontSize="12"/>
+                                                    FontFamily="{StaticResource MonoFontFamily}" FontSize="{StaticResource FontSizeXS}" Padding="6,4"/>
+                                        <Button Content="应用" Click="OnApplyCustomColor" Margin="4,0,0,0" Padding="8,4" FontSize="{StaticResource FontSizeXS}"/>
                                     </StackPanel>
-                                    <TextBlock x:Name="CustomColorError" Text="" FontSize="11" Foreground="{StaticResource DangerBrush}"
+                                    <TextBlock x:Name="CustomColorError" Text="" FontSize="{StaticResource FontSizeXS}" Foreground="{StaticResource DangerBrush}"
                                                Visibility="Collapsed" Margin="0,4,0,0"/>
                                 </StackPanel>
                             </Border>
@@ -110,7 +110,7 @@
                         </Button>
                         <Border Background="{StaticResource BorderSubtleBrush}" Width="1" Margin="8,2"/>
                         <ComboBox x:Name="LineHeightCombo" Width="60" Margin="8,0,0,0" Padding="4,4"
-                                  SelectionChanged="OnLineHeightChanged" FontSize="12"
+                                  SelectionChanged="OnLineHeightChanged" FontSize="{StaticResource FontSizeXS}"
                                   ToolTip="行高">
                             <ComboBoxItem Content="1.0" Tag="1.0"/>
                             <ComboBoxItem Content="1.15" Tag="1.15" IsSelected="True"/>
@@ -144,21 +144,26 @@
                 <Popup x:Name="AutoCompletePopup" StaysOpen="False" Placement="Bottom"
                        PlacementTarget="{Binding ElementName=Editor}"
                        AllowsTransparency="True" IsOpen="False">
-                    <Border Background="{StaticResource SurfaceBrush}" CornerRadius="6"
+                    <Border Background="{StaticResource SurfaceBrush}" CornerRadius="{StaticResource CornerRadiusSM}"
                             BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="1"
                             MaxHeight="200" MinWidth="160" Padding="4">
                         <ListBox x:Name="AutoCompleteList" BorderThickness="0" Background="Transparent"
-                                 MaxHeight="180" FontSize="13"
+                                 MaxHeight="180" FontSize="{StaticResource FontSizeSM}"
                                  SelectionChanged="OnAutoCompleteSelectionChanged"/>
                     </Border>
                 </Popup>
             </Grid>
         </Border>
 
-        <TextBlock x:Name="VarHintText" Grid.Row="2"
-                   Style="{StaticResource CaptionTextStyle}" Margin="0,8,0,0"/>
-        <TextBlock x:Name="VarWarningText" Grid.Row="2" Visibility="Collapsed"
-                   Foreground="{StaticResource WarningBrush}" FontWeight="Medium"
-                   Style="{StaticResource CaptionTextStyle}" Margin="0,8,0,0" TextWrapping="Wrap"/>
+        <StackPanel Grid.Row="2" Orientation="Vertical" Margin="0,8,0,0">
+            <StackPanel Orientation="Horizontal">
+                <ui:SymbolIcon Symbol="Info24" FontSize="14" Foreground="{StaticResource TextTertiaryBrush}" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                <TextBlock x:Name="VarHintText"
+                           Style="{StaticResource CaptionTextStyle}"/>
+            </StackPanel>
+            <TextBlock x:Name="VarWarningText" Visibility="Collapsed"
+                       Foreground="{StaticResource WarningBrush}" FontWeight="Medium"
+                       Style="{StaticResource CaptionTextStyle}" TextWrapping="Wrap"/>
+        </StackPanel>
     </Grid>
 </UserControl>

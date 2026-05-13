@@ -9,7 +9,8 @@ public partial class VariableSelectDialog : FluentWindow
 {
     public List<string> SelectedVariables { get; private set; } = [];
     public bool AllowSingle { get; set; }
-    public string ConfirmText { get; set; } = "删除";
+    public string ConfirmText { get => _confirmText; set { _confirmText = value; if (BtnOk != null) BtnOk.Content = value; } }
+    private string _confirmText = "删除";
     public string HeaderText { get => TitleText.Text; set => TitleText.Text = value; }
 
     private readonly List<CheckBox> _checkBoxes = [];

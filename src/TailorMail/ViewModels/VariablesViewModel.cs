@@ -254,10 +254,12 @@ public partial class VariablesViewModel : ObservableObject
     /// <returns>替换后的文本。</returns>
     public string ProcessBody(string body, Recipient recipient)
     {
-        var result = body.Replace("{名称}", recipient.Name)
-                         .Replace("{简称}", recipient.ShortName);
+        var result = body.Replace("{名称}", recipient.Name ?? "")
+                         .Replace("{简称}", recipient.ShortName ?? "");
         foreach (var kvp in recipient.Variables)
-            result = result.Replace($"{{{kvp.Key}}}", kvp.Value);
+            result = result.Replace($"{{{kvp.Key}}}", kvp.Value ?? "");
+        foreach (var name in VariableNames)
+            result = result.Replace($"{{{name}}}", "");
         return result;
     }
 
@@ -266,9 +268,8 @@ public partial class VariablesViewModel : ObservableObject
     /// Scans the template once, replacing all {key} placeholders via dictionary lookup.
     /// Avoids the N intermediate string allocations of chained .Replace() calls.
     /// </summary>
-    public static string ProcessBodyFast(string body, Recipient recipient)
+    public static string ProcessBodyFast(string body, Recipient recipient, IReadOnlyList<string>? knownVariableNames = null)
     {
-        // Build the replacement dictionary
         var replacements = new Dictionary<string, string>(StringComparer.Ordinal)
         {
             ["名称"] = recipient.Name ?? "",
@@ -276,6 +277,16 @@ public partial class VariablesViewModel : ObservableObject
         };
         foreach (var kvp in recipient.Variables)
             replacements[kvp.Key] = kvp.Value ?? "";
+
+        if (knownVariableNames != null)
+        {
+            for (int i = 0; i < knownVariableNames.Count; i++)
+            {
+                var name = knownVariableNames[i];
+                if (!replacements.ContainsKey(name))
+                    replacements[name] = "";
+            }
+        }
 
         var sb = new StringBuilder(body.Length);
         for (int i = 0; i < body.Length;)

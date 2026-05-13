@@ -143,6 +143,7 @@ public partial class RecipientsPage : UserControl, IRefreshable, IDynamicStepDes
         {
             if (cb.IsChecked == true) _vm.SelectAll();
             else _vm.DeselectAll();
+            _vm.ScheduleSave();
             UpdateHeaderCheckBox();
             UpdateDeleteButton();
         }
@@ -151,6 +152,7 @@ public partial class RecipientsPage : UserControl, IRefreshable, IDynamicStepDes
     private void OnCheckClick(object sender, RoutedEventArgs e)
     {
         _vm.UpdateCounts();
+        _vm.ScheduleSave();
         UpdateHeaderCheckBox();
         UpdateDeleteButton();
     }

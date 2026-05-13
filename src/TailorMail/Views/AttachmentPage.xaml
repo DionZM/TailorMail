@@ -8,7 +8,7 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition x:Name="CommonPanelColumn" Width="240" MinWidth="180" MaxWidth="400"/>
+            <ColumnDefinition x:Name="CommonPanelColumn" Width="220" MinWidth="180" MaxWidth="400"/>
             <ColumnDefinition Width="Auto"/>
             <ColumnDefinition Width="*" MinWidth="320"/>
         </Grid.ColumnDefinitions>
@@ -26,57 +26,31 @@
                     <Grid Grid.Row="0" Margin="0,0,0,8">
                         <TextBlock Text="公共附件" FontWeight="SemiBold" FontSize="14"
                                    Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
-                        <Button Click="OnAddCommon" Padding="6,4" HorizontalAlignment="Right" ToolTip="添加公共附件">
+                        <ui:Button Click="OnAddCommon" Padding="6,4" HorizontalAlignment="Right" ToolTip="添加公共附件">
                             <ui:SymbolIcon Symbol="Add24" FontSize="14"/>
-                        </Button>
+                        </ui:Button>
                     </Grid>
 
                     <Grid Grid.Row="1" AllowDrop="True" DragOver="OnDragOver" Drop="OnCommonDrop">
                         <ListBox x:Name="CommonList" BorderThickness="0" Background="Transparent"
                                  FontFamily="{StaticResource UIFontFamily}" MinHeight="60"
-                                 AllowDrop="True" DragOver="OnDragOver" Drop="OnCommonDrop">
-                            <ListBox.ItemContainerStyle>
-                                <Style TargetType="ListBoxItem">
-                                    <Setter Property="Padding" Value="8,6"/>
-                                    <Setter Property="Margin" Value="0,2"/>
-                                    <Setter Property="Template">
-                                        <Setter.Value>
-                                            <ControlTemplate TargetType="ListBoxItem">
-                                                <Border CornerRadius="4" Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}">
-                                                    <ContentPresenter/>
-                                                </Border>
-                                            </ControlTemplate>
-                                        </Setter.Value>
-                                    </Setter>
-                                    <Style.Triggers>
-                                        <Trigger Property="IsSelected" Value="True">
-                                            <Setter Property="Background" Value="{StaticResource AccentBrush}"/>
-                                            <Setter Property="Foreground" Value="White"/>
-                                        </Trigger>
-                                        <MultiTrigger>
-                                            <MultiTrigger.Conditions>
-                                                <Condition Property="IsSelected" Value="False"/>
-                                                <Condition Property="IsMouseOver" Value="True"/>
-                                            </MultiTrigger.Conditions>
-                                            <Setter Property="Background" Value="{StaticResource RowHoverBrush}"/>
-                                        </MultiTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </ListBox.ItemContainerStyle>
+                                 AllowDrop="True" DragOver="OnDragOver" Drop="OnCommonDrop"
+                                 MouseLeftButtonUp="OnCommonListClick"
+                                 ItemContainerStyle="{StaticResource SidebarListItemStyle}">
                             <ListBox.ItemTemplate>
                                 <DataTemplate>
                                     <Grid>
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="*"/>
                                             <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="Auto"/>
                                         </Grid.ColumnDefinitions>
-                                        <StackPanel Grid.Column="0" Orientation="Horizontal">
-                                            <TextBlock Text="{Binding Converter={StaticResource FileNameConverter}}" ToolTip="{Binding}" TextTrimming="CharacterEllipsis"
-                                                       Style="{StaticResource BodyTextStyle}" MaxWidth="260"/>
-                                            <TextBlock Text="{Binding Converter={StaticResource FilePathSizeConverter}}" Margin="6,0,0,0"
-                                                       Style="{StaticResource CaptionTextStyle}" VerticalAlignment="Center"/>
-                                        </StackPanel>
-                                        <Button Grid.Column="1" Click="OnRemoveCommon" Tag="{Binding}"
+                                        <TextBlock Grid.Column="0" Text="{Binding Converter={StaticResource FileNameConverter}}" ToolTip="{Binding}" TextTrimming="CharacterEllipsis"
+                                                   FontSize="13" VerticalAlignment="Center"/>
+                                        <TextBlock Grid.Column="1" Text="{Binding Converter={StaticResource FilePathSizeConverter}}"
+                                                   FontSize="{StaticResource FontSizeXS}" Opacity="0.7"
+                                                   VerticalAlignment="Center" Margin="6,0,6,0" HorizontalAlignment="Right"/>
+                                        <Button Grid.Column="2" Click="OnRemoveCommon" Tag="{Binding}"
                                                 Style="{StaticResource DeleteRowButtonStyle}"
                                                 ToolTip="删除此附件"/>
                                     </Grid>
@@ -101,10 +75,10 @@
                     </Grid>
 
                     <!-- 清空公共附件按钮 -->
-                    <Button Grid.Row="2" Click="OnClearCommon" Padding="6,4" Margin="0,8,0,0"
+                    <ui:Button Grid.Row="2" Click="OnClearCommon" Padding="6,4" Margin="0,8,0,0"
                             HorizontalAlignment="Right" ToolTip="清空公共附件">
                         <ui:SymbolIcon Symbol="Delete24" FontSize="14"/>
-                    </Button>
+                    </ui:Button>
                 </Grid>
             </Border>
         </Grid>
@@ -122,39 +96,47 @@
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
 
-                    <StackPanel Grid.Row="0" Margin="0,0,0,8">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="专有附件" FontWeight="SemiBold" FontSize="14"
-                                       Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
-                            <Button Click="OnSelectDirectory" Margin="12,0,0,0" Padding="10,4">
-                                <StackPanel Orientation="Horizontal">
-                                    <ui:SymbolIcon Symbol="FolderOpen24" FontSize="14" Margin="0,0,4,0"/>
-                                    <TextBlock Text="选择文件夹"/>
-                                </StackPanel>
-                            </Button>
-                            <Button x:Name="BtnAutoMatch" Click="OnAutoMatch" Margin="4,0,0,0" Padding="10,4">
-                                <StackPanel Orientation="Horizontal">
-                                    <ui:SymbolIcon Symbol="Link24" FontSize="14" Margin="0,0,4,0"/>
-                                    <TextBlock Text="自动匹配"/>
-                                </StackPanel>
-                            </Button>
-                            <Button Click="OnClearSpecial" Margin="4,0,0,0" Padding="10,4">
-                                <StackPanel Orientation="Horizontal">
-                                    <ui:SymbolIcon Symbol="Delete24" FontSize="14" Margin="0,0,4,0"/>
-                                    <TextBlock Text="清空"/>
-                                </StackPanel>
-                            </Button>
-                        </StackPanel>
-                        <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
-                            <TextBlock x:Name="TxtFolder" Text="" VerticalAlignment="Center"
-                                       Style="{StaticResource CaptionTextStyle}" MaxWidth="350"
-                                       TextTrimming="CharacterEllipsis"/>
-                            <TextBlock x:Name="TxtMatchResult" Text="" VerticalAlignment="Center"
-                                       Foreground="{StaticResource SuccessBrush}" FontWeight="Medium"
-                                       Style="{StaticResource CaptionTextStyle}" Margin="8,0,0,0"
-                                       Visibility="Collapsed"/>
-                        </StackPanel>
-                    </StackPanel>
+                    <Grid Grid.Row="0" Margin="0,0,0,8">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <TextBlock Grid.Row="0" Grid.Column="0" Text="专有附件" FontWeight="SemiBold" FontSize="14"
+                                   Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
+                        <TextBlock x:Name="TxtFolder" Grid.Row="0" Grid.Column="1" Text="" VerticalAlignment="Center"
+                                   FontSize="{StaticResource FontSizeSM}" Foreground="{StaticResource TextTertiaryBrush}"
+                                   TextTrimming="CharacterEllipsis" TextAlignment="Right" Margin="8,0,8,0"/>
+                        <ui:Button Grid.Row="0" Grid.Column="2" Click="OnSelectDirectory" Padding="10,4">
+                            <StackPanel Orientation="Horizontal">
+                                <ui:SymbolIcon Symbol="FolderOpen24" FontSize="14" Margin="0,0,4,0"/>
+                                <TextBlock Text="选择文件夹"/>
+                            </StackPanel>
+                        </ui:Button>
+                        <ui:Button Grid.Row="0" Grid.Column="3" x:Name="BtnAutoMatch" Click="OnAutoMatch" Margin="4,0,0,0" Padding="10,4">
+                            <StackPanel Orientation="Horizontal">
+                                <ui:SymbolIcon Symbol="Link24" FontSize="14" Margin="0,0,4,0"/>
+                                <TextBlock Text="自动匹配"/>
+                            </StackPanel>
+                        </ui:Button>
+                        <ui:Button Grid.Row="0" Grid.Column="4" Click="OnClearSpecial" Margin="4,0,0,0" Padding="10,4">
+                            <StackPanel Orientation="Horizontal">
+                                <ui:SymbolIcon Symbol="Delete24" FontSize="14" Margin="0,0,4,0"/>
+                                <TextBlock Text="清空"/>
+                            </StackPanel>
+                        </ui:Button>
+                        <TextBlock x:Name="TxtMatchResult" Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="5" Text="" VerticalAlignment="Center"
+                                   Foreground="{StaticResource SuccessBrush}" FontWeight="Medium"
+                                   FontSize="{StaticResource FontSizeSM}" Margin="0,4,0,0"
+                                   Visibility="Collapsed"/>
+                    </Grid>
 
                     <Grid Grid.Row="1">
                         <DataGrid x:Name="RecipientGrid"
@@ -180,20 +162,20 @@
                                                         <DataTemplate>
                                                             <StackPanel Orientation="Horizontal" Margin="0,1">
                                                                 <TextBlock Text="{Binding Converter={StaticResource FileNameConverter}}" TextTrimming="CharacterEllipsis"
-                                                                           Foreground="{StaticResource SuccessBrush}" FontSize="12"
+                                                                           Foreground="{StaticResource SuccessBrush}" FontSize="{StaticResource FontSizeSM}"
                                                                            VerticalAlignment="Center" MaxWidth="300"
                                                                            ToolTip="{Binding}"/>
-                                                                <TextBlock Text="{Binding Converter={StaticResource FilePathSizeConverter}}" FontSize="11"
+                                                                <TextBlock Text="{Binding Converter={StaticResource FilePathSizeConverter}}" FontSize="{StaticResource FontSizeXS}"
                                                                            Foreground="{StaticResource TextTertiaryBrush}" VerticalAlignment="Center" Margin="6,0,0,0"/>
                                                                 <Button Click="OnRemoveSpecialFromGrid" Tag="{Binding}"
                                                                         Style="{StaticResource DeleteRowButtonStyle}"
-                                                                        FontSize="12" Margin="4,0,0,0"
+                                                                        FontSize="{StaticResource FontSizeSM}" Margin="4,0,0,0"
                                                                         ToolTip="删除此附件"/>
                                                             </StackPanel>
                                                         </DataTemplate>
                                                     </ItemsControl.ItemTemplate>
                                                 </ItemsControl>
-                                                <TextBlock Text="暂无专有附件" FontSize="12" Foreground="{StaticResource TextTertiaryBrush}"
+                                                <TextBlock Text="暂无专有附件" FontSize="{StaticResource FontSizeSM}" Foreground="{StaticResource TextTertiaryBrush}"
                                                            VerticalAlignment="Center"
                                                            Visibility="{Binding HasFiles, Converter={StaticResource InverseBoolToVisibilityConverter}}"/>
                                             </Grid>
@@ -208,7 +190,7 @@
                                                     ToolTip="添加专有附件">
                                                 <StackPanel Orientation="Horizontal">
                                                     <ui:SymbolIcon Symbol="Add24" FontSize="14"/>
-                                                    <TextBlock Text="添加" FontSize="11" Margin="2,0,0,0" VerticalAlignment="Center"/>
+                                                    <TextBlock Text="添加" FontSize="{StaticResource FontSizeXS}" Margin="2,0,0,0" VerticalAlignment="Center"/>
                                                 </StackPanel>
                                             </Button>
                                         </DataTemplate>
@@ -231,9 +213,12 @@
                             </StackPanel>
                         </Border>
                     </Grid>
-                    <TextBlock Grid.Row="2" Text="自动匹配规则：按收件人「名称」或「简称」匹配文件名（不含扩展名）"
-                               Style="{StaticResource CaptionTextStyle}" Margin="0,8,0,0"
-                               Foreground="{StaticResource TextTertiaryBrush}" TextWrapping="Wrap"/>
+                    <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,8,0,0">
+                        <ui:SymbolIcon Symbol="Info24" FontSize="14" Foreground="{StaticResource TextTertiaryBrush}" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                        <TextBlock Text="自动匹配规则：按收件人「名称」或「简称」匹配文件名（不含扩展名）"
+                                   Style="{StaticResource CaptionTextStyle}"
+                                   Foreground="{StaticResource TextTertiaryBrush}" TextWrapping="Wrap"/>
+                    </StackPanel>
                 </Grid>
             </Border>
         </Grid>

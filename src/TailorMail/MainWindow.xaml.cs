@@ -588,13 +588,14 @@ public partial class MainWindow
         }
 
         MainContent.Opacity = 0;
-        MainContentTransform.Y = 12;
+        MainContentTransform.Y = DesignTokens.AnimationSlideOffset;
 
-        var opacityAnimation = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(250))
+        var duration = TimeSpan.FromMilliseconds(DesignTokens.DurationFast);
+        var opacityAnimation = new DoubleAnimation(0, 1, duration)
         {
             EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
         };
-        var slideAnimation = new DoubleAnimation(12, 0, TimeSpan.FromMilliseconds(250))
+        var slideAnimation = new DoubleAnimation(DesignTokens.AnimationSlideOffset, 0, duration)
         {
             EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
         };
