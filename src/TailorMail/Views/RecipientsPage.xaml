@@ -128,7 +128,7 @@
 
             <!-- 收件对象列表 -->
             <Grid Grid.Row="1">
-                <Border Style="{StaticResource CardStyle}" Margin="0">
+                <Border Style="{StaticResource CardStyleDense}" Margin="0">
                     <DataGrid x:Name="RecipientsGrid" ItemsSource="{Binding CurrentRecipients}" AutoGenerateColumns="False"
                           CanUserAddRows="False" CanUserDeleteRows="False"
                           SelectionMode="Single" CellEditEnding="OnCellEditEnding"

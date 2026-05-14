@@ -29,6 +29,7 @@
             <Color x:Key="SuccessColor">#047857</Color>
             <Color x:Key="WarningColor">#A16207</Color>
             <Color x:Key="DangerColor">#C42B1C</Color>
+            <Color x:Key="InfoColor">#2563EB</Color>
             <Color x:Key="RowHoverColor">#EDF2F8</Color>
             <Color x:Key="RowSelectedColor">#D6E9FB</Color>
 
@@ -46,6 +47,7 @@
             <SolidColorBrush x:Key="SuccessBrush" Color="{StaticResource SuccessColor}"/>
             <SolidColorBrush x:Key="WarningBrush" Color="{StaticResource WarningColor}"/>
             <SolidColorBrush x:Key="DangerBrush" Color="{StaticResource DangerColor}"/>
+            <SolidColorBrush x:Key="InfoBrush" Color="{StaticResource InfoColor}"/>
             <SolidColorBrush x:Key="RowHoverBrush" Color="{StaticResource RowHoverColor}"/>
             <SolidColorBrush x:Key="RowSelectedBrush" Color="{StaticResource RowSelectedColor}"/>
 
@@ -138,6 +140,44 @@
                 <Setter Property="BorderBrush" Value="{StaticResource BorderSubtleBrush}"/>
                 <Setter Property="BorderThickness" Value="1"/>
                 <Setter Property="Effect" Value="{StaticResource ShadowMD}"/>
+            </Style>
+
+            <Style TargetType="Border" x:Key="CardStyleDense" BasedOn="{StaticResource CardStyle}">
+                <Setter Property="Padding" Value="12,8"/>
+            </Style>
+
+            <Style TargetType="Button" x:Key="IconButtonStyle">
+                <Setter Property="Width" Value="28"/>
+                <Setter Property="Height" Value="28"/>
+                <Setter Property="Padding" Value="2"/>
+            </Style>
+
+            <Style TargetType="Button" x:Key="SmallButtonStyle">
+                <Setter Property="Padding" Value="6,4"/>
+                <Setter Property="Height" Value="28"/>
+            </Style>
+
+            <Style TargetType="Button" x:Key="StandardButtonStyle">
+                <Setter Property="Padding" Value="10,6"/>
+                <Setter Property="Height" Value="32"/>
+            </Style>
+
+            <Style TargetType="ToggleButton" x:Key="IconToggleButtonStyle">
+                <Setter Property="Width" Value="28"/>
+                <Setter Property="Height" Value="28"/>
+                <Setter Property="Padding" Value="2"/>
+            </Style>
+
+            <Style TargetType="ComboBox" x:Key="ToolbarComboBoxStyle">
+                <Setter Property="Height" Value="28"/>
+                <Setter Property="Padding" Value="4,2"/>
+                <Setter Property="VerticalContentAlignment" Value="Center"/>
+            </Style>
+
+            <Style TargetType="TextBox" x:Key="ToolbarTextBoxStyle">
+                <Setter Property="Height" Value="28"/>
+                <Setter Property="Padding" Value="6,2"/>
+                <Setter Property="VerticalContentAlignment" Value="Center"/>
             </Style>
 
             <Style TargetType="DataGridRow" x:Key="HoverRowStyle">

@@ -120,22 +120,22 @@ public partial class AttachmentPage : UserControl, IRefreshable
 
         if (matched > 0)
         {
-            TxtMatchResult.Text = $"自动匹配完成，新增 {matched} 个附件";
-            TxtMatchResult.Foreground = (System.Windows.Media.Brush)FindResource("SuccessBrush");
-            TxtMatchResult.Visibility = Visibility.Visible;
+            MatchInfoBar.Severity = Wpf.Ui.Controls.InfoBarSeverity.Success;
+            MatchInfoBar.Message = $"自动匹配完成，新增 {matched} 个附件";
+            MatchInfoBar.IsOpen = true;
             var timer = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromSeconds(3) };
             timer.Tick += (_, _) =>
             {
                 timer.Stop();
-                TxtMatchResult.Visibility = Visibility.Collapsed;
+                MatchInfoBar.IsOpen = false;
             };
             timer.Start();
         }
         else if (beforeCount == afterCount && _vm.RecipientAttachments.Count > 0)
         {
-            TxtMatchResult.Text = "未匹配到新的附件，请检查文件名是否与收件人名称匹配";
-            TxtMatchResult.Foreground = (System.Windows.Media.Brush)FindResource("WarningBrush");
-            TxtMatchResult.Visibility = Visibility.Visible;
+            MatchInfoBar.Severity = Wpf.Ui.Controls.InfoBarSeverity.Warning;
+            MatchInfoBar.Message = "未匹配到新的附件，请检查文件名是否与收件人名称匹配";
+            MatchInfoBar.IsOpen = true;
         }
 
         BtnAutoMatch.IsEnabled = true;

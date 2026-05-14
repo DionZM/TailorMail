@@ -114,28 +114,27 @@
                         <TextBlock x:Name="TxtFolder" Grid.Row="0" Grid.Column="1" Text="" VerticalAlignment="Center"
                                    FontSize="{StaticResource FontSizeSM}" Foreground="{StaticResource TextTertiaryBrush}"
                                    TextTrimming="CharacterEllipsis" TextAlignment="Right" Margin="8,0,8,0"/>
-                        <ui:Button Grid.Row="0" Grid.Column="2" Click="OnSelectDirectory" Padding="10,4">
+                        <ui:Button Grid.Row="0" Grid.Column="2" Click="OnSelectDirectory" Style="{StaticResource SmallButtonStyle}">
                             <StackPanel Orientation="Horizontal">
                                 <ui:SymbolIcon Symbol="FolderOpen24" FontSize="14" Margin="0,0,4,0"/>
-                                <TextBlock Text="选择文件夹"/>
+                                <TextBlock Text="选择文件夹" FontSize="{StaticResource FontSizeSM}"/>
                             </StackPanel>
                         </ui:Button>
-                        <ui:Button Grid.Row="0" Grid.Column="3" x:Name="BtnAutoMatch" Click="OnAutoMatch" Margin="4,0,0,0" Padding="10,4">
+                        <ui:Button Grid.Row="0" Grid.Column="3" x:Name="BtnAutoMatch" Click="OnAutoMatch" Margin="4,0,0,0" Style="{StaticResource SmallButtonStyle}">
                             <StackPanel Orientation="Horizontal">
                                 <ui:SymbolIcon Symbol="Link24" FontSize="14" Margin="0,0,4,0"/>
-                                <TextBlock Text="自动匹配"/>
+                                <TextBlock Text="自动匹配" FontSize="{StaticResource FontSizeSM}"/>
                             </StackPanel>
                         </ui:Button>
-                        <ui:Button Grid.Row="0" Grid.Column="4" Click="OnClearSpecial" Margin="4,0,0,0" Padding="10,4">
+                        <ui:Button Grid.Row="0" Grid.Column="4" Click="OnClearSpecial" Margin="4,0,0,0" Style="{StaticResource SmallButtonStyle}">
                             <StackPanel Orientation="Horizontal">
                                 <ui:SymbolIcon Symbol="Delete24" FontSize="14" Margin="0,0,4,0"/>
-                                <TextBlock Text="清空"/>
+                                <TextBlock Text="清空" FontSize="{StaticResource FontSizeSM}"/>
                             </StackPanel>
                         </ui:Button>
-                        <TextBlock x:Name="TxtMatchResult" Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="5" Text="" VerticalAlignment="Center"
-                                   Foreground="{StaticResource SuccessBrush}" FontWeight="Medium"
-                                   FontSize="{StaticResource FontSizeSM}" Margin="0,4,0,0"
-                                   Visibility="Collapsed"/>
+                        <ui:InfoBar x:Name="MatchInfoBar" Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="5"
+                                    Title="" Message="" IsOpen="False" IsClosable="True"
+                                    Severity="Informational" Margin="0,4,0,0"/>
                     </Grid>
 
                     <Grid Grid.Row="1">
