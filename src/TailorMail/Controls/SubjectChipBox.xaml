@@ -1,0 +1,28 @@
+<UserControl x:Class="TailorMail.Controls.SubjectChipBox"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      x:Name="Root">
+    <Border Background="White"
+            CornerRadius="{StaticResource CornerRadiusInput}"
+            BorderBrush="{StaticResource OutlineBrush}"
+            BorderThickness="1"
+            Padding="8,4"
+            MinHeight="32">
+        <Grid>
+            <RichTextBox x:Name="InternalEditor"
+                         BorderThickness="0" Background="Transparent"
+                         FontSize="{StaticResource FontSizeSM}"
+                         FontFamily="{StaticResource UIFontFamily}"
+                         AcceptsReturn="False"
+                         VerticalScrollBarVisibility="Disabled"
+                         TextChanged="OnEditorTextChanged"
+                         SelectionChanged="OnEditorSelectionChanged"
+                         PreviewKeyDown="OnEditorPreviewKeyDown"
+                         SpellCheck.IsEnabled="False"
+                         Padding="0"
+                         Margin="0"
+                         AutomationProperties.Name="邮件主题"
+                         AutomationProperties.HelpText="输入邮件主题，支持使用花括号插入变量"/>
+        </Grid>
+    </Border>
+</UserControl>

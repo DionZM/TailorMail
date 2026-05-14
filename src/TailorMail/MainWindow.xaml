@@ -130,23 +130,117 @@
             </ContentControl.RenderTransform>
         </ContentControl>
 
-        <StackPanel Grid.Row="2" x:Name="SkeletonPanel" Margin="32,8,32,16" Visibility="Collapsed">
-            <Border Style="{StaticResource CardStyle}" Margin="0">
-                <StackPanel Margin="4">
-                    <Border Style="{StaticResource SkeletonLineStyle}" Width="180" Margin="0,0,0,12"/>
-                    <Border Style="{StaticResource SkeletonLineStyle}" Width="100" Margin="0,0,0,8"/>
-                    <Border Style="{StaticResource SkeletonLineStyle}" Width="320" Margin="0,0,0,8"/>
-                    <Border Style="{StaticResource SkeletonLineStyle}" Width="240"/>
-                </StackPanel>
-            </Border>
-            <Border Style="{StaticResource CardStyle}" Margin="0">
-                <StackPanel Margin="4">
-                    <Border Style="{StaticResource SkeletonLineStyle}" Width="140" Margin="0,0,0,12"/>
-                    <Border Style="{StaticResource SkeletonLineStyle}" Width="400" Margin="0,0,0,8"/>
-                    <Border Style="{StaticResource SkeletonLineStyle}" Width="360"/>
-                </StackPanel>
-            </Border>
-        </StackPanel>
+        <Grid Grid.Row="2" x:Name="SkeletonHost" Margin="32,8,32,16" Visibility="Collapsed">
+            <!-- Step 0: Recipients (sidebar + table) -->
+            <StackPanel x:Name="SkeletonStep0" Visibility="Collapsed">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="220"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Border Style="{StaticResource CardStyle}" Margin="0" Grid.Column="0">
+                        <StackPanel Margin="4">
+                            <Border Style="{StaticResource SkeletonLineStyle}" Width="80" Margin="0,0,0,12"/>
+                            <Border Style="{StaticResource SkeletonLineStyle}" Width="140" Margin="0,0,0,8"/>
+                            <Border Style="{StaticResource SkeletonLineStyle}" Width="120" Margin="0,0,0,8"/>
+                            <Border Style="{StaticResource SkeletonLineStyle}" Width="100"/>
+                        </StackPanel>
+                    </Border>
+                    <Border Style="{StaticResource CardStyle}" Margin="0" Grid.Column="1">
+                        <StackPanel Margin="4">
+                            <Border Style="{StaticResource SkeletonLineStyle}" Width="180" Margin="0,0,0,12"/>
+                            <Border Style="{StaticResource SkeletonLineStyle}" Width="500" Margin="0,0,0,8"/>
+                            <Border Style="{StaticResource SkeletonLineStyle}" Width="450" Margin="0,0,0,8"/>
+                            <Border Style="{StaticResource SkeletonLineStyle}" Width="380"/>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </StackPanel>
+            <!-- Step 1: Variables (toolbar + table) -->
+            <StackPanel x:Name="SkeletonStep1" Visibility="Collapsed">
+                <Border Style="{StaticResource ToolbarCardStyle}" Margin="0">
+                    <StackPanel Margin="4" Orientation="Horizontal">
+                        <Border Style="{StaticResource SkeletonLineStyle}" Width="80" Height="24" Margin="0,0,8,0"/>
+                        <Border Style="{StaticResource SkeletonLineStyle}" Width="60" Height="24"/>
+                    </StackPanel>
+                </Border>
+                <Border Style="{StaticResource CardStyle}" Margin="0">
+                    <StackPanel Margin="4">
+                        <Border Style="{StaticResource SkeletonLineStyle}" Width="140" Margin="0,0,0,12"/>
+                        <Border Style="{StaticResource SkeletonLineStyle}" Width="500" Margin="0,0,0,8"/>
+                        <Border Style="{StaticResource SkeletonLineStyle}" Width="420" Margin="0,0,0,8"/>
+                        <Border Style="{StaticResource SkeletonLineStyle}" Width="360"/>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+            <!-- Step 3: Attachments (sidebar + table) -->
+            <StackPanel x:Name="SkeletonStep3" Visibility="Collapsed">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="220"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Border Style="{StaticResource CardStyle}" Margin="0" Grid.Column="0">
+                        <StackPanel Margin="4">
+                            <Border Style="{StaticResource SkeletonLineStyle}" Width="80" Margin="0,0,0,12"/>
+                            <Border Style="{StaticResource SkeletonLineStyle}" Width="150" Margin="0,0,0,8"/>
+                            <Border Style="{StaticResource SkeletonLineStyle}" Width="130"/>
+                        </StackPanel>
+                    </Border>
+                    <Border Style="{StaticResource CardStyle}" Margin="0" Grid.Column="1">
+                        <StackPanel Margin="4">
+                            <Border Style="{StaticResource SkeletonLineStyle}" Width="80" Margin="0,0,0,12"/>
+                            <Border Style="{StaticResource SkeletonLineStyle}" Width="500" Margin="0,0,0,8"/>
+                            <Border Style="{StaticResource SkeletonLineStyle}" Width="460" Margin="0,0,0,8"/>
+                            <Border Style="{StaticResource SkeletonLineStyle}" Width="300"/>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </StackPanel>
+            <!-- Step 4: Preview (sidebar + content) -->
+            <StackPanel x:Name="SkeletonStep4" Visibility="Collapsed">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="220"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Border Style="{StaticResource CardStyle}" Margin="0" Grid.Column="0">
+                        <StackPanel Margin="4">
+                            <Border Style="{StaticResource SkeletonLineStyle}" Width="120" Margin="0,0,0,12"/>
+                            <Border Style="{StaticResource SkeletonLineStyle}" Width="160" Margin="0,0,0,8"/>
+                            <Border Style="{StaticResource SkeletonLineStyle}" Width="140" Margin="0,0,0,8"/>
+                            <Border Style="{StaticResource SkeletonLineStyle}" Width="100"/>
+                        </StackPanel>
+                    </Border>
+                    <Border Style="{StaticResource CardStyle}" Margin="0" Grid.Column="1">
+                        <StackPanel Margin="4">
+                            <Border Style="{StaticResource SkeletonLineStyle}" Width="200" Margin="0,0,0,12"/>
+                            <Border Style="{StaticResource SkeletonLineStyle}" Width="500" Margin="0,0,0,8"/>
+                            <Border Style="{StaticResource SkeletonLineStyle}" Width="440" Margin="0,0,0,8"/>
+                            <Border Style="{StaticResource SkeletonLineStyle}" Width="380"/>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </StackPanel>
+            <!-- Generic fallback (steps 2, 5) -->
+            <StackPanel x:Name="SkeletonGeneric" Visibility="Collapsed">
+                <Border Style="{StaticResource CardStyle}" Margin="0">
+                    <StackPanel Margin="4">
+                        <Border Style="{StaticResource SkeletonLineStyle}" Width="180" Margin="0,0,0,12"/>
+                        <Border Style="{StaticResource SkeletonLineStyle}" Width="100" Margin="0,0,0,8"/>
+                        <Border Style="{StaticResource SkeletonLineStyle}" Width="320" Margin="0,0,0,8"/>
+                        <Border Style="{StaticResource SkeletonLineStyle}" Width="240"/>
+                    </StackPanel>
+                </Border>
+                <Border Style="{StaticResource CardStyle}" Margin="0">
+                    <StackPanel Margin="4">
+                        <Border Style="{StaticResource SkeletonLineStyle}" Width="140" Margin="0,0,0,12"/>
+                        <Border Style="{StaticResource SkeletonLineStyle}" Width="400" Margin="0,0,0,8"/>
+                        <Border Style="{StaticResource SkeletonLineStyle}" Width="360"/>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </Grid>
 
         <Border Grid.Row="3" Background="{StaticResource SurfaceElevatedBrush}"
                 BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="0,1,0,0"
@@ -167,16 +261,24 @@
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                     <ui:Button x:Name="BtnPrev" Content="上一步" Padding="16,6" Margin="0,0,8,0"
                                Click="BtnPrev_Click" Appearance="Secondary"
+                               AutomationProperties.Name="上一步"
+                               AutomationProperties.HelpText="返回上一个步骤"
                                ToolTip="上一步"/>
                     <ui:Button x:Name="BtnSend" Content="开始发送" Padding="20,6" Margin="0,0,8,0"
                                Click="BtnSend_Click" Appearance="Primary"
+                               AutomationProperties.Name="开始发送"
+                               AutomationProperties.HelpText="开始批量发送邮件"
                                ToolTip="开始发送邮件"
                                Visibility="Collapsed"/>
                     <ui:Button x:Name="BtnStop" Content="停止发送" Padding="20,6" Margin="0,0,8,0"
                                Click="BtnStop_Click" Appearance="Danger"
+                               AutomationProperties.Name="停止发送"
+                               AutomationProperties.HelpText="停止正在进行的发送"
                                ToolTip="停止正在进行的发送"
                                Visibility="Collapsed"/>
                     <ui:Button x:Name="BtnNext" Content="下一步" Padding="20,6" Click="BtnNext_Click"
+                               AutomationProperties.Name="下一步"
+                               AutomationProperties.HelpText="前进到下一个步骤"
                                ToolTip="下一步"/>
                     <ui:DropDownButton x:Name="BtnMenu" Padding="8,6" Margin="8,0,0,0"
                                        Appearance="Secondary" ToolTip="更多操作">

@@ -7,20 +7,29 @@
         WindowStartupLocation="CenterOwner"
         ResizeMode="NoResize" MinWidth="300" MinHeight="120"
         FontFamily="{StaticResource UIFontFamily}"
-        Background="{StaticResource SurfaceBrush}">
-    <Grid Margin="24">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-        </Grid.RowDefinitions>
+        Background="{StaticResource SurfaceElevatedBrush}">
+    <Border x:Name="DialogCard"
+            RenderTransformOrigin="0.5,0.5">
+        <Border.RenderTransform>
+            <ScaleTransform x:Name="DialogScale" ScaleX="1" ScaleY="1"/>
+        </Border.RenderTransform>
+        <Grid Margin="24">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
 
-        <TextBlock Grid.Row="0" x:Name="MessageText"
-                   Style="{StaticResource BodyTextStyle}" Margin="0,0,0,16"
-                   TextWrapping="Wrap" MaxHeight="200"/>
+            <TextBlock Grid.Row="0" x:Name="MessageText"
+                       Style="{StaticResource BodyTextStyle}" Margin="0,0,0,16"
+                       TextWrapping="Wrap" MaxHeight="200"/>
 
-        <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right">
-            <ui:Button x:Name="BtnNo" Content="否" Click="BtnNo_Click" Padding="16,6" Margin="0,0,8,0"/>
-            <ui:Button x:Name="BtnYes" Content="是" Click="BtnYes_Click" Padding="16,6" Appearance="Primary"/>
-        </StackPanel>
-    </Grid>
+            <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right">
+                <ui:Button x:Name="BtnNo" Content="否" Click="BtnNo_Click" Padding="16,6" Margin="0,0,8,0"
+                           Appearance="Secondary"
+                           AutomationProperties.Name="取消"/>
+                <ui:Button x:Name="BtnYes" Content="是" Click="BtnYes_Click" Padding="16,6" Appearance="Primary"
+                           AutomationProperties.Name="确认"/>
+            </StackPanel>
+        </Grid>
+    </Border>
 </ui:FluentWindow>

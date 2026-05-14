@@ -56,6 +56,7 @@ public partial class RecipientsPage : UserControl, IRefreshable, IDynamicStepDes
         _vm.LoadGroups();
         UpdateEmptyState();
         RestoreSortState();
+        Helpers.AnimationHelper.StaggerFadeIn(GroupListBox);
     }
 
     private void OnSelectedGroupChanged()

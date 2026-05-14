@@ -34,6 +34,7 @@ public partial class AttachmentPage : UserControl, IRefreshable
         TxtFolder.Text = string.IsNullOrEmpty(_vm.MatchDirectory) ? "" : _vm.MatchDirectory;
         TxtFolder.ToolTip = string.IsNullOrEmpty(_vm.MatchDirectory) ? null : _vm.MatchDirectory;
         UpdateEmptyStates();
+        Helpers.AnimationHelper.StaggerFadeIn(CommonList);
     }
 
     private void UpdateEmptyStates()

@@ -270,3 +270,32 @@ public class FailedToVisibilityConverter : IValueConverter
         throw new NotImplementedException();
     }
 }
+
+public class FileTypeToIconConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        if (value is not string path || string.IsNullOrEmpty(path))
+            return "Document24";
+
+        var ext = System.IO.Path.GetExtension(path).ToLowerInvariant();
+        return ext switch
+        {
+            ".pdf" => "Document24",
+            ".doc" or ".docx" => "Document24",
+            ".xls" or ".xlsx" => "Table24",
+            ".csv" => "Table24",
+            ".png" or ".jpg" or ".jpeg" or ".gif" or ".bmp" or ".svg" or ".webp" => "Image24",
+            ".zip" or ".rar" or ".7z" => "FolderZip24",
+            ".ppt" or ".pptx" => "SlideText24",
+            ".txt" or ".rtf" => "Document24",
+            ".html" or ".htm" => "Globe24",
+            _ => "Document24"
+        };
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        throw new NotImplementedException();
+    }
+}

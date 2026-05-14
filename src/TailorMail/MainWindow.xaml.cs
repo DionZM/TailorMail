@@ -16,6 +16,10 @@ namespace TailorMail;
 public partial class MainWindow
 {
     private int _currentStep;
+    private int _previousStep = -1;
+
+    private enum NavDirection { Forward, Back }
+    private NavDirection _navDirection = NavDirection.Forward;
 
     private ObservableCollection<StepItem> _steps = null!;
 
@@ -122,12 +126,14 @@ public partial class MainWindow
         {
             e.Handled = true;
             SaveCurrentStep();
+            _navDirection = NavDirection.Back;
             if (_currentStep > 0) NavigateToStep(_currentStep - 1);
         }
         else if (Keyboard.Modifiers == ModifierKeys.Alt && e.Key == Key.Right)
         {
             e.Handled = true;
             SaveCurrentStep();
+            _navDirection = NavDirection.Forward;
             if (_currentStep < 5) NavigateToStep(_currentStep + 1);
         }
         else if (e.Key == Key.F1)
@@ -176,11 +182,29 @@ public partial class MainWindow
         }
     }
 
+    private void ShowSkeletonForStep(int step)
+    {
+        SkeletonStep0.Visibility = Visibility.Collapsed;
+        SkeletonStep1.Visibility = Visibility.Collapsed;
+        SkeletonStep3.Visibility = Visibility.Collapsed;
+        SkeletonStep4.Visibility = Visibility.Collapsed;
+        SkeletonGeneric.Visibility = Visibility.Collapsed;
+
+        switch (step)
+        {
+            case 0: SkeletonStep0.Visibility = Visibility.Visible; break;
+            case 1: SkeletonStep1.Visibility = Visibility.Visible; break;
+            case 3: SkeletonStep3.Visibility = Visibility.Visible; break;
+            case 4: SkeletonStep4.Visibility = Visibility.Visible; break;
+            default: SkeletonGeneric.Visibility = Visibility.Visible; break;
+        }
+    }
+
     private void ShowWelcome()
     {
         var welcomePage = new WelcomePage();
         MainContent.Content = welcomePage;
-        SkeletonPanel.Visibility = Visibility.Collapsed;
+        SkeletonHost.Visibility = Visibility.Collapsed;
         MainContent.Visibility = Visibility.Visible;
         MainContent.Opacity = 1;
         MainContentTransform.Y = 0;
@@ -205,23 +229,52 @@ public partial class MainWindow
         if (sender is Button btn && btn.Tag is int step)
         {
             SaveCurrentStep();
+            _navDirection = step >= _currentStep ? NavDirection.Forward : NavDirection.Back;
             NavigateToStep(step);
         }
     }
 
     private void NavigateToStep(int step)
     {
+        if (_previousStep >= 0 && MainContent.Visibility == Visibility.Visible && MainContent.Opacity > 0)
+        {
+            var settings = App.DataService.LoadSettings();
+            if (!settings.ReducedMotion)
+            {
+                var fadeOut = new DoubleAnimation(1, 0, TimeSpan.FromMilliseconds(120))
+                {
+                    EasingFunction = new CubicEase { EasingMode = EasingMode.EaseIn }
+                };
+                fadeOut.Completed += (_, _) => LoadStepContent(step);
+                MainContent.BeginAnimation(UIElement.OpacityProperty, fadeOut);
+                _previousStep = _currentStep;
+                _currentStep = step;
+                _visitedSteps.Add(step);
+                UpdateStepIndicator();
+                UpdateButtons();
+                TxtStepHint.Text = $"步骤 {step + 1}/6 · {StepNames[step]}";
+                TxtShortcutHint.Text = ShortcutHintForStep(step);
+                UnsubscribeDynamicDesc();
+                return;
+            }
+        }
+
+        _previousStep = _currentStep;
         _currentStep = step;
         _visitedSteps.Add(step);
         UpdateStepIndicator();
         UpdateButtons();
         TxtStepHint.Text = $"步骤 {step + 1}/6 · {StepNames[step]}";
         TxtShortcutHint.Text = ShortcutHintForStep(step);
-
         UnsubscribeDynamicDesc();
+        LoadStepContent(step);
+    }
 
-        SkeletonPanel.Visibility = Visibility.Visible;
+    private void LoadStepContent(int step)
+    {
+        SkeletonHost.Visibility = Visibility.Visible;
         MainContent.Visibility = Visibility.Collapsed;
+        ShowSkeletonForStep(step);
 
         Dispatcher.BeginInvoke(() =>
         {
@@ -238,7 +291,7 @@ public partial class MainWindow
             SubscribeDynamicDesc();
             UpdateStepDesc();
 
-            SkeletonPanel.Visibility = Visibility.Collapsed;
+            SkeletonHost.Visibility = Visibility.Collapsed;
             MainContent.Visibility = Visibility.Visible;
             AnimateContentIn();
         }, System.Windows.Threading.DispatcherPriority.Loaded);
@@ -386,6 +439,10 @@ public partial class MainWindow
         };
     }
 
+    private double _currentAccentCenter = 0.5;
+    private double _targetAccentCenter = 0.5;
+    private System.Windows.Threading.DispatcherTimer? _accentBarTimer;
+
     private void UpdateAccentBar()
     {
         if (AccentBar == null || StepItems.ItemContainerGenerator.Status != GeneratorStatus.ContainersGenerated)
@@ -413,26 +470,68 @@ public partial class MainWindow
             var centerX = (pillCenterScreenX - barLeftScreenX) / barWidth;
             centerX = Math.Max(0.05, Math.Min(0.95, centerX));
 
-            var halfSpread = 0.44;
-            var midLeft = Math.Max(0, centerX - halfSpread * 0.5);
-            var midRight = Math.Min(1, centerX + halfSpread * 0.5);
-            AccentBar.Background = new LinearGradientBrush
-            {
-                StartPoint = new Point(0, 0.5),
-                EndPoint = new Point(1, 0.5),
-                GradientStops = new GradientStopCollection
-                {
-                    new GradientStop(Colors.Transparent, Math.Max(0, centerX - halfSpread)),
-                    new GradientStop((Color)FindResource("AccentLightColor"), midLeft),
-                    new GradientStop((Color)FindResource("AccentColor"), centerX),
-                    new GradientStop((Color)FindResource("AccentLightColor"), midRight),
-                    new GradientStop(Colors.Transparent, Math.Min(1, centerX + halfSpread))
-                }
-            };
+            _targetAccentCenter = centerX;
+            StartAccentBarAnimation();
         }
         catch
         {
         }
+    }
+
+    private void StartAccentBarAnimation()
+    {
+        var settings = App.DataService.LoadSettings();
+        if (settings.ReducedMotion)
+        {
+            _currentAccentCenter = _targetAccentCenter;
+            ApplyAccentBarGradient(_currentAccentCenter);
+            return;
+        }
+
+        _accentBarTimer?.Stop();
+        var startCenter = _currentAccentCenter;
+        var targetCenter = _targetAccentCenter;
+        var startTime = DateTime.UtcNow;
+        var durationMs = 300.0;
+
+        _accentBarTimer = new System.Windows.Threading.DispatcherTimer
+        {
+            Interval = TimeSpan.FromMilliseconds(16)
+        };
+        _accentBarTimer.Tick += (_, _) =>
+        {
+            var elapsed = (DateTime.UtcNow - startTime).TotalMilliseconds;
+            var progress = Math.Min(1.0, elapsed / durationMs);
+            var eased = 1 - Math.Pow(1 - progress, 3);
+            _currentAccentCenter = startCenter + (targetCenter - startCenter) * eased;
+            ApplyAccentBarGradient(_currentAccentCenter);
+            if (progress >= 1.0)
+            {
+                _accentBarTimer.Stop();
+                _currentAccentCenter = targetCenter;
+            }
+        };
+        _accentBarTimer.Start();
+    }
+
+    private void ApplyAccentBarGradient(double centerX)
+    {
+        var halfSpread = 0.44;
+        var midLeft = Math.Max(0, centerX - halfSpread * 0.5);
+        var midRight = Math.Min(1, centerX + halfSpread * 0.5);
+        AccentBar.Background = new LinearGradientBrush
+        {
+            StartPoint = new Point(0, 0.5),
+            EndPoint = new Point(1, 0.5),
+            GradientStops = new GradientStopCollection
+            {
+                new GradientStop(Colors.Transparent, Math.Max(0, centerX - halfSpread)),
+                new GradientStop((Color)FindResource("AccentLightColor"), midLeft),
+                new GradientStop((Color)FindResource("AccentColor"), centerX),
+                new GradientStop((Color)FindResource("AccentLightColor"), midRight),
+                new GradientStop(Colors.Transparent, Math.Min(1, centerX + halfSpread))
+            }
+        };
     }
 
     private static T? FindVisualChild<T>(DependencyObject parent) where T : DependencyObject
@@ -452,12 +551,14 @@ public partial class MainWindow
     private void BtnPrev_Click(object sender, RoutedEventArgs e)
     {
         SaveCurrentStep();
+        _navDirection = NavDirection.Back;
         if (_currentStep > 0) NavigateToStep(_currentStep - 1);
     }
 
     private void BtnNext_Click(object sender, RoutedEventArgs e)
     {
         SaveCurrentStep();
+        _navDirection = NavDirection.Forward;
         if (_currentStep < 5) NavigateToStep(_currentStep + 1);
     }
 
@@ -584,24 +685,27 @@ public partial class MainWindow
         {
             MainContent.Opacity = 1;
             MainContentTransform.Y = 0;
+            MainContentTransform.X = 0;
             return;
         }
 
+        double offsetX = _navDirection == NavDirection.Forward ? 40 : -40;
         MainContent.Opacity = 0;
-        MainContentTransform.Y = DesignTokens.AnimationSlideOffset;
+        MainContentTransform.X = offsetX;
+        MainContentTransform.Y = 0;
 
-        var duration = TimeSpan.FromMilliseconds(DesignTokens.DurationFast);
+        var duration = TimeSpan.FromMilliseconds(DesignTokens.DurationNormal);
         var opacityAnimation = new DoubleAnimation(0, 1, duration)
         {
             EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
         };
-        var slideAnimation = new DoubleAnimation(DesignTokens.AnimationSlideOffset, 0, duration)
+        var slideAnimation = new DoubleAnimation(offsetX, 0, duration)
         {
             EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
         };
 
         MainContent.BeginAnimation(UIElement.OpacityProperty, opacityAnimation);
-        MainContentTransform.BeginAnimation(TranslateTransform.YProperty, slideAnimation);
+        MainContentTransform.BeginAnimation(TranslateTransform.XProperty, slideAnimation);
     }
 
     private void OnMainWindowClosing(object? sender, CancelEventArgs e)

@@ -10,9 +10,10 @@
         </Grid.RowDefinitions>
 
         <Border Grid.Row="0" Style="{StaticResource CardStyle}" Margin="0,0,0,8" Padding="16,8">
-            <ui:TextBox x:Name="SubjectBox" Text="{Binding Subject,UpdateSourceTrigger=PropertyChanged}"
-                        PlaceholderText="请输入邮件主题，支持 {变量名} 格式" FontSize="{StaticResource FontSizeSM}"
-                        FontFamily="{StaticResource UIFontFamily}"/>
+            <ui:TextBox x:Name="SubjectBox"
+                        Text="{Binding Subject,UpdateSourceTrigger=PropertyChanged}"
+                        PlaceholderText="请输入邮件主题，支持 {变量名} 格式"
+                        Padding="8,6"/>
         </Border>
 
         <Border Grid.Row="1" Style="{StaticResource CardStyle}" Margin="0">
@@ -31,7 +32,7 @@
                                 <TextBlock Text="插入变量" FontSize="{StaticResource FontSizeSM}"/>
                             </StackPanel>
                         </Button>
-                        <Border Background="{StaticResource BorderSubtleBrush}" Width="1" Margin="6,4"/>
+                        <Border Style="{StaticResource VerticalDividerStyle}" Margin="6,4"/>
                         <ToggleButton x:Name="BoldBtn" Click="OnToggleBold" ToolTip="粗体 (Ctrl+B)" Margin="4,0,0,0" Style="{StaticResource IconToggleButtonStyle}">
                             <TextBlock Text="B" FontWeight="Bold" FontSize="{StaticResource FontSizeSM}"/>
                         </ToggleButton>
@@ -41,7 +42,7 @@
                         <ToggleButton x:Name="UnderlineBtn" Click="OnToggleUnderline" ToolTip="下划线 (Ctrl+U)" Margin="2,0,0,0" Style="{StaticResource IconToggleButtonStyle}">
                             <TextBlock TextDecorations="Underline" Text="U" FontSize="{StaticResource FontSizeSM}"/>
                         </ToggleButton>
-                        <Border Background="{StaticResource BorderSubtleBrush}" Width="1" Margin="6,4"/>
+                        <Border Style="{StaticResource VerticalDividerStyle}" Margin="6,4"/>
                         <ToggleButton x:Name="AlignLeftBtn" Click="OnAlignLeft" ToolTip="左对齐" Margin="4,0,0,0" Style="{StaticResource IconToggleButtonStyle}">
                             <ui:SymbolIcon Symbol="TextAlignLeft24" FontSize="14"/>
                         </ToggleButton>
@@ -51,21 +52,21 @@
                         <ToggleButton x:Name="AlignRightBtn" Click="OnAlignRight" ToolTip="右对齐" Margin="2,0,0,0" Style="{StaticResource IconToggleButtonStyle}">
                             <ui:SymbolIcon Symbol="TextAlignRight24" FontSize="14"/>
                         </ToggleButton>
-                        <Border Background="{StaticResource BorderSubtleBrush}" Width="1" Margin="6,4"/>
+                        <Border Style="{StaticResource VerticalDividerStyle}" Margin="6,4"/>
                         <Button x:Name="UndoBtn" Click="OnUndo" ToolTip="撤销 (Ctrl+Z)" Margin="4,0,0,0" Style="{StaticResource IconButtonStyle}">
                             <ui:SymbolIcon Symbol="ArrowUndo24" FontSize="14"/>
                         </Button>
                         <Button x:Name="RedoBtn" Click="OnRedo" ToolTip="重做 (Ctrl+Y)" Margin="2,0,0,0" Style="{StaticResource IconButtonStyle}">
                             <ui:SymbolIcon Symbol="ArrowRedo24" FontSize="14"/>
                         </Button>
-                        <Border Background="{StaticResource BorderSubtleBrush}" Width="1" Margin="6,4"/>
+                        <Border Style="{StaticResource VerticalDividerStyle}" Margin="6,4"/>
                         <ComboBox x:Name="FontSizeCombo" Width="56" Margin="4,0,0,0" Style="{StaticResource ToolbarComboBoxStyle}"
                                   SelectionChanged="OnFontSizeComboChanged" IsEditable="True"
                                   KeyDown="OnFontSizeKeyDown"
                                   PreviewTextInput="OnFontSizePreviewTextInput"/>
                         <TextBlock x:Name="FontSizeError" Text="" FontSize="{StaticResource FontSizeXS}" Foreground="{StaticResource DangerBrush}"
                                    VerticalAlignment="Center" Margin="4,0,0,0" Visibility="Collapsed"/>
-                        <Border Background="{StaticResource BorderSubtleBrush}" Width="1" Margin="6,4"/>
+                        <Border Style="{StaticResource VerticalDividerStyle}" Margin="6,4"/>
                         <Border x:Name="ColorPreview" Width="28" Height="28" CornerRadius="6"
                                 Background="Black" Margin="4,0,0,0" VerticalAlignment="Center"
                                 BorderBrush="{StaticResource AccentBrush}" BorderThickness="2"
@@ -104,11 +105,11 @@
                                 </StackPanel>
                             </Border>
                         </Popup>
-                        <Border Background="{StaticResource BorderSubtleBrush}" Width="1" Margin="6,4"/>
+                        <Border Style="{StaticResource VerticalDividerStyle}" Margin="6,4"/>
                         <Button Click="OnInsertLink" ToolTip="插入链接" Margin="4,0,0,0" Style="{StaticResource IconButtonStyle}">
                             <ui:SymbolIcon Symbol="Link24" FontSize="14"/>
                         </Button>
-                        <Border Background="{StaticResource BorderSubtleBrush}" Width="1" Margin="6,4"/>
+                        <Border Style="{StaticResource VerticalDividerStyle}" Margin="6,4"/>
                         <ComboBox x:Name="LineHeightCombo" Width="52" Margin="4,0,0,0" Style="{StaticResource ToolbarComboBoxStyle}"
                                   SelectionChanged="OnLineHeightChanged"
                                   ToolTip="行高">
@@ -126,7 +127,9 @@
                                  BorderThickness="0" TextChanged="OnEditorTextChanged"
                                  SelectionChanged="OnEditorSelectionChanged"
                                  SpellCheck.IsEnabled="False" AcceptsTab="False"
-                                 Background="Transparent">
+                                 Background="Transparent"
+                                 AutomationProperties.Name="邮件正文编辑器"
+                                 AutomationProperties.HelpText="编辑邮件正文内容">
                             <RichTextBox.ContextMenu>
                                 <ContextMenu>
                                     <MenuItem Header="剪切" Command="ApplicationCommands.Cut"/>
@@ -155,11 +158,17 @@
         </Border>
 
         <StackPanel Grid.Row="2" Orientation="Vertical" Margin="0,8,0,0">
-            <StackPanel Orientation="Horizontal">
-                <ui:SymbolIcon Symbol="Info24" FontSize="14" Foreground="{StaticResource TextTertiaryBrush}" VerticalAlignment="Center" Margin="0,0,4,0"/>
-                <TextBlock x:Name="VarHintText"
-                           Style="{StaticResource CaptionTextStyle}"/>
-            </StackPanel>
+            <DockPanel>
+                <StackPanel Orientation="Horizontal" DockPanel.Dock="Left">
+                    <ui:SymbolIcon Symbol="Info24" FontSize="14" Foreground="{StaticResource TextTertiaryBrush}" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                    <TextBlock x:Name="VarHintText"
+                               Style="{StaticResource CaptionTextStyle}"/>
+                </StackPanel>
+                <TextBlock x:Name="TxtCharCount" DockPanel.Dock="Right"
+                           HorizontalAlignment="Right" VerticalAlignment="Center"
+                           Style="{StaticResource CaptionTextStyle}"
+                           Foreground="{StaticResource TextTertiaryBrush}"/>
+            </DockPanel>
             <TextBlock x:Name="VarWarningText" Visibility="Collapsed"
                        Foreground="{StaticResource WarningBrush}" FontWeight="Medium"
                        Style="{StaticResource CaptionTextStyle}" TextWrapping="Wrap"/>

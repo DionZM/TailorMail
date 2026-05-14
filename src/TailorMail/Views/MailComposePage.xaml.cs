@@ -274,12 +274,9 @@ public partial class MailComposePage : UserControl, IRefreshable
             var newText = before + insertText + after;
             var newCursorPos = safeStart + insertText.Length;
 
-            // Update ViewModel directly — binding pushes newText to TextBox,
-            // which resets SelectionStart to 0 during the render pass.
             if (source.DataContext is MailComposeViewModel vm)
                 vm.Subject = newText;
 
-            // Defer cursor positioning until after binding + layout + render completes
             Dispatcher.BeginInvoke(() => tb.SelectionStart = newCursorPos,
                 System.Windows.Threading.DispatcherPriority.Loaded);
         }
@@ -302,7 +299,6 @@ public partial class MailComposePage : UserControl, IRefreshable
 
     private void OnAutoCompleteSelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        // Selection highlight only; insertion is handled by Enter/Tab key
     }
 
     private void OnAutoCompleteListKeyDown(object sender, KeyEventArgs e)
@@ -323,9 +319,9 @@ public partial class MailComposePage : UserControl, IRefreshable
 
     #endregion
 
-    // UI-21: Strip rich formatting on paste, keep plain text only
     private void OnEditorPasting(object sender, DataObjectPastingEventArgs e)
     {
+        var hadRichText = e.DataObject.GetDataPresent(DataFormats.Rtf);
         if (e.DataObject.GetDataPresent(DataFormats.Text))
         {
             var text = e.DataObject.GetData(DataFormats.Text) as string;
@@ -333,6 +329,8 @@ public partial class MailComposePage : UserControl, IRefreshable
             {
                 var cleanData = new DataObject(DataFormats.Text, text);
                 e.DataObject = cleanData;
+                if (hadRichText)
+                    App.ShowNotification("已粘贴为纯文本");
             }
         }
     }
@@ -345,6 +343,15 @@ public partial class MailComposePage : UserControl, IRefreshable
         _xamlSaveTimer.Stop();
         _xamlSaveTimer.Start();
         ValidateVariablesInEditor();
+        UpdateCharCount();
+    }
+
+    private void UpdateCharCount()
+    {
+        var text = new TextRange(Editor.Document.ContentStart, Editor.Document.ContentEnd).Text;
+        var charCount = text.Length;
+        var lineCount = Editor.Document.Blocks.Count;
+        TxtCharCount.Text = $"{charCount} 字符 · {lineCount} 行";
     }
 
     private void FlushXamlSave()
@@ -427,7 +434,6 @@ public partial class MailComposePage : UserControl, IRefreshable
         if (foreground is SolidColorBrush scb)
             ColorPreview.Background = scb;
 
-        // UI-30: Update alignment toggle states
         TextAlignment alignment;
         if (sel.IsEmpty)
         {
@@ -746,10 +752,9 @@ public partial class MailComposePage : UserControl, IRefreshable
         }
     }
 
-    // UI-28: Line height
     private void OnLineHeightChanged(object sender, SelectionChangedEventArgs e)
     {
-        if (Editor == null) return; // Fires during InitializeComponent before Editor is ready
+        if (Editor == null) return;
         if (LineHeightCombo.SelectedItem is ComboBoxItem item && item.Tag is string tagStr && double.TryParse(tagStr, out var lineHeight))
         {
             if (Editor.Selection != null && !Editor.Selection.IsEmpty)

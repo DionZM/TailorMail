@@ -56,14 +56,14 @@
                             </Grid.ColumnDefinitions>
                             <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
                                 <TextBlock Text="筛选：" VerticalAlignment="Center" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,8,0" FontSize="{StaticResource FontSizeSM}"/>
-                                <RadioButton x:Name="FilterAll" Content="全部" IsChecked="True" GroupName="SendFilter" Click="OnFilterClicked" Margin="0,0,8,0"
-                                             FontSize="{StaticResource FontSizeSM}" FontFamily="{StaticResource UIFontFamily}" Padding="10,4"/>
-                                <RadioButton x:Name="FilterSuccess" Content="成功" GroupName="SendFilter" Click="OnFilterClicked" Margin="0,0,8,0"
-                                             FontSize="{StaticResource FontSizeSM}" FontFamily="{StaticResource UIFontFamily}" Padding="10,4"/>
-                                <RadioButton x:Name="FilterFailed" Content="失败" GroupName="SendFilter" Click="OnFilterClicked" Margin="0,0,8,0"
-                                             FontSize="{StaticResource FontSizeSM}" FontFamily="{StaticResource UIFontFamily}" Padding="10,4"/>
-                                <RadioButton x:Name="FilterPending" Content="等待" GroupName="SendFilter" Click="OnFilterClicked"
-                                             FontSize="{StaticResource FontSizeSM}" FontFamily="{StaticResource UIFontFamily}" Padding="10,4"/>
+                                <RadioButton x:Name="FilterAll" IsChecked="True" Click="OnFilterClicked"
+                                             Style="{StaticResource FilterTabStyle}"/>
+                                <RadioButton x:Name="FilterSuccess" Click="OnFilterClicked"
+                                             Style="{StaticResource FilterTabStyle}"/>
+                                <RadioButton x:Name="FilterFailed" Click="OnFilterClicked"
+                                             Style="{StaticResource FilterTabStyle}"/>
+                                <RadioButton x:Name="FilterPending" Click="OnFilterClicked"
+                                             Style="{StaticResource FilterTabStyle}"/>
                             </StackPanel>
                             <TextBlock Grid.Column="1" x:Name="TxtEta" Text="" VerticalAlignment="Center" HorizontalAlignment="Center"
                                        Style="{StaticResource CaptionTextStyle}" Foreground="{StaticResource TextTertiaryBrush}"/>

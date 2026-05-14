@@ -1,6 +1,7 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
+using System.Windows.Media;
 using TailorMail.Helpers;
 using TailorMail.Models;
 using TailorMail.Services;
@@ -62,6 +63,7 @@ public partial class SendPage : UserControl, IRefreshable, IDynamicStepDesc
             : "未选择发送对象";
         DataGridResults.ItemsSource = _viewModel.SendResults;
         UpdateProgressDisplay();
+        UpdateFilterTabs();
         StepDescriptionChanged?.Invoke();
         SendStateChanged?.Invoke();
     }
@@ -206,6 +208,7 @@ public partial class SendPage : UserControl, IRefreshable, IDynamicStepDesc
                 _propertyChangedHandler = null;
             }
             UpdateProgressDisplay();
+            UpdateFilterTabs();
             NotifyStateChanged();
             _sendStartTime = null;
             // U-05: Play different sounds based on results
@@ -391,5 +394,44 @@ public partial class SendPage : UserControl, IRefreshable, IDynamicStepDesc
             view.Filter = item => item is SendResult s && s.Status == SendStatus.Pending;
         else
             view.Filter = null;
+    }
+
+    private void UpdateFilterTabs()
+    {
+        var total = _viewModel.SendResults.Count;
+        var success = _viewModel.SendResults.Count(r => r.Status == SendStatus.Success);
+        var failed = _viewModel.SendResults.Count(r => r.Status == SendStatus.Failed);
+        var pending = _viewModel.SendResults.Count(r => r.Status == SendStatus.Pending);
+
+        FilterAll.Content = CreateTabContent("全部", total);
+        FilterSuccess.Content = CreateTabContent("成功", success);
+        FilterFailed.Content = CreateTabContent("失败", failed);
+        FilterPending.Content = CreateTabContent("等待", pending);
+    }
+
+    private StackPanel CreateTabContent(string label, int count)
+    {
+        var panel = new StackPanel { Orientation = Orientation.Horizontal };
+        panel.Children.Add(new TextBlock { Text = label, VerticalAlignment = VerticalAlignment.Center });
+        if (count > 0)
+        {
+            var badge = new Border
+            {
+                Background = (Brush)FindResource("SurfaceVariantBrush"),
+                CornerRadius = new CornerRadius(8),
+                Padding = new Thickness(6, 0, 6, 0),
+                Margin = new Thickness(4, 0, 0, 0),
+                VerticalAlignment = VerticalAlignment.Center
+            };
+            badge.Child = new TextBlock
+            {
+                Text = count.ToString(),
+                FontSize = 11,
+                Foreground = (Brush)FindResource("TextSecondaryBrush"),
+                VerticalAlignment = VerticalAlignment.Center
+            };
+            panel.Children.Add(badge);
+        }
+        return panel;
     }
 }

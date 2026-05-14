@@ -1,4 +1,8 @@
 using System.Collections.ObjectModel;
+using System.Text.RegularExpressions;
+using System.Windows;
+using System.Windows.Documents;
+using System.Windows.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
 using TailorMail.Helpers;
 using TailorMail.Models;
@@ -153,7 +157,7 @@ public partial class PreviewViewModel : ObservableObject
         foreach (var run in GetAllRuns(doc).ToList())
         {
             if (!string.IsNullOrEmpty(run.Text))
-                run.Text = VariablesViewModel.ProcessBodyFast(run.Text, SelectedRecipient, varNames);
+                HighlightVariablesInRun(run, SelectedRecipient, varNames);
         }
 
         return doc;
@@ -193,6 +197,115 @@ public partial class PreviewViewModel : ObservableObject
                     yield return child;
             }
         }
+    }
+
+    private static void HighlightVariablesInRun(Run run, Recipient recipient, IReadOnlyList<string>? varNames)
+    {
+        var text = run.Text;
+        if (string.IsNullOrEmpty(text) || !text.Contains('{'))
+        {
+            run.Text = VariablesViewModel.ProcessBodyFast(text, recipient, varNames);
+            return;
+        }
+
+        var parent = run.Parent as Paragraph;
+        if (parent == null)
+        {
+            run.Text = VariablesViewModel.ProcessBodyFast(text, recipient, varNames);
+            return;
+        }
+
+        var replacements = BuildReplacementMap(recipient, varNames);
+        var pattern = @"\{([^}]+)\}";
+        var matches = Regex.Matches(text, pattern);
+        if (matches.Count == 0)
+        {
+            run.Text = VariablesViewModel.ProcessBodyFast(text, recipient, varNames);
+            return;
+        }
+
+        var nextSibling = run.NextInline;
+        int lastPos = 0;
+
+        for (int i = 0; i < matches.Count; i++)
+        {
+            var match = matches[i];
+            if (match.Index > lastPos)
+            {
+                var plainText = text[lastPos..match.Index];
+                var newRun = new Run(VariablesViewModel.ProcessBodyFast(plainText, recipient, varNames))
+                {
+                    FontFamily = run.FontFamily,
+                    FontSize = run.FontSize,
+                    FontWeight = run.FontWeight,
+                    FontStyle = run.FontStyle,
+                    Foreground = run.Foreground
+                };
+                if (nextSibling != null)
+                    parent.Inlines.InsertBefore(nextSibling, newRun);
+                else
+                    parent.Inlines.Add(newRun);
+            }
+
+            var varName = match.Groups[1].Value;
+            var value = replacements.TryGetValue(varName, out var v) ? v : match.Value;
+            var highlightRun = new Run(value)
+            {
+                Background = (Brush)Application.Current.FindResource("AccentLightBrush"),
+                Foreground = (Brush)Application.Current.FindResource("AccentBrush"),
+                FontFamily = run.FontFamily,
+                FontSize = run.FontSize,
+                FontWeight = run.FontWeight,
+                FontStyle = run.FontStyle
+            };
+            if (nextSibling != null)
+                parent.Inlines.InsertBefore(nextSibling, highlightRun);
+            else
+                parent.Inlines.Add(highlightRun);
+
+            lastPos = match.Index + match.Length;
+        }
+
+        if (lastPos < text.Length)
+        {
+            var trailing = text[lastPos..];
+            var trailingRun = new Run(VariablesViewModel.ProcessBodyFast(trailing, recipient, varNames))
+            {
+                FontFamily = run.FontFamily,
+                FontSize = run.FontSize,
+                FontWeight = run.FontWeight,
+                FontStyle = run.FontStyle,
+                Foreground = run.Foreground
+            };
+            if (nextSibling != null)
+                parent.Inlines.InsertBefore(nextSibling, trailingRun);
+            else
+                parent.Inlines.Add(trailingRun);
+        }
+
+        parent.Inlines.Remove(run);
+    }
+
+    private static Dictionary<string, string> BuildReplacementMap(Recipient recipient, IReadOnlyList<string>? varNames)
+    {
+        var replacements = new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            ["名称"] = recipient.Name ?? "",
+            ["简称"] = recipient.ShortName ?? ""
+        };
+        foreach (var kvp in recipient.Variables)
+            replacements[kvp.Key] = kvp.Value ?? "";
+
+        if (varNames != null)
+        {
+            for (int i = 0; i < varNames.Count; i++)
+            {
+                var name = varNames[i];
+                if (!replacements.ContainsKey(name))
+                    replacements[name] = "";
+            }
+        }
+        return replacements;
     }
 
     private static System.Windows.Documents.FlowDocument CreatePlainTextDoc(string text)

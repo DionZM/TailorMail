@@ -22,6 +22,21 @@ public static class DesignTokens
     public const string RowHoverColor = "#EDF2F8";
     public const string RowSelectedColor = "#D6E9FB";
 
+    // Semantic layer colors
+    public const string OnAccentColor = "#FFFFFF";
+    public const string OnAccentLightColor = "#1D6FB5";
+    public const string AccentDisabledColor = "#B0C4D8";
+
+    // Neutral scale
+    public const string SurfaceVariantColor = "#E8ECF0";
+    public const string OutlineColor = "#C0C8D4";
+    public const string OutlineLightColor = "#E0E4EA";
+
+    // Semantic state variants
+    public const string SuccessLightColor = "#ECFDF5";
+    public const string DangerLightColor = "#FEF2F2";
+    public const string WarningLightColor = "#FFFBEB";
+
     public const string DisplayFontFamily = "Georgia, Segoe UI Variable, Segoe UI, Microsoft YaHei UI";
     public const string BodyFontFamily = "Segoe UI Variable, Segoe UI, Microsoft YaHei UI";
     public const string UIFontFamily = "Segoe UI Variable, Segoe UI, Microsoft YaHei UI";
@@ -29,6 +44,7 @@ public static class DesignTokens
 
     public const double SpacingXS = 4;
     public const double SpacingSM = 8;
+    public const double SpacingM2 = 12;
     public const double SpacingMD = 16;
     public const double SpacingLG = 24;
     public const double SpacingXL = 32;
@@ -50,10 +66,13 @@ public static class DesignTokens
     public static readonly CornerRadius CornerRadiusMD = new(8);
     public static readonly CornerRadius CornerRadiusLG = new(12);
     public static readonly CornerRadius CornerRadiusXL = new(16);
+    public static readonly CornerRadius CornerRadiusInput = new(6);
 
     public const double DurationFast = 150;
     public const double DurationNormal = 300;
     public const double DurationSlow = 500;
 
     public const double AnimationSlideOffset = 12;
+
+    public const double LineHeightDefault = 22.0;
 }

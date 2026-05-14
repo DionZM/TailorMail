@@ -11,6 +11,7 @@ public partial class SettingsWindow
 {
     private readonly SettingsViewModel _vm;
     private bool _isLoading;
+    private bool _isDirty;
     private CancellationTokenSource? _portHintCts;
 
     public SettingsWindow()
@@ -39,6 +40,7 @@ public partial class SettingsWindow
         {
             LoadSettings();
             UpdateOutlookStatus();
+            TrackChanges();
         }
         catch (Exception ex)
         {
@@ -308,11 +310,76 @@ public partial class SettingsWindow
         _vm.SmtpConcurrency = (int)(TxtSmtpConcurrency.Value ?? 1);
         _vm.Signature = TxtSignature.Text;
         _vm.SaveCommand.Execute(null);
+        _isDirty = false;
         Close();
     }
 
     private void BtnCancel_Click(object sender, RoutedEventArgs e)
     {
         Close();
+    }
+
+    private void OnSettingsNavChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (SettingsNavList == null) return;
+        var index = SettingsNavList.SelectedIndex;
+
+        var scrollViewer = FindScrollViewer();
+        if (scrollViewer == null) return;
+
+        FrameworkElement? target = index switch
+        {
+            0 => SectionChannel,
+            1 => SectionSendParams,
+            2 => SectionSignature,
+            _ => null
+        };
+
+        if (target != null)
+            target.BringIntoView();
+    }
+
+    private System.Windows.Controls.ScrollViewer? FindScrollViewer()
+    {
+        return FindVisualChild<System.Windows.Controls.ScrollViewer>(this);
+    }
+
+    private static T? FindVisualChild<T>(System.Windows.DependencyObject parent) where T : System.Windows.DependencyObject
+    {
+        for (int i = 0; i < System.Windows.Media.VisualTreeHelper.GetChildrenCount(parent); i++)
+        {
+            var child = System.Windows.Media.VisualTreeHelper.GetChild(parent, i);
+            if (child is T result) return result;
+            var found = FindVisualChild<T>(child);
+            if (found != null) return found;
+        }
+        return null;
+    }
+
+    private void TrackChanges()
+    {
+        CmbChannel.SelectionChanged += (_, _) => _isDirty = true;
+        TxtServer.TextChanged += (_, _) => _isDirty = true;
+        TxtUsername.TextChanged += (_, _) => _isDirty = true;
+        TxtPassword.PasswordChanged += (_, _) => _isDirty = true;
+        TxtSenderName.TextChanged += (_, _) => _isDirty = true;
+        TxtSenderEmail.TextChanged += (_, _) => _isDirty = true;
+        TxtSendInterval.ValueChanged += (_, _) => _isDirty = true;
+        TxtSmtpConcurrency.ValueChanged += (_, _) => _isDirty = true;
+        TxtSignature.TextChanged += (_, _) => _isDirty = true;
+    }
+
+    protected override void OnClosing(System.ComponentModel.CancelEventArgs e)
+    {
+        if (_isDirty)
+        {
+            var dlg = new ConfirmDialog { Title = "未保存的更改", Message = "设置已修改但未保存，确定要关闭吗？" };
+            if (dlg.ShowDialog() != true)
+            {
+                e.Cancel = true;
+                return;
+            }
+        }
+        base.OnClosing(e);
     }
 }

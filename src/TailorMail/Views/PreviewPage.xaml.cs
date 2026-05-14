@@ -108,6 +108,7 @@ public partial class PreviewPage : UserControl, IRefreshable
             Dispatcher.BeginInvoke(() =>
             {
                 ListGroups.SelectedIndex = restoreIndex >= 0 ? restoreIndex : 0;
+                Helpers.AnimationHelper.StaggerFadeIn(ListGroups);
             });
         }
     }
@@ -172,6 +173,25 @@ public partial class PreviewPage : UserControl, IRefreshable
             VerticalAlignment = VerticalAlignment.Center
         };
 
+        var ext = System.IO.Path.GetExtension(filePath).ToLowerInvariant();
+        var iconSymbol = ext switch
+        {
+            ".pdf" or ".doc" or ".docx" => Wpf.Ui.Controls.SymbolRegular.Document24,
+            ".xls" or ".xlsx" or ".csv" => Wpf.Ui.Controls.SymbolRegular.Table24,
+            ".png" or ".jpg" or ".jpeg" or ".gif" or ".bmp" or ".svg" or ".webp" => Wpf.Ui.Controls.SymbolRegular.Image24,
+            ".zip" or ".rar" or ".7z" => Wpf.Ui.Controls.SymbolRegular.FolderZip24,
+            ".ppt" or ".pptx" => Wpf.Ui.Controls.SymbolRegular.SlideText24,
+            _ => Wpf.Ui.Controls.SymbolRegular.Document24
+        };
+        var icon = new Wpf.Ui.Controls.SymbolIcon
+        {
+            Symbol = iconSymbol,
+            FontSize = 14,
+            Foreground = (System.Windows.Media.Brush)FindResource("TextSecondaryBrush"),
+            VerticalAlignment = VerticalAlignment.Center,
+            Margin = new Thickness(0, 0, 4, 0)
+        };
+
         if (!System.IO.File.Exists(filePath))
         {
             var notFoundBlock = new TextBlock
@@ -183,6 +203,7 @@ public partial class PreviewPage : UserControl, IRefreshable
                 TextTrimming = TextTrimming.CharacterEllipsis,
                 ToolTip = filePath
             };
+            panel.Children.Add(icon);
             panel.Children.Add(prefixBlock);
             panel.Children.Add(notFoundBlock);
             return panel;
@@ -200,6 +221,7 @@ public partial class PreviewPage : UserControl, IRefreshable
             VerticalAlignment = VerticalAlignment.Center,
             ToolTip = filePath
         };
+        panel.Children.Add(icon);
         panel.Children.Add(prefixBlock);
         panel.Children.Add(linkBlock);
 

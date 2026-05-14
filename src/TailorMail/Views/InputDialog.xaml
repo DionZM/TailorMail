@@ -7,24 +7,31 @@
         WindowStartupLocation="CenterOwner"
         ResizeMode="CanResizeWithGrip" MinWidth="300" MinHeight="150"
         FontFamily="{StaticResource UIFontFamily}"
-        Background="{StaticResource SurfaceBrush}">
-    <Grid Margin="24">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-        </Grid.RowDefinitions>
+        Background="{StaticResource SurfaceElevatedBrush}">
+    <Border x:Name="DialogCard"
+            RenderTransformOrigin="0.5,0.5">
+        <Border.RenderTransform>
+            <ScaleTransform x:Name="DialogScale" ScaleX="1" ScaleY="1"/>
+        </Border.RenderTransform>
+        <Grid Margin="24">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
 
-        <TextBlock Grid.Row="0" Text="{Binding Prompt}" Style="{StaticResource BodyTextStyle}" Margin="0,0,0,12" TextWrapping="Wrap" MaxHeight="120"/>
+            <TextBlock Grid.Row="0" Text="{Binding Prompt}" Style="{StaticResource BodyTextStyle}" Margin="0,0,0,12" TextWrapping="Wrap" MaxHeight="120"/>
 
-        <ui:TextBox Grid.Row="1" x:Name="InputTextBox" Margin="0,0,0,16"
-                    PlaceholderText="请输入..."
-                    TextChanged="OnTextChanged"
-                    KeyDown="OnInputKeyDown"/>
+            <ui:TextBox Grid.Row="1" x:Name="InputTextBox" Margin="0,0,0,16"
+                        PlaceholderText="请输入..."
+                        TextChanged="OnTextChanged"
+                        KeyDown="OnInputKeyDown"/>
 
-        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right">
-            <ui:Button Content="取消" Click="BtnCancel_Click" Padding="16,6" Margin="0,0,8,0"/>
-            <ui:Button x:Name="BtnOk" Content="确定" Click="BtnOk_Click" Padding="16,6" Appearance="Primary"/>
-        </StackPanel>
-    </Grid>
+            <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right">
+                <ui:Button Content="取消" Click="BtnCancel_Click" Padding="16,6" Margin="0,0,8,0"
+                           Appearance="Secondary"/>
+                <ui:Button x:Name="BtnOk" Content="确定" Click="BtnOk_Click" Padding="16,6" Appearance="Primary"/>
+            </StackPanel>
+        </Grid>
+    </Border>
 </ui:FluentWindow>
