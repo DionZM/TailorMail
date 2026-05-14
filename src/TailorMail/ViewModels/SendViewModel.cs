@@ -11,8 +11,6 @@ public partial class SendViewModel : ObservableObject
 {
     private readonly IDataService _dataService;
     private CancellationTokenSource? _cts;
-    // T-05: volatile for thread-safe visibility
-    private volatile List<Recipient>? _cachedSelectedRecipients;
 
     [ObservableProperty]
     private ObservableCollection<SendResult> _sendResults = [];
@@ -56,16 +54,12 @@ public partial class SendViewModel : ObservableObject
 
     public List<Recipient> GetSelectedRecipients()
     {
-        if (_cachedSelectedRecipients != null) return _cachedSelectedRecipients;
         var groups = _dataService.LoadRecipientGroups();
-        _cachedSelectedRecipients = groups.SelectMany(g => g.Recipients).Where(r => r.IsSelected).ToList();
-        return _cachedSelectedRecipients;
+        return groups.SelectMany(g => g.Recipients).Where(r => r.IsSelected).ToList();
     }
 
     public Recipient? FindRecipient(string id)
     {
-        if (_cachedSelectedRecipients != null)
-            return _cachedSelectedRecipients.FirstOrDefault(r => r.Id == id);
         var groups = _dataService.LoadRecipientGroups();
         return groups.SelectMany(g => g.Recipients).FirstOrDefault(r => r.Id == id);
     }
@@ -88,7 +82,6 @@ public partial class SendViewModel : ObservableObject
             IsSending = false;
             _cts?.Dispose();
             _cts = null;
-            _cachedSelectedRecipients = null;
         }
     }
 

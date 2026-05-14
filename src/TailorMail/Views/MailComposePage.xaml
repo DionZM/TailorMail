@@ -23,7 +23,6 @@
                 </Grid.RowDefinitions>
 
                 <StackPanel Grid.Row="0" Margin="0,0,0,8">
-                    <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
                     <WrapPanel Orientation="Horizontal">
                         <ComboBox x:Name="VariableCombo" Width="160" Margin="0,0,8,0" Padding="8,6"/>
                         <Button Click="OnInsertVariable" Margin="0,0,8,0" Padding="8,4" ToolTip="插入变量到光标位置">
@@ -33,30 +32,30 @@
                             </StackPanel>
                         </Button>
                         <Border Background="{StaticResource BorderSubtleBrush}" Width="1" Margin="4,2"/>
-                        <ToggleButton x:Name="BoldBtn" Click="OnToggleBold" ToolTip="粗体 (Ctrl+B)" Margin="8,0,0,0" Width="36" Height="28" FontSize="13">
+                        <ToggleButton x:Name="BoldBtn" Click="OnToggleBold" ToolTip="粗体 (Ctrl+B)" Margin="8,0,0,0" Width="28" Height="28" Padding="2,2">
                             <TextBlock Text="B" FontWeight="Bold"/>
                         </ToggleButton>
-                        <ToggleButton x:Name="ItalicBtn" Click="OnToggleItalic" ToolTip="斜体 (Ctrl+I)" Margin="4,0,0,0" Width="36" Height="28" FontSize="13">
+                        <ToggleButton x:Name="ItalicBtn" Click="OnToggleItalic" ToolTip="斜体 (Ctrl+I)" Margin="4,0,0,0" Width="28" Height="28" Padding="2,2">
                             <TextBlock Text="I" FontStyle="Italic"/>
                         </ToggleButton>
-                        <ToggleButton x:Name="UnderlineBtn" Click="OnToggleUnderline" ToolTip="下划线 (Ctrl+U)" Margin="4,0,0,0" Width="36" Height="28" FontSize="13">
+                        <ToggleButton x:Name="UnderlineBtn" Click="OnToggleUnderline" ToolTip="下划线 (Ctrl+U)" Margin="4,0,0,0" Width="28" Height="28" Padding="2,2">
                             <TextBlock TextDecorations="Underline" Text="U"/>
                         </ToggleButton>
                         <Border Background="{StaticResource BorderSubtleBrush}" Width="1" Margin="8,2"/>
-                        <ToggleButton x:Name="AlignLeftBtn" Click="OnAlignLeft" ToolTip="左对齐" Margin="8,0,0,0" Padding="6,4" Width="32" Height="28">
+                        <ToggleButton x:Name="AlignLeftBtn" Click="OnAlignLeft" ToolTip="左对齐" Margin="8,0,0,0" Padding="2,2" Width="28" Height="28">
                             <ui:SymbolIcon Symbol="TextAlignLeft24" FontSize="14"/>
                         </ToggleButton>
-                        <ToggleButton x:Name="AlignCenterBtn" Click="OnAlignCenter" ToolTip="居中" Margin="4,0,0,0" Padding="6,4" Width="32" Height="28">
+                        <ToggleButton x:Name="AlignCenterBtn" Click="OnAlignCenter" ToolTip="居中" Margin="4,0,0,0" Padding="2,2" Width="28" Height="28">
                             <ui:SymbolIcon Symbol="TextAlignCenter24" FontSize="14"/>
                         </ToggleButton>
-                        <ToggleButton x:Name="AlignRightBtn" Click="OnAlignRight" ToolTip="右对齐" Margin="4,0,0,0" Padding="6,4" Width="32" Height="28">
+                        <ToggleButton x:Name="AlignRightBtn" Click="OnAlignRight" ToolTip="右对齐" Margin="4,0,0,0" Padding="2,2" Width="28" Height="28">
                             <ui:SymbolIcon Symbol="TextAlignRight24" FontSize="14"/>
                         </ToggleButton>
                         <Border Background="{StaticResource BorderSubtleBrush}" Width="1" Margin="8,2"/>
-                        <Button x:Name="UndoBtn" Click="OnUndo" ToolTip="撤销 (Ctrl+Z)" Margin="8,0,0,0" Padding="6,4" Width="32" Height="28">
+                        <Button x:Name="UndoBtn" Click="OnUndo" ToolTip="撤销 (Ctrl+Z)" Margin="8,0,0,0" Padding="2,2" Width="28" Height="28">
                             <ui:SymbolIcon Symbol="ArrowUndo24" FontSize="14"/>
                         </Button>
-                        <Button x:Name="RedoBtn" Click="OnRedo" ToolTip="重做 (Ctrl+Y)" Margin="4,0,0,0" Padding="6,4" Width="32" Height="28">
+                        <Button x:Name="RedoBtn" Click="OnRedo" ToolTip="重做 (Ctrl+Y)" Margin="4,0,0,0" Padding="2,2" Width="28" Height="28">
                             <ui:SymbolIcon Symbol="ArrowRedo24" FontSize="14"/>
                         </Button>
                         <Border Background="{StaticResource BorderSubtleBrush}" Width="1" Margin="8,2"/>
@@ -67,11 +66,12 @@
                         <TextBlock x:Name="FontSizeError" Text="" FontSize="10" Foreground="{StaticResource DangerBrush}"
                                    VerticalAlignment="Center" Margin="4,0,0,0" Visibility="Collapsed"/>
                         <Border Background="{StaticResource BorderSubtleBrush}" Width="1" Margin="8,2"/>
-                        <Border x:Name="ColorPreview" Width="22" Height="22" CornerRadius="4"
+                        <Border x:Name="ColorPreview" Width="28" Height="28" CornerRadius="6"
                                 Background="Black" Margin="0,0,0,0" VerticalAlignment="Center"
                                 BorderBrush="{StaticResource AccentBrush}" BorderThickness="2"
                                 Cursor="Hand" MouseLeftButtonUp="OnColorPickerClick" ToolTip="文字颜色"/>
-                        <Popup x:Name="ColorPopup" StaysOpen="False" Placement="Bottom">
+                        <Popup x:Name="ColorPopup" StaysOpen="False" Placement="Bottom"
+                               PlacementTarget="{Binding ElementName=ColorPreview}">
                             <Border Style="{StaticResource ColorPickerPopupStyle}">
                                 <StackPanel>
                                     <WrapPanel Width="220" Orientation="Horizontal">
@@ -105,7 +105,7 @@
                             </Border>
                         </Popup>
                         <Border Background="{StaticResource BorderSubtleBrush}" Width="1" Margin="8,2"/>
-                        <Button Click="OnInsertLink" ToolTip="插入链接" Margin="8,0,0,0" Padding="6,4" Width="32" Height="28">
+                        <Button Click="OnInsertLink" ToolTip="插入链接" Margin="8,0,0,0" Padding="2,2" Width="28" Height="28">
                             <ui:SymbolIcon Symbol="Link24" FontSize="14"/>
                         </Button>
                         <Border Background="{StaticResource BorderSubtleBrush}" Width="1" Margin="8,2"/>
@@ -118,7 +118,6 @@
                             <ComboBoxItem Content="2.0" Tag="2.0"/>
                         </ComboBox>
                     </WrapPanel>
-                    </ScrollViewer>
                 </StackPanel>
 
                 <Border Grid.Row="1" BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="0,1,0,0" Margin="0,4,0,0" Padding="0,8,0,0">

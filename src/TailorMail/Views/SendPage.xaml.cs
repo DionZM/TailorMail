@@ -41,7 +41,6 @@ public partial class SendPage : UserControl, IRefreshable, IDynamicStepDesc
         _viewModel.ReloadSettings();
         _allRecipients = _viewModel.GetSelectedRecipients();
 
-        // Only clear results on first load, preserve on subsequent visits
         if (!_hasInitialized)
         {
             _viewModel.SendResults.Clear();
@@ -53,6 +52,10 @@ public partial class SendPage : UserControl, IRefreshable, IDynamicStepDesc
             _viewModel.ProgressValue = 0;
             _hasInitialized = true;
         }
+        else if (!_viewModel.IsSending)
+        {
+            SyncSendResults();
+        }
 
         _viewModel.StatusText = _allRecipients.Count > 0
             ? $"共 {_allRecipients.Count} 封待发送"
@@ -61,6 +64,26 @@ public partial class SendPage : UserControl, IRefreshable, IDynamicStepDesc
         UpdateProgressDisplay();
         StepDescriptionChanged?.Invoke();
         SendStateChanged?.Invoke();
+    }
+
+    private void SyncSendResults()
+    {
+        var toRemove = _viewModel.SendResults
+            .Where(sr => _allRecipients.All(r => r.Id != sr.RecipientId))
+            .ToList();
+        foreach (var sr in toRemove)
+            _viewModel.SendResults.Remove(sr);
+
+        var existingIds = _viewModel.SendResults.Select(sr => sr.RecipientId).ToHashSet();
+        foreach (var r in _allRecipients)
+        {
+            if (!existingIds.Contains(r.Id))
+            {
+                _viewModel.SendResults.Add(new SendResult { RecipientId = r.Id, RecipientName = r.Name });
+            }
+        }
+
+        _viewModel.TotalCount = _allRecipients.Count;
     }
 
     public string GetStepDescription()

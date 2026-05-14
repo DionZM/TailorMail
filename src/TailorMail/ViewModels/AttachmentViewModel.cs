@@ -76,6 +76,11 @@ public partial class AttachmentViewModel : ObservableObject
             MatchDirectory = config.AutoMatchDirectory;
 
         EnsureAllRecipientsInList();
+
+        if (!string.IsNullOrWhiteSpace(MatchDirectory) && System.IO.Directory.Exists(MatchDirectory))
+        {
+            AutoMatch();
+        }
     }
 
     /// <summary>

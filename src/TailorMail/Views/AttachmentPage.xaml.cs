@@ -107,6 +107,7 @@ public partial class AttachmentPage : UserControl, IRefreshable
     private void OnAutoMatch(object sender, RoutedEventArgs e)
     {
         BtnAutoMatch.IsEnabled = false;
+        var originalContent = BtnAutoMatch.Content;
         BtnAutoMatch.Content = "匹配中...";
 
         var beforeCount = _vm.RecipientAttachments.Sum(ra => ra.Files.Count);
@@ -138,7 +139,7 @@ public partial class AttachmentPage : UserControl, IRefreshable
         }
 
         BtnAutoMatch.IsEnabled = true;
-        BtnAutoMatch.Content = "自动匹配";
+        BtnAutoMatch.Content = originalContent;
     }
 
     private void OnAddRecipientAttachmentFromGrid(object sender, RoutedEventArgs e)

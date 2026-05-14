@@ -66,6 +66,7 @@ public partial class RecipientsViewModel : ObservableObject
         {
             foreach (var r in SelectedGroup.Recipients)
                 r.IsSelected = false;
+            SaveAll();
         }
     }
 
